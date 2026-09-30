@@ -386,18 +386,16 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             // Fast in-memory capability update (no blocking Binder IPC calls in critical path)
             val detectedCapabilities = if (oldState.capabilities.isNotEmpty()) {
                 val updated = oldState.capabilities.toMutableMap()
-                if (currentMicroAmps != Int.MIN_VALUE && currentMicroAmps != 0) {
-                    updated[CapabilityType.BATTERY_CURRENT] = CapabilityStatus.AVAILABLE
-                    updated[CapabilityType.BATTERY_POWER_CALCULATION] = CapabilityStatus.AVAILABLE
-                    updated[CapabilityType.CHARGING_SPEED_CALCULATION] = CapabilityStatus.AVAILABLE
-                    updated[CapabilityType.FAST_CHARGING_DETECTION] = CapabilityStatus.AVAILABLE
-                }
-                if (temperatureRaw > 0) {
-                    updated[CapabilityType.BATTERY_TEMPERATURE] = CapabilityStatus.AVAILABLE
-                }
-                if (voltage > 0) {
-                    updated[CapabilityType.BATTERY_VOLTAGE] = CapabilityStatus.AVAILABLE
-                }
+                val currentAvailable = currentMicroAmps != Int.MIN_VALUE
+                val voltageAvailable = voltage > 0
+                val powerAvailable = currentAvailable && voltageAvailable
+                updated[CapabilityType.BATTERY_CURRENT] = if (currentAvailable) CapabilityStatus.AVAILABLE else CapabilityStatus.UNAVAILABLE
+                updated[CapabilityType.BATTERY_TEMPERATURE] = if (temperatureRaw > 0) CapabilityStatus.AVAILABLE else CapabilityStatus.UNAVAILABLE
+                updated[CapabilityType.BATTERY_VOLTAGE] = if (voltageAvailable) CapabilityStatus.AVAILABLE else CapabilityStatus.UNAVAILABLE
+                val powerStatus = if (powerAvailable) CapabilityStatus.AVAILABLE else CapabilityStatus.UNAVAILABLE
+                updated[CapabilityType.BATTERY_POWER_CALCULATION] = powerStatus
+                updated[CapabilityType.CHARGING_SPEED_CALCULATION] = powerStatus
+                updated[CapabilityType.FAST_CHARGING_DETECTION] = powerStatus
                 updated
             } else {
                 capabilityRegistry?.detectAllCapabilities(
