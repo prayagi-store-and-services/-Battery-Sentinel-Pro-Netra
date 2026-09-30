@@ -74,13 +74,21 @@ fun QuickDrainActionsBottomSheet(
     sheetState: SheetState,
     onDismiss: () -> Unit
 ) {
-    val context = LocalContext.current
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    QuickDrainActionsContent(settings, { viewModel.toggleUltraBatterySaver() }, sheetState, onDismiss)
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun QuickDrainActionsContent(
+    settings: com.example.data.repository.SentinelSettings,
+    onToggleSaver: () -> Unit, sheetState: SheetState, onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = NetraDarkBg,
+        containerColor = MaterialTheme.colorScheme.background,
         tonalElevation = 8.dp,
         modifier = Modifier.testTag("quick_actions_bottom_sheet")
     ) {
@@ -121,7 +129,7 @@ fun QuickDrainActionsBottomSheet(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Instant toggles to eliminate high-drain radios & services",
+                            text = "Android settings shortcuts; no measured savings",
                             fontSize = 11.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -154,19 +162,19 @@ fun QuickDrainActionsBottomSheet(
                 ) {
                     Column {
                         Text(
-                            text = "ESTIMATED DRAIN REDUCTION",
+                            text = "BATTERY SAVINGS",
                             fontSize = 9.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = NetraEmerald
                         )
                         Text(
-                            text = "Save up to ~320 mAh / hour",
+                            text = "Unavailable",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Extends remaining battery by +3.5 to 5.2 hours",
+                            text = "Savings and added runtime are not measured",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -179,7 +187,7 @@ fun QuickDrainActionsBottomSheet(
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = "-65% DRAIN",
+                            text = "Not measured",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = Color.Black
@@ -195,11 +203,11 @@ fun QuickDrainActionsBottomSheet(
                 icon = Icons.Default.BatterySaver,
                 iconTint = DangerRed,
                 title = "Ultra Battery Saver",
-                subtitle = "Restricts background network & throttles animations to 0Hz",
+                subtitle = "Preference only; no device-wide controls applied",
                 trailing = {
                     Switch(
                         checked = settings.ultraBatterySaverActive,
-                        onCheckedChange = { viewModel.toggleUltraBatterySaver() },
+                        onCheckedChange = { onToggleSaver() },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = DangerRed,
                             checkedTrackColor = DangerRed.copy(alpha = 0.3f)
@@ -216,7 +224,7 @@ fun QuickDrainActionsBottomSheet(
                 icon = Icons.Default.Wifi,
                 iconTint = NetraCyan,
                 title = "Wi-Fi & Internet Connectivity",
-                subtitle = "Turn off search & scanning when away from known networks (-90 mAh/h)",
+                subtitle = "Open Android Internet Settings; changes are made there",
                 onClick = {
                     try {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -237,7 +245,7 @@ fun QuickDrainActionsBottomSheet(
                 icon = Icons.Default.Bluetooth,
                 iconTint = StatusBlue,
                 title = "Bluetooth Radios & Scanning",
-                subtitle = "Disable Bluetooth when not paired to audio or wearables (-45 mAh/h)",
+                subtitle = "Open Android Bluetooth Settings; changes are made there",
                 onClick = {
                     try {
                         context.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -254,7 +262,7 @@ fun QuickDrainActionsBottomSheet(
                 icon = Icons.Default.LocationOn,
                 iconTint = StatusAmber,
                 title = "Location Services (GPS)",
-                subtitle = "High-precision GNSS consumes 180-350 mA during active polling",
+                subtitle = "Open Android Location Settings; per-radio energy unavailable",
                 onClick = {
                     try {
                         context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -271,7 +279,7 @@ fun QuickDrainActionsBottomSheet(
                 icon = Icons.Default.BrightnessMedium,
                 iconTint = NetraEmerald,
                 title = "Display Brightness & Refresh Rate",
-                subtitle = "Lower display sleep timeout and enable dynamic 60Hz (-140 mAh/h)",
+                subtitle = "Open Android Display Settings; savings are not measured",
                 onClick = {
                     try {
                         context.startActivity(Intent(Settings.ACTION_DISPLAY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -288,7 +296,7 @@ fun QuickDrainActionsBottomSheet(
                 icon = Icons.Default.Sync,
                 iconTint = NetraCyan,
                 title = "Account Auto-Sync",
-                subtitle = "Pause background push synchronization for email and cloud backups",
+                subtitle = "Open Android Account Sync Settings; changes are made there",
                 onClick = {
                     try {
                         context.startActivity(Intent(Settings.ACTION_SYNC_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
