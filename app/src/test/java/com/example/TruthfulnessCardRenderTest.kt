@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.unit.dp
 import com.example.ai.BatteryDegradationPredictor
 import com.example.ui.components.GeminiHealthInsightsContent
@@ -38,6 +40,35 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class TruthfulnessCardRenderTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
+
+    @Test
+    fun renderPowerProfilePreference() {
+        compose.setContent {
+            MyApplicationTheme {
+                Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+                    com.example.ui.components.PowerSavingProfileCard(com.example.model.PowerProfileState(), {})
+                    com.example.ui.components.UltraBatterySaverBanner(true, {})
+                }
+            }
+        }
+        captureCard("power-profile-preference.png")
+    }
+
+    @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+    @Test
+    fun renderQuickPowerSettings() {
+        compose.setContent {
+            MyApplicationTheme {
+                Column(Modifier.width(411.dp).background(MaterialTheme.colorScheme.background)) {
+                    com.example.ui.components.QuickPowerSettingsBody(
+                        com.example.data.repository.SentinelSettings(), {}, {})
+                }
+            }
+        }
+        compose.onNodeWithText("Quick Power Savers").assertIsDisplayed()
+        compose.onNodeWithText("Savings and added runtime are not measured").assertIsDisplayed()
+        captureCard("quick-power-settings.png")
+    }
 
     @Test
     fun renderForegroundUsageWithUnavailableEnergy() {
@@ -177,6 +208,9 @@ class TruthfulnessCardRenderTest {
             bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
             view.draw(Canvas(bitmap))
         }
+        val pixels = IntArray(bitmap.width * bitmap.height)
+        bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+        assertTrue("Render must contain actual UI, not a flat background", pixels.toSet().size > 16)
         val output = File("build/outputs/ui-renders").apply { mkdirs() }
         val file = File(output, filename)
         file.outputStream().use {

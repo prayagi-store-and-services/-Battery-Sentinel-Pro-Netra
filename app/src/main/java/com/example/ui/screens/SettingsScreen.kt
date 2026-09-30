@@ -281,7 +281,7 @@ fun SettingsScreen(
         // 5. Power Optimization Engine
         item {
             SentinelCard(
-                title = "Power Optimization Engine",
+                title = "Power Preferences",
                 icon = Icons.Default.BatterySaver,
                 dotState = DotState.CONNECTED,
                 accentColor = NetraEmerald
@@ -292,8 +292,8 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "One-Tap Ultra Battery Saver", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (settings.ultraBatterySaverActive) DangerRed else MaterialTheme.colorScheme.onSurface)
-                        Text(text = "Restricts background network & throttles UI animations to 0Hz", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = "Saver profile preference", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (settings.ultraBatterySaverActive) DangerRed else MaterialTheme.colorScheme.onSurface)
+                        Text(text = "Preference only; network and animation restrictions are not applied.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(
                         checked = settings.ultraBatterySaverActive,
@@ -311,8 +311,8 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Autonomous Power Saver Mode", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Text(text = "Throttles background poll interval to 300-600s", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = "Power-saving preference", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = "Preference only; this switch does not change polling.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(
                         checked = settings.powerSaverEnabled,
@@ -329,8 +329,8 @@ fun SettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Brightness Optimization", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Text(text = "Guards against excessive display backlight draw", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = "Brightness preference", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = "Preference only; this app does not change brightness.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(
                         checked = settings.brightnessOptimization,

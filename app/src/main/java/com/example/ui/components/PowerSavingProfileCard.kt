@@ -59,9 +59,9 @@ fun PowerSavingProfileCard(
     }
 
     SentinelCard(
-        title = "Dynamic Power-Saving Profiles",
+        title = "Power Profile Preferences",
         icon = Icons.Default.BatterySaver,
-        dotState = if (profileState.dynamicSyncThrottled) DotState.THROTTLED else DotState.CONNECTED,
+        dotState = DotState.STANDBY,
         accentColor = accentColor,
         trailingAction = {
             Box(
@@ -81,7 +81,7 @@ fun PowerSavingProfileCard(
         modifier = modifier.testTag("power_saving_profile_card")
     ) {
         Text(
-            text = "Dynamically adjusts background sync frequency, telemetry polling intervals, and display brightness limits based on battery level thresholds.",
+            text = "Preferences only. This app does not apply profile-based polling, account sync, brightness or device-wide restrictions. Use Android Settings for device controls.",
             fontSize = 11.5.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -134,13 +134,13 @@ fun PowerSavingProfileCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Active: ${activeMode.title}",
+                        text = "Suggested: ${activeMode.title}",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = accentColor
                     )
                     Text(
-                        text = if (profileState.selectedMode == PowerProfileMode.SMART_ADAPTIVE) "🤖 Auto Threshold" else "⚙️ Manual",
+                        text = if (profileState.selectedMode == PowerProfileMode.SMART_ADAPTIVE) "Auto suggestion" else "Selected",
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -172,7 +172,7 @@ fun PowerSavingProfileCard(
                             Spacer(modifier = Modifier.width(6.dp))
                             Column {
                                 Text("BACKGROUND SYNC", fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text("${activeMode.syncIntervalSeconds}s Interval", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = NetraCyan)
+                                Text("Not applied", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = NetraCyan)
                             }
                         }
                     }
@@ -189,7 +189,7 @@ fun PowerSavingProfileCard(
                             Spacer(modifier = Modifier.width(6.dp))
                             Column {
                                 Text("DISPLAY BRIGHTNESS", fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text("Cap: ${activeMode.brightnessCappedPercent}%", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = StatusAmber)
+                                Text("Not applied", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = StatusAmber)
                             }
                         }
                     }

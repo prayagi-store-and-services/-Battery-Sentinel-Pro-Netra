@@ -366,8 +366,8 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             repository.logEvent(
-                title = if (target) "⚡ Ultra Battery Saver Engaged" else "Ultra Battery Saver Disabled",
-                message = if (target) "Background network sync restricted, display capped to 30%, and UI animations throttled to 0Hz." else "Restored normal background sync and full animation refresh rates.",
+                title = if (target) "Saver Preference Selected" else "Saver Preference Cleared",
+                message = if (target) "Saver preference saved. Device controls, network restrictions and animation rates are unchanged." else "Adaptive preference restored. Device controls are unchanged.",
                 category = "SYSTEM",
                 severity = if (target) "WARNING" else "INFO",
                 dotColor = if (target) "RED" else "GREEN"

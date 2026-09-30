@@ -80,13 +80,13 @@ fun UltraBatterySaverBanner(
 
                     Column {
                         Text(
-                            text = "ULTRA BATTERY SAVER ACTIVE",
+                            text = "SAVER PREFERENCE SELECTED",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = DangerRed
                         )
                         Text(
-                            text = "Background Network Restricted • Animations 0Hz • 900s Sync",
+                            text = "No network, animation or sync restrictions applied",
                             fontSize = 10.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )

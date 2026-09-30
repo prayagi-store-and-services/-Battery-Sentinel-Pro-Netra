@@ -503,7 +503,7 @@ private fun SystemTelemetryTabContent(
                         TelemetryRow("Latency Budget Status", if (latency.meetsBudget) "Compliant (≤100ms)" else "Exceeded")
                     }
                     TelemetryRow("Screen State", if (telemetry.isScreenOn) "Active (Screen ON)" else "Standby (Screen OFF)")
-                    TelemetryRow("Background Polling Mode", if (telemetry.isScreenOn) "Active (60-90s)" else "Ultra-Low Power (300-600s)")
+                    TelemetryRow("Polling Policy", "Profile preferences do not change polling")
                     TelemetryRow("Room Database Records", "$totalRecords Stored Records")
                 }
             }
