@@ -299,8 +299,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 BatteryManager.BATTERY_STATUS_CHARGING,
                 BatteryManager.BATTERY_STATUS_FULL -> true
                 BatteryManager.BATTERY_STATUS_DISCHARGING,
-                BatteryManager.BATTERY_STATUS_NOT_CHARGING,
-                BatteryManager.BATTERY_STATUS_UNKNOWN -> false
+                BatteryManager.BATTERY_STATUS_NOT_CHARGING -> false
                 else -> null
             }
 
@@ -340,7 +339,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             val mergedCurrentMa = currentMa ?: oldState.currentMa
 
             // Central ChargingSpeedEngine calculation using raw incoming power exclusively
-            val speedResult = chargingSpeedEngine.calculate(mergedIsCharging, mergedVoltageMv, mergedCurrentMa)
+            val speedResult = chargingSpeedEngine.calculate(isCharging, voltageMv, currentMa)
             val mergedRawPower = speedResult.rawPowerWatts ?: oldState.powerWatts
             val mergedConsumption = speedResult.consumptionPowerWatts ?: oldState.consumptionPowerWatts
             val mergedSpeed = if (mergedIsCharging == true) {
@@ -348,7 +347,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             } else {
                 CanonicalChargingSpeed.UNAVAILABLE
             }
-            val mergedAnnouncementSpeed = mergedSpeed
+            val mergedAnnouncementSpeed = speedResult.announcementCategory
 
             // Calculate precise FieldStatus for each telemetry parameter
             val fieldStates = TelemetryFieldState(
@@ -376,7 +375,12 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                     speedResult.rawPowerWatts != null -> FieldStatus.LIVE
                     oldState.powerWatts != null -> FieldStatus.LAST_VALID
                     else -> FieldStatus.UNAVAILABLE
-                }
+                },
+                levelObservedAt = if (validatedLevel != null) now else oldState.fieldStates.levelObservedAt,
+                tempObservedAt = if (tempCelsius != null) now else oldState.fieldStates.tempObservedAt,
+                voltageObservedAt = if (voltageMv != null) now else oldState.fieldStates.voltageObservedAt,
+                currentObservedAt = if (currentMa != null) now else oldState.fieldStates.currentObservedAt,
+                powerObservedAt = if (speedResult.rawPowerWatts != null) now else oldState.fieldStates.powerObservedAt
             )
 
             // Fast in-memory capability update (no blocking Binder IPC calls in critical path)
@@ -723,8 +727,8 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 bluetoothBatteryPercent = mergedBluetoothBattery,
                 bluetoothDevices = oldState.bluetoothDevices,
                 bluetoothHistory = oldState.bluetoothHistory,
-                lastUpdateTimestamp = now,
-                isDataFresh = true,
+                lastUpdateTimestamp = if (validatedLevel != null || tempCelsius != null || voltageMv != null || currentMa != null) now else oldState.lastUpdateTimestamp,
+                isDataFresh = validatedLevel != null && isCharging != null,
                 fieldStates = fieldStates,
                 capabilities = detectedCapabilities,
                 chargingEtaMinutes = mergedChargingEta,
@@ -768,6 +772,30 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 }
             } catch (_: Exception) {}
         }
+    }
+
+    /** A running service or Bluetooth update is not a new battery observation. */
+    suspend fun expireTelemetryFreshness() = telemetryMutex.withLock {
+        val state = _centralState.value
+        val now = telemetryClock()
+        fun aged(status: FieldStatus, observedAt: Long): FieldStatus =
+            if (status == FieldStatus.LIVE && (observedAt <= 0L || now < observedAt || now - observedAt > 120_000L))
+                FieldStatus.LAST_VALID else status
+        val f = state.fieldStates
+        val agedFields = f.copy(
+            levelStatus = aged(f.levelStatus, f.levelObservedAt),
+            tempStatus = aged(f.tempStatus, f.tempObservedAt),
+            voltageStatus = aged(f.voltageStatus, f.voltageObservedAt),
+            currentStatus = aged(f.currentStatus, f.currentObservedAt),
+            powerStatus = aged(f.powerStatus, f.powerObservedAt)
+        )
+        val fresh = state.isDataFresh && agedFields.levelStatus == FieldStatus.LIVE
+        _centralState.value = state.copy(
+            fieldStates = agedFields, isDataFresh = fresh,
+            chargingEtaMinutes = if (fresh) state.chargingEtaMinutes else null,
+            dischargingEtaMinutes = if (fresh) state.dischargingEtaMinutes else null,
+            announcementSpeed = if (agedFields.powerStatus == FieldStatus.LIVE) state.announcementSpeed else CanonicalChargingSpeed.UNAVAILABLE
+        )
     }
 
     suspend fun processBluetoothDevices(devices: List<com.example.model.BluetoothDeviceItem>, source: String = "BluetoothHelper") {
@@ -866,7 +894,6 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 bluetoothBatteryPercent = highestBattery,
                 bluetoothDevices = mergedDevices,
                 bluetoothHistory = updatedHistoryList,
-                lastUpdateTimestamp = now,
                 isNightProtectionActive = isNightActive
             )
 
