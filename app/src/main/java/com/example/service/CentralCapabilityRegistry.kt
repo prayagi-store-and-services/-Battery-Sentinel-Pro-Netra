@@ -88,11 +88,11 @@ class CentralCapabilityRegistry(private val context: Context) {
             if (bm != null) CapabilityStatus.AVAILABLE else CapabilityStatus.UNAVAILABLE
         }
 
-        // 3. Battery Voltage
+        // 3. Battery Voltage: service presence is not an observed voltage.
         map[CapabilityType.BATTERY_VOLTAGE] = if (voltageRaw > 0) {
             CapabilityStatus.AVAILABLE
         } else {
-            CapabilityStatus.AVAILABLE
+            CapabilityStatus.UNAVAILABLE
         }
 
         // 4. Battery Current (OEM restricted on certain hardware)
@@ -108,8 +108,10 @@ class CentralCapabilityRegistry(private val context: Context) {
             }
         }
 
-        // 5. Battery Power Calculation
-        map[CapabilityType.BATTERY_POWER_CALCULATION] = if (map[CapabilityType.BATTERY_CURRENT] == CapabilityStatus.AVAILABLE) {
+        // 5. Battery Power Calculation requires both measured inputs.
+        val hasPowerInputs = map[CapabilityType.BATTERY_CURRENT] == CapabilityStatus.AVAILABLE &&
+            map[CapabilityType.BATTERY_VOLTAGE] == CapabilityStatus.AVAILABLE
+        map[CapabilityType.BATTERY_POWER_CALCULATION] = if (hasPowerInputs) {
             CapabilityStatus.AVAILABLE
         } else {
             CapabilityStatus.UNAVAILABLE
@@ -195,14 +197,14 @@ class CentralCapabilityRegistry(private val context: Context) {
         map[CapabilityType.BATTERY_HEALTH_STATUS] = CapabilityStatus.AVAILABLE
 
         // 19. Charging Speed Calculation
-        map[CapabilityType.CHARGING_SPEED_CALCULATION] = if (map[CapabilityType.BATTERY_CURRENT] == CapabilityStatus.AVAILABLE) {
+        map[CapabilityType.CHARGING_SPEED_CALCULATION] = if (hasPowerInputs) {
             CapabilityStatus.AVAILABLE
         } else {
             CapabilityStatus.UNAVAILABLE
         }
 
         // 20. Fast Charging Detection
-        map[CapabilityType.FAST_CHARGING_DETECTION] = if (map[CapabilityType.BATTERY_CURRENT] == CapabilityStatus.AVAILABLE) {
+        map[CapabilityType.FAST_CHARGING_DETECTION] = if (hasPowerInputs) {
             CapabilityStatus.AVAILABLE
         } else {
             CapabilityStatus.UNAVAILABLE
