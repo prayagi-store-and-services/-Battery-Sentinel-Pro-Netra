@@ -14,12 +14,12 @@ data class AppUsageItem(
     val packageName: String,
     val appName: String,
     val foregroundTimeMinutes: Long,
-    val backgroundTimeMinutes: Long = 0L,
-    val estimatedDrainPercent: Float,
-    val estimatedEnergyMah: Int = 0,
-    val consumptionRateMahPerHour: Float = 0f,
+    val backgroundTimeMinutes: Long? = null,
+    val estimatedDrainPercent: Float? = null,
+    val estimatedEnergyMah: Int? = null,
+    val consumptionRateMahPerHour: Float? = null,
     val category: String = "Application",
-    val isHighDrain: Boolean = false,
+    val isHighDrain: Boolean? = null,
     val anomalyWarning: String? = null
 )
 
