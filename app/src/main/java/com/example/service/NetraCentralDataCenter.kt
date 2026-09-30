@@ -203,9 +203,10 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
     fun refreshCapabilities() {
         val oldState = _centralState.value
         val detected = capabilityRegistry?.detectAllCapabilities(
-            currentMicroAmps = oldState.currentMa?.let { it * 1000 } ?: Int.MIN_VALUE,
-            temperatureRaw = ((oldState.temperatureCelsius ?: 0f) * 10).toInt(),
-            voltageRaw = oldState.voltageMv ?: 0,
+            currentMicroAmps = oldState.currentMa?.takeIf { oldState.fieldStates.currentStatus == FieldStatus.LIVE }
+                ?.let { it * 1000 } ?: Int.MIN_VALUE,
+            temperatureRaw = ((oldState.temperatureCelsius?.takeIf { oldState.fieldStates.tempStatus == FieldStatus.LIVE } ?: 0f) * 10).toInt(),
+            voltageRaw = oldState.voltageMv?.takeIf { oldState.fieldStates.voltageStatus == FieldStatus.LIVE } ?: 0,
             connectedBluetoothCount = oldState.bluetoothDevices.count { it.isConnected }
         ) ?: return
 
