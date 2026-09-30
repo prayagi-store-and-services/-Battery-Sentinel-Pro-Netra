@@ -11,7 +11,7 @@
         android:id="@+id/widget_single_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Unavailable"
+        android:text="VOLTAGE"
         android:textColor="#69F0AE"
         android:textSize="9.5sp"
         android:textStyle="bold" />
@@ -37,7 +37,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="3dp"
-            android:text="Unavailable"
+            android:text=""
             android:textColor="#69F0AE"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -48,7 +48,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:gravity="end"
-            android:text="Unavailable"
+            android:text="No reading"
             android:textColor="#90A4AE"
             android:textSize="10sp" />
     </LinearLayout>
