@@ -37,14 +37,17 @@ object BatteryPdfReportGenerator {
         telemetry: BatteryTelemetry
     ): File? {
         var file: File? = null
+        val document = PdfDocument()
         return try {
-            PdfDocument().use { document ->
+            try {
                 val page = document.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
                 drawReportContent(page.canvas, records, sessions, degradationReport, telemetry)
                 document.finishPage(page)
                 val directory = File(context.filesDir, "reports").apply { mkdirs() }
                 file = File.createTempFile("Netra_Battery_Report_", ".pdf", directory)
                 FileOutputStream(file!!).use { document.writeTo(it) }
+            } finally {
+                document.close()
             }
             file
         } catch (e: Exception) {
