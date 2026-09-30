@@ -104,7 +104,7 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun `unverified PDF export produces no fake file`() {
+    fun `unsupported JVM PDF export produces no fake file`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val records = listOf(
             BatteryRecord(level = 80, temperature = 28.0f, voltageMv = 4100, currentMa = 1500, powerWatts = 6.0f, isCharging = true, pluggedType = "AC", healthStatus = "GOOD")
