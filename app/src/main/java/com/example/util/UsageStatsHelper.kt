@@ -13,8 +13,9 @@ import java.util.Calendar
 
 object UsageStatsHelper {
 
-    fun getAppUsageDrainList(context: Context, totalDeviceCapacityMah: Int = 5000): List<AppUsageItem> {
+    fun getAppUsageDrainList(context: Context): List<AppUsageItem> {
         return try {
+            if (!PermissionHelper.isUsageAccessGranted(context)) return emptyList()
             val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager ?: return emptyList()
             val packageManager = context.packageManager
 
@@ -31,14 +32,10 @@ object UsageStatsHelper {
 
             if (usageStatsList.isEmpty()) return emptyList()
 
-            val totalForegroundMs = usageStatsList.sumOf { it.totalTimeInForeground }
-            val effectiveTotal = if (totalForegroundMs > 0) totalForegroundMs else 1L
-
             val results = mutableListOf<AppUsageItem>()
 
-            for (stat in usageStatsList) {
-                if (stat.totalTimeInForeground > 30_000) { // at least 30 seconds
-                    val pkgName = stat.packageName
+            for ((pkgName, foregroundMs) in aggregateForegroundTimes(usageStatsList.map { it.packageName to it.totalTimeInForeground })) {
+                if (foregroundMs > 30_000) { // at least 30 seconds
                     var appName = pkgName.substringAfterLast('.')
                     var category = "Tools & Utilities"
 
@@ -56,41 +53,31 @@ object UsageStatsHelper {
                         }
                     } catch (_: PackageManager.NameNotFoundException) {}
 
-                    val foregroundMinutes = stat.totalTimeInForeground / 60_000L
-                    val drainPct = ((stat.totalTimeInForeground.toFloat() / effectiveTotal.toFloat()) * 100f)
-                    val estMah = ((drainPct / 100f) * (totalDeviceCapacityMah * 0.7f)).toInt()
-                    val rate = if (foregroundMinutes > 0) (estMah.toFloat() / (foregroundMinutes / 60f)) else 0f
-                    val isHigh = drainPct > 15f || foregroundMinutes > 120
-
-                    val anomaly = when {
-                        rate > 450f -> "High GPU / CPU thermal draw detected"
-                        foregroundMinutes > 180 -> "Heavy active display screen time"
-                        drainPct > 20f -> "Consuming over 20% of daily battery budget"
-                        else -> null
-                    }
+                    val foregroundMinutes = foregroundMs / 60_000L
 
                     results.add(
                         AppUsageItem(
                             packageName = pkgName,
                             appName = appName,
                             foregroundTimeMinutes = foregroundMinutes,
-                            backgroundTimeMinutes = maxOf(0L, (stat.totalTimeInForeground / 4000L)),
-                            estimatedDrainPercent = String.format("%.1f", drainPct).toFloatOrNull() ?: drainPct,
-                            estimatedEnergyMah = estMah,
-                            consumptionRateMahPerHour = String.format("%.1f", rate).toFloatOrNull() ?: rate,
-                            category = category,
-                            isHighDrain = isHigh,
-                            anomalyWarning = anomaly
+                            category = category
                         )
                     )
                 }
             }
 
-            results.sortedByDescending { it.estimatedDrainPercent }.take(20)
+            results.sortedByDescending { it.foregroundTimeMinutes }.take(20)
         } catch (_: Exception) {
             emptyList()
         }
     }
+
+    /** UsageStats can return multiple daily buckets per package. Never turn time into energy. */
+    internal fun aggregateForegroundTimes(samples: List<Pair<String, Long>>): Map<String, Long> =
+        samples.filter { it.first.isNotBlank() && it.second > 0L }.groupBy { it.first }
+            .mapValues { (_, values) -> values.fold(0L) { total, sample ->
+                if (Long.MAX_VALUE - total < sample.second) Long.MAX_VALUE else total + sample.second
+            } }
 
     fun openAppDetailsSettings(context: Context, packageName: String) {
         PermissionHelper.openAppDetailsSettings(context, packageName)
