@@ -68,7 +68,8 @@ class TruthfulnessCardRenderTest {
             MyApplicationTheme {
                 Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
                     com.example.ui.components.CircularBatteryGauge(
-                        NetraCentralState(batteryLevel = 52, isCharging = false, isChargerConnected = false))
+                        NetraCentralState(batteryLevel = 52, isCharging = false, isChargerConnected = false, isDataFresh = true,
+                            fieldStates = com.example.model.TelemetryFieldState(levelStatus = com.example.model.FieldStatus.LIVE)))
                 }
             }
         }
@@ -82,7 +83,8 @@ class TruthfulnessCardRenderTest {
             MyApplicationTheme {
                 Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
                     com.example.ui.components.CircularBatteryGauge(
-                        NetraCentralState(batteryLevel = 52, isCharging = true, isChargerConnected = true, chargingEtaMinutes = 48))
+                        NetraCentralState(batteryLevel = 52, isCharging = true, isChargerConnected = true, chargingEtaMinutes = 48, isDataFresh = true,
+                            fieldStates = com.example.model.TelemetryFieldState(levelStatus = com.example.model.FieldStatus.LIVE)))
                 }
             }
         }
