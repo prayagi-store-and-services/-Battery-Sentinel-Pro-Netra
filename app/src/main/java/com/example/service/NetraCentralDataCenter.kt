@@ -88,7 +88,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 conditionText = currentWeather.conditionText ?: oldState.weatherContext.conditionText,
                 isPrecipitating = currentWeather.isPrecipitating ?: oldState.weatherContext.isPrecipitating,
                 windSpeedKmh = currentWeather.windSpeedKmh ?: oldState.weatherContext.windSpeedKmh,
-                severeWeatherAlert = currentWeather.severeWeatherAlert ?: oldState.weatherContext.severeWeatherAlert,
+                severeWeatherAlert = if (currentWeather.isAvailable) currentWeather.severeWeatherAlert else oldState.weatherContext.severeWeatherAlert,
                 weatherSource = currentWeather.weatherSource ?: oldState.weatherContext.weatherSource,
                 lastUpdated = currentWeather.lastUpdated,
                 isAvailable = currentWeather.isAvailable || (oldState.weatherContext.temperatureCelsius != null)
@@ -150,7 +150,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             conditionText = weather.conditionText ?: oldState.weatherContext.conditionText,
             isPrecipitating = weather.isPrecipitating ?: oldState.weatherContext.isPrecipitating,
             windSpeedKmh = weather.windSpeedKmh ?: oldState.weatherContext.windSpeedKmh,
-            severeWeatherAlert = weather.severeWeatherAlert ?: oldState.weatherContext.severeWeatherAlert,
+            severeWeatherAlert = if (weather.isAvailable) weather.severeWeatherAlert else oldState.weatherContext.severeWeatherAlert,
             weatherSource = weather.weatherSource ?: oldState.weatherContext.weatherSource,
             lastUpdated = weather.lastUpdated,
             isAvailable = weather.isAvailable || (oldState.weatherContext.temperatureCelsius != null)
