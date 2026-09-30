@@ -625,10 +625,10 @@ fun StatusScreen(
                         Text(text = "Foreground: ${topApp.foregroundTimeMinutes}m", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Text(
-                        text = "~${topApp.estimatedDrainPercent}% drain",
+                        text = "${topApp.foregroundTimeMinutes} min foreground",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (topApp.isHighDrain) StatusAmber else NetraEmerald
+                        color = NetraEmerald
                     )
                 }
             } else {
@@ -637,7 +637,7 @@ fun StatusScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Usage Access needed for app drain stats", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = "Usage Access needed for app foreground time", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedButton(onClick = { UsageStatsHelper.openUsageAccessSettings(context) }) {
                         Text("Grant", fontSize = 11.sp)
                     }
