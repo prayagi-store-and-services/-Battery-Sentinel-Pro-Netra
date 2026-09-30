@@ -27,9 +27,9 @@
             android:id="@+id/widget_single_value"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="14.8"
+            android:text="Unavailable"
             android:textColor="#FFFFFF"
-            android:textSize="26sp"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <TextView
@@ -37,7 +37,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="3dp"
-            android:text="W"
+            android:text=""
             android:textColor="#00E5FF"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -48,7 +48,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:gravity="end"
-            android:text="Fast Charge"
+            android:text="No reading"
             android:textColor="#90A4AE"
             android:textSize="10sp" />
     </LinearLayout>

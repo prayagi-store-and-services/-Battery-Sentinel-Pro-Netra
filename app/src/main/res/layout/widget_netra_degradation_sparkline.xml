@@ -28,7 +28,7 @@
             android:id="@+id/widget_health_score"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Score: 98/100 (A)"
+            android:text="Unavailable"
             android:textColor="#00E676"
             android:textSize="10sp"
             android:textStyle="bold" />
@@ -46,9 +46,9 @@
             android:id="@+id/widget_sparkline_level"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="85%"
+            android:text="Unavailable"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <TextView
@@ -57,7 +57,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:text="• Discharging • 32.1°C • 0 Thermal Alerts"
+            android:text="Unavailable"
             android:textColor="#94A3B8"
             android:textSize="10sp" />
     </LinearLayout>

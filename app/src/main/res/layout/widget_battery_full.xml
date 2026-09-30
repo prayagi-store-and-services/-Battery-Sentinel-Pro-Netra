@@ -27,7 +27,7 @@
             android:id="@+id/widget_full_badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="⚡ 24/7 SENTINEL"
+            android:text="Unavailable"
             android:textColor="#00E676"
             android:textSize="9.5sp"
             android:textStyle="bold" />
@@ -45,9 +45,9 @@
             android:id="@+id/widget_full_percent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="88%"
+            android:text="Unavailable"
             android:textColor="#FFFFFF"
-            android:textSize="32sp"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <LinearLayout
@@ -61,7 +61,7 @@
                 android:id="@+id/widget_full_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Charging • Fast (10-20W)"
+                android:text="Unavailable"
                 android:textColor="#00E5FF"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -70,7 +70,7 @@
                 android:id="@+id/widget_full_power"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Raw Incoming Power: 14.8W"
+                android:text="Unavailable"
                 android:textColor="#FFD700"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -78,7 +78,7 @@
     </LinearLayout>
 
     <!-- Divider -->
-    <View
+    <ImageView
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="6dp"
@@ -106,7 +106,7 @@
                 android:id="@+id/widget_full_temp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="36.8°C"
+                android:text="Unavailable"
                 android:textColor="#FFFFFF"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -127,7 +127,7 @@
                 android:id="@+id/widget_full_volt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="4.15V"
+                android:text="Unavailable"
                 android:textColor="#FFFFFF"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -148,7 +148,7 @@
                 android:id="@+id/widget_full_current"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="3560mA"
+                android:text="Unavailable"
                 android:textColor="#FFFFFF"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -169,7 +169,7 @@
                 android:id="@+id/widget_full_health"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Good"
+                android:text="Unavailable"
                 android:textColor="#00E676"
                 android:textSize="11sp"
                 android:textStyle="bold" />

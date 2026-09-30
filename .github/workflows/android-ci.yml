@@ -37,11 +37,18 @@ jobs:
           -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048
           -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
       - name: Build debug APK and run unit tests
-        run: gradle --no-daemon :app:assembleDebug :app:testDebugUnitTest
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p app/build/ci-diagnostics
+          gradle --no-daemon :app:assembleDebug :app:testDebugUnitTest --stacktrace 2>&1 | tee app/build/ci-diagnostics/android-build.log
       - name: Upload Compose renders for visual review
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: compose-ui-renders
-          path: app/build/outputs/ui-renders/*.png
+          path: |
+            app/build/outputs/ui-renders/*.png
+            app/build/test-results/testDebugUnitTest/*.xml
+            app/build/ci-diagnostics/android-build.log
           if-no-files-found: warn

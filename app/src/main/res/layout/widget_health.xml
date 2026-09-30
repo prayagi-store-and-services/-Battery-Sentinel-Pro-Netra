@@ -26,7 +26,7 @@
             android:id="@+id/widget_health_badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PROTECTED"
+            android:text="Unavailable"
             android:textColor="#00E676"
             android:textSize="8.5sp"
             android:textStyle="bold" />
@@ -43,9 +43,9 @@
             android:id="@+id/widget_health_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Good"
+            android:text="Unavailable"
             android:textColor="#FFFFFF"
-            android:textSize="22sp"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <LinearLayout
@@ -58,7 +58,7 @@
                 android:id="@+id/widget_health_score"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Score: 98/100 (Grade A)"
+                android:text="Unavailable"
                 android:textColor="#00E676"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -67,7 +67,7 @@
                 android:id="@+id/widget_health_meta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="88% • 36.4°C"
+                android:text="Unavailable"
                 android:textColor="#90A4AE"
                 android:textSize="9sp" />
         </LinearLayout>
