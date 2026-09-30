@@ -19,7 +19,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Unavailable"
+            android:text="CURRENT HISTORY"
             android:textColor="#FFD700"
             android:textSize="10.5sp"
             android:textStyle="bold" />
@@ -38,7 +38,7 @@
         android:id="@+id/widget_graph_sub"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Unavailable"
+        android:text="History unavailable"
         android:textColor="#90A4AE"
         android:textSize="8.5sp" />
 
