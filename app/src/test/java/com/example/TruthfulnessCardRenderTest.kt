@@ -42,6 +42,34 @@ class TruthfulnessCardRenderTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Test
+    fun renderEtaUnavailableAfterTransition() {
+        compose.setContent {
+            MyApplicationTheme {
+                Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+                    com.example.ui.components.CircularBatteryGauge(
+                        NetraCentralState(batteryLevel = 52, isCharging = false, isChargerConnected = false))
+                }
+            }
+        }
+        compose.onNodeWithText("ETA unavailable").assertIsDisplayed()
+        captureCard("eta-session-unavailable.png")
+    }
+
+    @Test
+    fun renderEtaObservedSession() {
+        compose.setContent {
+            MyApplicationTheme {
+                Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+                    com.example.ui.components.CircularBatteryGauge(
+                        NetraCentralState(batteryLevel = 52, isCharging = true, isChargerConnected = true, chargingEtaMinutes = 48))
+                }
+            }
+        }
+        compose.onNodeWithText("Full in ~48 min").assertIsDisplayed()
+        captureCard("eta-session-observed.png")
+    }
+
+    @Test
     fun renderPowerProfilePreference() {
         compose.setContent {
             MyApplicationTheme {
