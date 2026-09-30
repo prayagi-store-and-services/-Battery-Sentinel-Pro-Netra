@@ -229,7 +229,12 @@ data class TelemetryFieldState(
     val tempStatus: FieldStatus = FieldStatus.UNAVAILABLE,
     val voltageStatus: FieldStatus = FieldStatus.UNAVAILABLE,
     val currentStatus: FieldStatus = FieldStatus.UNAVAILABLE,
-    val powerStatus: FieldStatus = FieldStatus.UNAVAILABLE
+    val powerStatus: FieldStatus = FieldStatus.UNAVAILABLE,
+    val levelObservedAt: Long = 0L,
+    val tempObservedAt: Long = 0L,
+    val voltageObservedAt: Long = 0L,
+    val currentObservedAt: Long = 0L,
+    val powerObservedAt: Long = 0L
 )
 
 enum class EnvironmentalHeatDiagnosis {
