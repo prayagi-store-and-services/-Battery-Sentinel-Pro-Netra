@@ -521,7 +521,7 @@ fun StatusScreen(
                     Column(horizontalAlignment = Alignment.End) {
                         Text(text = "Estimated Time to 100%", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
-                            text = telemetry.timeToFullMinutes?.let { "~$it mins" } ?: "Calculating...",
+                            text = telemetry.timeToFullMinutes?.let { "~$it mins" } ?: "Unavailable",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = NetraCyan
