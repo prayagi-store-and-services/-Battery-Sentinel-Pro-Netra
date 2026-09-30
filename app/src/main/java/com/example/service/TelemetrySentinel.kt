@@ -3,7 +3,8 @@ package com.example.service
 import android.content.Context
 import android.util.Log
 import com.example.NetraApplication
-import com.example.model.BatteryTelemetry
+import com.example.model.NetraCentralState
+import com.example.model.FieldStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -36,71 +37,74 @@ data class TelemetryHealthReport(
  * - Detects stale or missing telemetry, monitors collector health, and logs significant events.
  * - Ensures 24/7 background monitoring recoverability without creating duplicate polling loops or duplicate announcements.
  */
-class TelemetrySentinel(private val context: Context) {
+class TelemetrySentinel(private val context: Context, private val clock: () -> Long = { System.currentTimeMillis() }) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _healthReport = MutableStateFlow(
         TelemetryHealthReport(
-            state = TelemetryHealthState.HEALTHY,
-            lastUpdateTimestamp = System.currentTimeMillis(),
-            isBatteryActive = true,
-            isThermalActive = true,
-            isBluetoothActive = true,
-            message = "Sentinel supervising canonical telemetry pipeline."
+            state = TelemetryHealthState.UNAVAILABLE,
+            lastUpdateTimestamp = 0L,
+            isBatteryActive = false,
+            isThermalActive = false,
+            isBluetoothActive = false,
+            message = "Waiting for a verified battery observation."
         )
     )
     val healthReport: StateFlow<TelemetryHealthReport> = _healthReport.asStateFlow()
 
-    private var lastTelemetryUpdateMs: Long = System.currentTimeMillis()
-    private var lastLoggedState: TelemetryHealthState = TelemetryHealthState.HEALTHY
+    private var lastTelemetryUpdateMs: Long = 0L
+    private var lastLoggedState: TelemetryHealthState = TelemetryHealthState.UNAVAILABLE
     private val staleThresholdMs: Long = 300_000L // 5 minutes
 
     /**
      * Called by the canonical BatteryMonitorService whenever new telemetry is received.
      */
-    fun onTelemetryReceived(telemetry: BatteryTelemetry) {
-        val now = System.currentTimeMillis()
-        lastTelemetryUpdateMs = now
-
-        val newState = if (telemetry.temperature <= 0f && telemetry.voltageMv <= 0) {
-            TelemetryHealthState.DEGRADED
-        } else {
-            TelemetryHealthState.HEALTHY
+    @Synchronized
+    fun onTelemetryReceived(state: NetraCentralState) {
+        val batteryLive = state.isDataFresh && state.fieldStates.levelStatus == FieldStatus.LIVE
+        val thermalLive = state.fieldStates.tempStatus == FieldStatus.LIVE
+        // Invalid or repeated retained snapshots do not reset the stale clock.
+        if (batteryLive && state.fieldStates.levelObservedAt > lastTelemetryUpdateMs) {
+            lastTelemetryUpdateMs = state.fieldStates.levelObservedAt
         }
-
-        updateHealthState(newState, "Canonical telemetry updated successfully. Level: ${telemetry.level}%, Temp: ${telemetry.temperature}°C")
+        val health = when {
+            !batteryLive && lastTelemetryUpdateMs == 0L -> TelemetryHealthState.UNAVAILABLE
+            !batteryLive -> TelemetryHealthState.DEGRADED
+            !thermalLive || state.fieldStates.voltageStatus != FieldStatus.LIVE -> TelemetryHealthState.DEGRADED
+            else -> TelemetryHealthState.HEALTHY
+        }
+        publishHealth(health, batteryLive, thermalLive)
     }
 
-    /**
-     * Periodically checked or triggered to inspect telemetry staleness.
-     */
+    /** Called from the existing service supervisor, never a second polling loop. */
+    @Synchronized
     fun checkStaleStatus() {
-        val now = System.currentTimeMillis()
-        val elapsed = now - lastTelemetryUpdateMs
-
-        if (elapsed > staleThresholdMs) {
-            updateHealthState(TelemetryHealthState.STALE, "Telemetry stream is stale. Last update was ${elapsed / 1000}s ago.")
+        val now = clock()
+        if (lastTelemetryUpdateMs == 0L) {
+            publishHealth(TelemetryHealthState.UNAVAILABLE, false, false)
+        } else if (now < lastTelemetryUpdateMs || now - lastTelemetryUpdateMs > staleThresholdMs) {
+            publishHealth(TelemetryHealthState.STALE, false, false)
         }
     }
 
-    private fun updateHealthState(newState: TelemetryHealthState, msg: String) {
+    private fun publishHealth(state: TelemetryHealthState, batteryLive: Boolean, thermalLive: Boolean) {
+        val message = when (state) {
+            TelemetryHealthState.HEALTHY -> "Verified canonical battery and thermal observation received."
+            TelemetryHealthState.DEGRADED -> "Some canonical fields are retained or unavailable; not fully live."
+            TelemetryHealthState.STALE -> "No verified battery observation within the last five minutes."
+            else -> "Waiting for a verified battery observation."
+        }
         val current = _healthReport.value
-        if (current.state != newState || current.message != msg) {
-            _healthReport.value = current.copy(
-                state = newState,
-                lastUpdateTimestamp = System.currentTimeMillis(),
-                message = msg
-            )
-
-            // Log meaningful state transitions to Room activity log (avoid spamming every cycle)
-            if (newState != lastLoggedState && newState != TelemetryHealthState.HEALTHY) {
-                lastLoggedState = newState
-                logSentinelEventToDb(newState, msg)
-            } else if (newState == TelemetryHealthState.HEALTHY && lastLoggedState != TelemetryHealthState.HEALTHY) {
-                lastLoggedState = newState
-                logSentinelEventToDb(newState, "Telemetry recovered to HEALTHY state.")
-            }
+        _healthReport.value = current.copy(
+            state = state, lastUpdateTimestamp = lastTelemetryUpdateMs,
+            isBatteryActive = batteryLive, isThermalActive = thermalLive,
+            // This sentinel does not verify the Bluetooth collector. Do not invent an active status.
+            isBluetoothActive = false, message = message
+        )
+        if (state != lastLoggedState) {
+            lastLoggedState = state
+            logSentinelEventToDb(state, message)
         }
     }
 
