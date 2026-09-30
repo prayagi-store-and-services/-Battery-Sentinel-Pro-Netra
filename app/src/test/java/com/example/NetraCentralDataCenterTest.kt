@@ -570,4 +570,30 @@ class NetraCentralDataCenterTest {
         assertEquals(com.example.model.CapabilityStatus.AVAILABLE, caps[com.example.model.CapabilityType.BATTERY_VOLTAGE])
         assertEquals(com.example.model.CapabilityStatus.AVAILABLE, caps[com.example.model.CapabilityType.BLUETOOTH_CONNECTED_INFO])
     }
+    @Test
+    fun `ETA clears on transition and invalid level without losing display retention`() = runTest(testDispatcher) {
+        var now = 1_000L
+        val center = NetraCentralDataCenter { now }
+        suspend fun sample(level: Int, status: Int, plugged: Int) {
+            center.processRawInput(level, 100, status, plugged, 300, 4000, 1000000, null, null)
+        }
+        val charge = android.os.BatteryManager.BATTERY_STATUS_CHARGING
+        val discharge = android.os.BatteryManager.BATTERY_STATUS_DISCHARGING
+        val ac = android.os.BatteryManager.BATTERY_PLUGGED_AC
+        sample(50, charge, ac)
+        now += 120_000L; sample(52, charge, ac)
+        assertEquals(48, center.centralState.value.chargingEtaMinutes)
+        now += 60_000L; sample(-1, charge, ac)
+        assertEquals(52, center.centralState.value.batteryLevel)
+        assertNull(center.centralState.value.chargingEtaMinutes)
+        now += 60_000L; sample(53, charge, ac)
+        assertNull(center.centralState.value.chargingEtaMinutes)
+        now += 120_000L; sample(55, charge, ac)
+        assertEquals(45, center.centralState.value.chargingEtaMinutes)
+        now += 60_000L; sample(55, discharge, 0)
+        assertNull(center.centralState.value.chargingEtaMinutes)
+        assertNull(center.centralState.value.dischargingEtaMinutes)
+        now += 120_000L; sample(53, discharge, 0)
+        assertEquals(53, center.centralState.value.dischargingEtaMinutes)
+    }
 }
