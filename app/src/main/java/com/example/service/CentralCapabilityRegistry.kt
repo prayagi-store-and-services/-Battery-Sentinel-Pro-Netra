@@ -67,7 +67,7 @@ class CentralCapabilityRegistry(private val context: Context) {
     }
 
     fun detectAllCapabilities(
-        currentMicroAmps: Int = 0,
+        currentMicroAmps: Int = Int.MIN_VALUE,
         temperatureRaw: Int = 0,
         voltageRaw: Int = 0,
         hasBluetoothHardware: Boolean? = null,
@@ -96,12 +96,14 @@ class CentralCapabilityRegistry(private val context: Context) {
         }
 
         // 4. Battery Current (OEM restricted on certain hardware)
-        map[CapabilityType.BATTERY_CURRENT] = if (currentMicroAmps != Int.MIN_VALUE && currentMicroAmps != 0) {
+        map[CapabilityType.BATTERY_CURRENT] = if (currentMicroAmps != Int.MIN_VALUE) {
             CapabilityStatus.AVAILABLE
         } else {
             val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
-            val currentNow = bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) ?: Int.MIN_VALUE
-            if (currentNow != Int.MIN_VALUE && currentNow != 0) {
+            val currentNow = try {
+                bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) ?: Int.MIN_VALUE
+            } catch (_: Exception) { Int.MIN_VALUE }
+            if (currentNow != Int.MIN_VALUE) {
                 CapabilityStatus.AVAILABLE
             } else {
                 CapabilityStatus.UNAVAILABLE // OEM restricted
