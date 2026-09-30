@@ -125,6 +125,7 @@ class BatteryMonitorService : Service() {
             Log.e("BatteryMonitorService", "Error starting lifecycle polling", e)
         }
 
+        val needsInitialBatterySnapshot = !isReceiverRegistered
         if (!isReceiverRegistered) {
             try {
                 val filter = IntentFilter().apply {
@@ -153,7 +154,7 @@ class BatteryMonitorService : Service() {
 
         // Initial check via sticky intent
         try {
-            val initialIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            val initialIntent = if (needsInitialBatterySnapshot) registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) else null
             if (initialIntent != null) {
                 batteryInputs.trySend(initialIntent)
             }
@@ -167,6 +168,14 @@ class BatteryMonitorService : Service() {
                 try {
                     // Ensure collectors are active and restart if stopped without spawning duplicates
                     startCollectorsAndPolling()
+                    val center = NetraApplication.instance.centralDataCenter
+                    center.expireTelemetryFreshness()
+                    val state = center.centralState.value
+                    if (!state.isDataFresh) {
+                        _liveTelemetryFlow.value = _liveTelemetryFlow.value.copy(timeToFullMinutes = null, estimatedDischargeHours = null)
+                        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                        manager.notify(NOTIFICATION_ID, buildSentinelNotification(state))
+                    }
                 } catch (e: Exception) {
                     Log.e("BatteryMonitorService", "Supervisor check failed", e)
                 }
@@ -231,13 +240,14 @@ class BatteryMonitorService : Service() {
         // Thermal velocity calculation (°C / minute)
         val now = canonical.lastUpdateTimestamp
         var thermalVelocity = 0f
-        if (lastTempTimestamp > 0 && now > lastTempTimestamp) {
+        val hasLiveTemperature = canonical.fieldStates.tempStatus == com.example.model.FieldStatus.LIVE
+        if (hasLiveTemperature && lastTempTimestamp > 0 && now > lastTempTimestamp) {
             val deltaMinutes = (now - lastTempTimestamp) / 60_000f
             if (deltaMinutes > 0.1f) {
                 thermalVelocity = (tempCelsius - lastTemp) / deltaMinutes
             }
         }
-        if (tempCelsius > 0) {
+        if (hasLiveTemperature && tempCelsius > 0) {
             lastTemp = tempCelsius
             lastTempTimestamp = now
         }
@@ -557,6 +567,9 @@ class BatteryMonitorService : Service() {
         val now = System.currentTimeMillis()
         val title: String
         val lines = mutableListOf<String>()
+
+        if (!t.isDataFresh) lines.add("Last-known battery data; live update unavailable")
+        if (t.fieldStates.powerStatus == com.example.model.FieldStatus.LAST_VALID) lines.add("Electrical power is last known, not a live reading")
 
         if (t.isCriticalThermalActive) {
             lines.add("⚠️ Critical Thermal Control Active")

@@ -596,4 +596,60 @@ class NetraCentralDataCenterTest {
         now += 120_000L; sample(53, discharge, 0)
         assertEquals(53, center.centralState.value.dischargingEtaMinutes)
     }
+    @Test
+    fun `missing electrical input cannot promote retained power to LIVE`() = runTest(testDispatcher) {
+        var now = 1_000L
+        val center = NetraCentralDataCenter { now }
+        center.processRawInput(50,100,2,1,300,4000,2000000,null,null)
+        assertEquals(com.example.model.FieldStatus.LIVE, center.centralState.value.fieldStates.powerStatus)
+        now += 60_000L
+        center.processRawInput(51,100,2,1,0,0,Int.MIN_VALUE,null,null)
+        val state = center.centralState.value
+        assertEquals(8f, state.powerWatts)
+        assertEquals(com.example.model.FieldStatus.LAST_VALID, state.fieldStates.powerStatus)
+        assertEquals(1_000L, state.fieldStates.powerObservedAt)
+        assertEquals(61_000L, state.fieldStates.levelObservedAt)
+        assertEquals(com.example.model.CanonicalChargingSpeed.UNAVAILABLE, state.announcementSpeed)
+    }
+
+    @Test
+    fun `invalid battery snapshot does not renew freshness or observation timestamp`() = runTest(testDispatcher) {
+        var now = 1_000L
+        val center = NetraCentralDataCenter { now }
+        center.processRawInput(50,100,2,1,300,4000,2000000,null,null)
+        now += 60_000L
+        center.processRawInput(-1,-1,-1,-1,0,0,Int.MIN_VALUE,null,null)
+        val state = center.centralState.value
+        assertEquals(50, state.batteryLevel)
+        assertEquals(1_000L, state.lastUpdateTimestamp)
+        assertEquals(false, state.isDataFresh)
+        assertEquals(com.example.model.FieldStatus.LAST_VALID, state.fieldStates.levelStatus)
+    }
+
+    @Test
+    fun `quiet battery feed ages live values without discarding them`() = runTest(testDispatcher) {
+        var now = 1_000L
+        val center = NetraCentralDataCenter { now }
+        center.processRawInput(50,100,2,1,300,4000,2000000,null,null)
+        now += 120_000L
+        center.expireTelemetryFreshness()
+        assertTrue(center.centralState.value.isDataFresh)
+        now += 1L
+        center.expireTelemetryFreshness()
+        val state = center.centralState.value
+        assertEquals(false, state.isDataFresh)
+        assertEquals(50, state.batteryLevel)
+        assertEquals(8f, state.powerWatts)
+        assertEquals(com.example.model.FieldStatus.LAST_VALID, state.fieldStates.powerStatus)
+        assertEquals(1_000L, state.lastUpdateTimestamp)
+        assertEquals(1_000L, state.fieldStates.powerObservedAt)
+    }
+
+    @Test
+    fun `UNKNOWN battery status cannot become a live discharge observation`() = runTest(testDispatcher) {
+        val center = NetraCentralDataCenter { 1_000L }
+        center.processRawInput(50,100,1,0,300,4000,-200000,null,null)
+        assertNull(center.centralState.value.isCharging)
+        assertEquals(false, center.centralState.value.isDataFresh)
+    }
 }

@@ -42,12 +42,34 @@ class TruthfulnessCardRenderTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Test
+    fun renderRetainedTelemetryFreshness() {
+        compose.setContent {
+            MyApplicationTheme {
+                Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+                    com.example.ui.components.CircularBatteryGauge(NetraCentralState(
+                        batteryLevel = 52, isCharging = true, isChargerConnected = true,
+                        voltageMv = 4000, currentMa = 2000, powerWatts = 8f, isDataFresh = false,
+                        fieldStates = com.example.model.TelemetryFieldState(
+                            levelStatus = com.example.model.FieldStatus.LAST_VALID,
+                            voltageStatus = com.example.model.FieldStatus.LAST_VALID,
+                            currentStatus = com.example.model.FieldStatus.LAST_VALID,
+                            powerStatus = com.example.model.FieldStatus.LAST_VALID)))
+                }
+            }
+        }
+        compose.onNodeWithText("Live battery update unavailable").assertIsDisplayed()
+        compose.onNodeWithText("Power: Last known").assertIsDisplayed()
+        captureCard("telemetry-last-known.png")
+    }
+
+    @Test
     fun renderEtaUnavailableAfterTransition() {
         compose.setContent {
             MyApplicationTheme {
                 Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
                     com.example.ui.components.CircularBatteryGauge(
-                        NetraCentralState(batteryLevel = 52, isCharging = false, isChargerConnected = false))
+                        NetraCentralState(batteryLevel = 52, isCharging = false, isChargerConnected = false, isDataFresh = true,
+                            fieldStates = com.example.model.TelemetryFieldState(levelStatus = com.example.model.FieldStatus.LIVE)))
                 }
             }
         }
@@ -61,7 +83,8 @@ class TruthfulnessCardRenderTest {
             MyApplicationTheme {
                 Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
                     com.example.ui.components.CircularBatteryGauge(
-                        NetraCentralState(batteryLevel = 52, isCharging = true, isChargerConnected = true, chargingEtaMinutes = 48))
+                        NetraCentralState(batteryLevel = 52, isCharging = true, isChargerConnected = true, chargingEtaMinutes = 48, isDataFresh = true,
+                            fieldStates = com.example.model.TelemetryFieldState(levelStatus = com.example.model.FieldStatus.LIVE)))
                 }
             }
         }

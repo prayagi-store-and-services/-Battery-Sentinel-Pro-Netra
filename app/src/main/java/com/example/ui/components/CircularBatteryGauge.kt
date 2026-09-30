@@ -227,7 +227,9 @@ fun CircularBatteryGauge(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Live Telemetry Bar (Voltage, Current, Power)
+        TelemetryFreshnessSummary(canonical)
+
+        // Telemetry Bar (including explicit retained-reading status)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -256,6 +258,30 @@ fun CircularBatteryGauge(
                 accent = if (canonical.isCharging == true) NetraEmerald else MaterialTheme.colorScheme.onSurface
             )
         }
+    }
+}
+
+@Composable
+internal fun TelemetryFreshnessSummary(canonical: NetraCentralState) {
+    val fields = canonical.fieldStates
+    Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        Text(
+            text = if (canonical.isDataFresh) "Battery observation received" else "Live battery update unavailable",
+            fontSize = 12.sp, fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        fun status(status: com.example.model.FieldStatus, at: Long): String = when (status) {
+            com.example.model.FieldStatus.LIVE -> "Observed"
+            com.example.model.FieldStatus.LAST_VALID -> "Last known"
+            com.example.model.FieldStatus.UNSUPPORTED -> "Unsupported"
+            com.example.model.FieldStatus.UNAVAILABLE -> "Unavailable"
+        } + if (at > 0L) " at " + java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(at)) else ""
+        Text("Level: " + status(fields.levelStatus, fields.levelObservedAt), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Temperature: " + status(fields.tempStatus, fields.tempObservedAt), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Voltage: " + status(fields.voltageStatus, fields.voltageObservedAt), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Current: " + status(fields.currentStatus, fields.currentObservedAt), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Power: " + status(fields.powerStatus, fields.powerObservedAt), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Last-known readings are retained values, not new measurements.", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
