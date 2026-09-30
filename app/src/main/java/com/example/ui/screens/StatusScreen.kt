@@ -340,7 +340,7 @@ fun StatusScreen(
             }
         ) {
             Text(
-                text = "Instant toggles to shut off battery-draining radios (Bluetooth, Wi-Fi search, GPS location polling, background account sync, and 0Hz animations).",
+                text = "Open Android Settings to manage radios, display and account sync. In-app preferences do not switch these controls.",
                 fontSize = 11.5.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -375,7 +375,7 @@ fun StatusScreen(
 
         // B. Battery Saving Engine
         SentinelCard(
-            title = "Battery Saving Engine",
+            title = "Power Preferences",
             icon = Icons.Default.BatterySaver,
             dotState = if (settings.powerSaverEnabled) DotState.CONNECTED else DotState.STANDBY,
             accentColor = NetraEmerald
@@ -387,13 +387,13 @@ fun StatusScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Ultra-Low Power Background Sentinel",
+                        text = "Power-saving preference",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Throttles background poll interval to 300s when screen off",
+                        text = "Preference only; this switch does not change polling.",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -415,13 +415,13 @@ fun StatusScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Brightness Optimization Guard",
+                        text = "Brightness preference",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Prevents display backlight battery drain spikes",
+                        text = "Preference only; this app does not change display brightness.",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
