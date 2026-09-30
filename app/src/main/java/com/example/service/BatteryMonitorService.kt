@@ -218,14 +218,7 @@ class BatteryMonitorService : Service() {
         val tempCelsius = canonical.temperatureCelsius ?: _liveTelemetryFlow.value.temperature
         val voltageMv = canonical.voltageMv ?: _liveTelemetryFlow.value.voltageMv
         val healthInt = intent.getIntExtra(BatteryManager.EXTRA_HEALTH, BatteryManager.BATTERY_HEALTH_UNKNOWN)
-        val healthString = when (healthInt) {
-            BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
-            BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat"
-            BatteryManager.BATTERY_HEALTH_DEAD -> "Dead"
-            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "Over Voltage"
-            BatteryManager.BATTERY_HEALTH_COLD -> "Cold"
-            else -> if (_liveTelemetryFlow.value.healthString != "Unavailable") _liveTelemetryFlow.value.healthString else "Unavailable"
-        }
+        val healthString = reportedHealthLabel(healthInt)
         val technology = intent.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: _liveTelemetryFlow.value.technology
 
         val currentMa = canonical.currentMa ?: _liveTelemetryFlow.value.currentMa
@@ -665,6 +658,16 @@ class BatteryMonitorService : Service() {
     }
 
     companion object {
+        internal fun reportedHealthLabel(health: Int): String = when (health) {
+            BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
+            BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat"
+            BatteryManager.BATTERY_HEALTH_DEAD -> "Dead"
+            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "Over Voltage"
+            BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> "Unspecified Failure"
+            BatteryManager.BATTERY_HEALTH_COLD -> "Cold"
+            else -> "Unavailable"
+        }
+
         const val ACTION_DISMISS_ALARM = "com.example.ACTION_DISMISS_ALARM"
         const val ACTION_SET_TARGET_100 = "com.example.ACTION_SET_TARGET_100"
         const val CHANNEL_SERVICE_ID = "netra_service_channel"
