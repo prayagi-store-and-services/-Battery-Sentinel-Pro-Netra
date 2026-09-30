@@ -39,6 +39,8 @@ class BatteryHealthCapabilityTruthfulnessTest {
         for (health in listOf(
             BatteryManager.BATTERY_HEALTH_OVERHEAT,
             BatteryManager.BATTERY_HEALTH_DEAD,
+            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE,
+            BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE,
             BatteryManager.BATTERY_HEALTH_COLD
         )) {
             broadcastHealth(health)
@@ -60,4 +62,24 @@ class BatteryHealthCapabilityTruthfulnessTest {
             registry.detectAllCapabilities()[CapabilityType.BATTERY_HEALTH_STATUS]
         )
     }
+    @Test fun invalidHealthIntegersAreUnavailable() {
+        for (health in listOf(-1, 0, 8, Int.MAX_VALUE, Int.MIN_VALUE)) {
+            broadcastHealth(health)
+            assertEquals(CapabilityStatus.UNAVAILABLE,
+                CentralCapabilityRegistry(context).detectAllCapabilities()[CapabilityType.BATTERY_HEALTH_STATUS])
+        }
+    }
+    @Test fun broadcastWithoutHealthExtraIsUnavailable() {
+        context.sendStickyBroadcast(Intent(Intent.ACTION_BATTERY_CHANGED))
+        assertEquals(CapabilityStatus.UNAVAILABLE,
+            CentralCapabilityRegistry(context).detectAllCapabilities()[CapabilityType.BATTERY_HEALTH_STATUS])
+    }
+    @Test fun laterInvalidHealthRevokesAvailability() {
+        broadcastHealth(BatteryManager.BATTERY_HEALTH_GOOD)
+        val registry = CentralCapabilityRegistry(context)
+        assertEquals(CapabilityStatus.AVAILABLE, registry.detectAllCapabilities()[CapabilityType.BATTERY_HEALTH_STATUS])
+        broadcastHealth(0)
+        assertEquals(CapabilityStatus.UNAVAILABLE, registry.detectAllCapabilities()[CapabilityType.BATTERY_HEALTH_STATUS])
+    }
+
 }

@@ -203,7 +203,14 @@ class CentralCapabilityRegistry(private val context: Context) {
             BatteryManager.EXTRA_HEALTH,
             BatteryManager.BATTERY_HEALTH_UNKNOWN
         ) ?: BatteryManager.BATTERY_HEALTH_UNKNOWN
-        map[CapabilityType.BATTERY_HEALTH_STATUS] = if (healthStatus != BatteryManager.BATTERY_HEALTH_UNKNOWN) {
+        map[CapabilityType.BATTERY_HEALTH_STATUS] = if (healthStatus in setOf(
+            BatteryManager.BATTERY_HEALTH_GOOD,
+            BatteryManager.BATTERY_HEALTH_OVERHEAT,
+            BatteryManager.BATTERY_HEALTH_DEAD,
+            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE,
+            BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE,
+            BatteryManager.BATTERY_HEALTH_COLD
+        )) {
             CapabilityStatus.AVAILABLE
         } else {
             CapabilityStatus.UNAVAILABLE
