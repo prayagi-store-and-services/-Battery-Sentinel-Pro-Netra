@@ -13,7 +13,12 @@ import com.example.model.CanonicalChargingSpeed
 import com.example.model.NetraCentralEvent
 import com.example.model.NetraCentralState
 import com.example.model.NetraEventType
+import com.example.model.AudioRoutingPolicy
+import com.example.model.AudioRouteType
+import com.example.util.AudioRoutingInspector
 import com.example.util.MediaPlaybackController
+import android.media.AudioManager
+import android.media.ToneGenerator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -152,20 +157,28 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 @Deprecated("Deprecated in Java")
                 override fun onError(utteranceId: String?) {
                     Log.e(TAG, "TTS error on utterance: $utteranceId")
+                    val failedItem = currentPlayingAnnouncement
                     currentPlayingAnnouncement?.let {
                         if (it.speechState != AnnouncementSpeechState.CANCELLED) {
                             it.speechState = AnnouncementSpeechState.FAILED
                         }
+                    }
+                    if (failedItem != null) {
+                        triggerSpeakerFallback(failedItem, "TTS error callback")
                     }
                     onSpeechFinished()
                 }
 
                 override fun onError(utteranceId: String?, errorCode: Int) {
                     Log.e(TAG, "TTS error ($errorCode) on utterance: $utteranceId")
+                    val failedItem = currentPlayingAnnouncement
                     currentPlayingAnnouncement?.let {
                         if (it.speechState != AnnouncementSpeechState.CANCELLED) {
                             it.speechState = AnnouncementSpeechState.FAILED
                         }
+                    }
+                    if (failedItem != null) {
+                        triggerSpeakerFallback(failedItem, "TTS error code $errorCode")
                     }
                     onSpeechFinished()
                 }
@@ -583,8 +596,20 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 }
             }
 
+            // Audio routing check and fallback policy evaluation
+            val routingStatus = AudioRoutingInspector.inspectRouting(context, settings.audioRoutingPolicy)
+            val isCritical = nextItem.priority == AnnouncementPriority.CRITICAL_THERMAL
+
             val params = Bundle().apply {
                 putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, nextItem.id)
+                if (settings.audioRoutingPolicy == AudioRoutingPolicy.FORCE_PHONE_SPEAKER) {
+                    putString(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_NOTIFICATION.toString())
+                }
+            }
+
+            // If dual sequential mode is selected and alert is critical thermal, trigger companion speaker chime
+            if (settings.audioRoutingPolicy == AudioRoutingPolicy.DUAL_ATTEMPT_SEQUENTIAL && isCritical) {
+                playSpeakerAlertChime()
             }
 
             nextItem.speechState = AnnouncementSpeechState.SPEAKING
@@ -592,11 +617,58 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             if (result != TextToSpeech.SUCCESS) {
                 Log.e(TAG, "TTS speak failed for: ${nextItem.text}")
                 nextItem.speechState = AnnouncementSpeechState.FAILED
+                
+                // Trigger fallback to phone speaker if primary route failed
+                if (routingStatus.isBluetoothA2dpConnected) {
+                    triggerSpeakerFallback(nextItem, "TTS speak API returned failure")
+                }
                 onSpeechFinished()
             } else {
-                Log.i(TAG, "Spoken: '${nextItem.text}' [Priority: ${nextItem.priority}]")
+                Log.i(TAG, "Spoken: '${nextItem.text}' [Priority: ${nextItem.priority}, Route: ${routingStatus.activePrimaryRoute}]")
                 logAnnouncementToDb(nextItem)
+
+                // Volume zero check on active bluetooth
+                if (routingStatus.isBluetoothA2dpConnected && !routingStatus.isMusicVolumeAdequate && isCritical) {
+                    Log.w(TAG, "Bluetooth volume is zero for critical alert; invoking speaker fallback")
+                    playSpeakerAlertChime()
+                }
             }
+        }
+    }
+
+    /**
+     * Fallback policy execution when primary Bluetooth speech delivery is disrupted or muted.
+     */
+    fun triggerSpeakerFallback(item: AnnouncementItem, reason: String) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                Log.w(TAG, "Executing Phone Speaker Fallback for '${item.text}' due to: $reason")
+                // Sound alarm/notification chime over speaker to alert user
+                playSpeakerAlertChime()
+
+                // Update central state with last fallback trigger
+                val dataCenter = NetraApplication.instance.centralDataCenter
+                val curState = dataCenter.centralState.value
+                val updatedRouting = curState.audioRoutingStatus.copy(
+                    lastFallbackTriggered = "Fallback to Speaker: $reason (${System.currentTimeMillis()})"
+                )
+                dataCenter.updateAudioRoutingStatus(updatedRouting)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed executing speaker fallback chime", e)
+            }
+        }
+    }
+
+    /**
+     * Emits a standard safety confirmation chime through device speaker using ToneGenerator.
+     */
+    fun playSpeakerAlertChime() {
+        try {
+            val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 95)
+            toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 300)
+            toneGen.release()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to generate ToneGenerator alert tone", e)
         }
     }
 

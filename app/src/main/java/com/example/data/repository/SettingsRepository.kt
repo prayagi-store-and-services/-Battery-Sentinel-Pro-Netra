@@ -32,7 +32,8 @@ data class SentinelSettings(
     val nightProtectionEnabled: Boolean = true,
     val nightStartHour: Int = 23, // 11:00 PM
     val nightEndHour: Int = 6,    // 06:00 AM
-    val mediaPlaybackHandlingEnabled: Boolean = true
+    val mediaPlaybackHandlingEnabled: Boolean = true,
+    val audioRoutingPolicy: com.example.model.AudioRoutingPolicy = com.example.model.AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK
 )
 
 class SettingsRepository(context: Context) {
@@ -42,6 +43,13 @@ class SettingsRepository(context: Context) {
     val settings: StateFlow<SentinelSettings> = _settings.asStateFlow()
 
     private fun loadSettings(): SentinelSettings {
+        val policyName = prefs.getString("audio_routing_policy", com.example.model.AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK.name)
+        val policy = try {
+            com.example.model.AudioRoutingPolicy.valueOf(policyName ?: com.example.model.AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK.name)
+        } catch (_: Exception) {
+            com.example.model.AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK
+        }
+
         return SentinelSettings(
             chargeTargetPercent = prefs.getInt("charge_target", 80),
             lowBatteryThreshold = prefs.getInt("low_battery_threshold", 15),
@@ -67,7 +75,8 @@ class SettingsRepository(context: Context) {
             nightProtectionEnabled = prefs.getBoolean("night_protection_enabled", true),
             nightStartHour = prefs.getInt("night_start_hour", 23),
             nightEndHour = prefs.getInt("night_end_hour", 6),
-            mediaPlaybackHandlingEnabled = prefs.getBoolean("media_playback_handling", true)
+            mediaPlaybackHandlingEnabled = prefs.getBoolean("media_playback_handling", true),
+            audioRoutingPolicy = policy
         )
     }
 
@@ -179,5 +188,10 @@ class SettingsRepository(context: Context) {
     fun setMediaPlaybackHandlingEnabled(enabled: Boolean) {
         prefs.edit().putBoolean("media_playback_handling", enabled).apply()
         _settings.value = _settings.value.copy(mediaPlaybackHandlingEnabled = enabled)
+    }
+
+    fun setAudioRoutingPolicy(policy: com.example.model.AudioRoutingPolicy) {
+        prefs.edit().putString("audio_routing_policy", policy.name).apply()
+        _settings.value = _settings.value.copy(audioRoutingPolicy = policy)
     }
 }

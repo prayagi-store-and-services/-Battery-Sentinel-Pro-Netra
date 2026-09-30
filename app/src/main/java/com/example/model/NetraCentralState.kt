@@ -90,8 +90,38 @@ enum class CapabilityType {
     LOCATION,
     WEATHER,
     ENVIRONMENTAL_CONTEXT,
-    CLIMATE_BASELINE
+    CLIMATE_BASELINE,
+    AUDIO_ROUTING_FALLBACK
 }
+
+enum class AudioRouteType {
+    BUILTIN_SPEAKER,
+    BLUETOOTH_A2DP,
+    BLUETOOTH_SCO,
+    WIRED_HEADSET,
+    USB_AUDIO,
+    UNKNOWN
+}
+
+enum class AudioRoutingPolicy {
+    AUTO_BT_WITH_SPEAKER_FALLBACK,
+    FORCE_PHONE_SPEAKER,
+    DUAL_ATTEMPT_SEQUENTIAL
+}
+
+data class AudioRoutingStatus(
+    val hasBuiltInSpeaker: Boolean = true,
+    val isBluetoothA2dpConnected: Boolean = false,
+    val isBluetoothScoActive: Boolean = false,
+    val isWiredHeadsetConnected: Boolean = false,
+    val isSimultaneousDualOutputSupported: Boolean = false,
+    val activePrimaryRoute: AudioRouteType = AudioRouteType.BUILTIN_SPEAKER,
+    val activePolicy: AudioRoutingPolicy = AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK,
+    val isSpeakerVolumeAdequate: Boolean = true,
+    val isMusicVolumeAdequate: Boolean = true,
+    val limitationDetails: String = "Standard Android AOSP AudioPolicyManager and audio HAL route audio exclusively to a single active output sink (Bluetooth A2DP when connected). Concurrent hardware multi-sink playback to both internal speakers and external Bluetooth is not supported on standard Android without custom vendor HAL. Netra enforces an intelligent fallback and volume safeguard policy to guarantee all announcements remain audible.",
+    val lastFallbackTriggered: String? = null
+)
 
 enum class LocationPermissionState {
     LOCATION_AVAILABLE,
@@ -202,6 +232,14 @@ data class TelemetryFieldState(
     val powerStatus: FieldStatus = FieldStatus.UNAVAILABLE
 )
 
+enum class EnvironmentalHeatDiagnosis {
+    NORMAL_ENVIRONMENTAL_CONTEXT,
+    ENVIRONMENTAL_HEAT_LIKELY,
+    INTERNAL_HEAT_LIKELY,
+    MIXED_HEAT_CONTEXT,
+    INSUFFICIENT_SENSOR_DATA
+}
+
 data class NetraCentralState(
     val batteryLevel: Int? = null, // null if unavailable
     val isCharging: Boolean? = null,
@@ -245,11 +283,14 @@ data class NetraCentralState(
     val isLowBatteryControlActive: Boolean = false,
     val targetBrightnessPercent: Int? = null,
     val thermalCauseDiagnosis: String? = null,
+    val environmentalDiagnosis: EnvironmentalHeatDiagnosis = EnvironmentalHeatDiagnosis.NORMAL_ENVIRONMENTAL_CONTEXT,
     // Geo-Climate Adaptive Environmental Context (Part 19)
     val locationContext: LocationContextState = LocationContextState(),
     val weatherContext: WeatherContextState = WeatherContextState(),
     val deviceIdleState: DeviceIdleState = DeviceIdleState.INSUFFICIENT_DATA,
     val adaptiveThermalContext: AdaptiveThermalContext = AdaptiveThermalContext(),
+    // AudioManager Audio Routing & Fallback Status
+    val audioRoutingStatus: AudioRoutingStatus = AudioRoutingStatus(),
     // Real-Time Pipeline Latency Instrumentation (Target: <= 100ms)
     val pipelineLatency: PipelineLatencyMetrics? = null
 )

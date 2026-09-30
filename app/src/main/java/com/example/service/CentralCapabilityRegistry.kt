@@ -251,6 +251,9 @@ class CentralCapabilityRegistry(private val context: Context) {
         // 29. Climate Baseline Engine Capability
         map[CapabilityType.CLIMATE_BASELINE] = CapabilityStatus.AVAILABLE
 
+        // 30. Audio Routing & Fallback Policy Capability
+        map[CapabilityType.AUDIO_ROUTING_FALLBACK] = CapabilityStatus.AVAILABLE
+
         return map
     }
 
@@ -284,6 +287,7 @@ class CentralCapabilityRegistry(private val context: Context) {
         CapabilityType.WEATHER -> "Ambient Weather Telemetry"
         CapabilityType.ENVIRONMENTAL_CONTEXT -> "Environmental Context Attribution"
         CapabilityType.CLIMATE_BASELINE -> "Geo-Climate Adaptive Thermal Engine"
+        CapabilityType.AUDIO_ROUTING_FALLBACK -> "Audio Routing & Fallback Engine"
     }
 
     private fun checkBluetoothPermission(): Boolean {

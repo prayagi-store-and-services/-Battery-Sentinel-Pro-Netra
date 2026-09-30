@@ -346,6 +346,11 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
         settingsRepository.setMediaPlaybackHandlingEnabled(enabled)
     }
 
+    fun setAudioRoutingPolicy(policy: com.example.model.AudioRoutingPolicy) {
+        settingsRepository.setAudioRoutingPolicy(policy)
+        NetraApplication.instance.centralDataCenter.refreshAudioRouting(getApplication())
+    }
+
     fun testVoiceAnnouncement(sampleText: String? = null) {
         val text = sampleText ?: if (liveTelemetry.value.isCharging) {
             "C ${liveTelemetry.value.level} percent"

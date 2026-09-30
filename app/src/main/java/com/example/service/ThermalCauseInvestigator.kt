@@ -5,11 +5,17 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import com.example.model.EnvironmentalHeatDiagnosis
 import java.util.Locale
+
+data class ThermalCauseDiagnosisResult(
+    val state: EnvironmentalHeatDiagnosis,
+    val message: String
+)
 
 /**
  * Investigates potential root causes of high temperature when critical thermal control is active (>40°C).
- * Distinguishes external/environmental heat vs internal device-generated heat using public Android Sensor APIs.
+ * Distinguishes external/environmental heat vs internal device-generated heat using public Android Sensor APIs & Weather context.
  * Only activated conditionally on thermal events to avoid battery drain, and stopped upon recovery (<=35°C).
  */
 class ThermalCauseInvestigator(private val context: Context) : SensorEventListener {
@@ -48,21 +54,52 @@ class ThermalCauseInvestigator(private val context: Context) : SensorEventListen
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 
-    fun diagnoseThermalCause(batteryTempCelsius: Float): String {
-        val ambient = lastAmbientReading
+    fun diagnoseThermalCause(
+        batteryTempCelsius: Float,
+        weatherAmbientTempCelsius: Float? = null,
+        isCharging: Boolean = false,
+        isHeavyLoad: Boolean = false
+    ): ThermalCauseDiagnosisResult {
+        val ambient = lastAmbientReading ?: weatherAmbientTempCelsius
+
         return when {
-            ambient != null && ambient >= 35.0f -> {
-                "External Environmental Heat: Ambient temperature is high (${String.format(Locale.US, "%.1f", ambient)}°C). Move device to a cooler shade."
+            ambient == null -> {
+                ThermalCauseDiagnosisResult(
+                    state = EnvironmentalHeatDiagnosis.INSUFFICIENT_SENSOR_DATA,
+                    message = "Ambient thermal telemetry unavailable on this device. Internal protection remains authoritative."
+                )
             }
-            ambient != null && ambient < 30.0f && batteryTempCelsius >= 40.0f -> {
-                "Internal Component Heat: Ambient is normal (${String.format(Locale.US, "%.1f", ambient)}°C). Thermal stress caused by active processor or charging workload."
+            ambient >= 36.0f && (isCharging || isHeavyLoad) -> {
+                ThermalCauseDiagnosisResult(
+                    state = EnvironmentalHeatDiagnosis.MIXED_HEAT_CONTEXT,
+                    message = "Mixed Heat Context: High ambient climate (${String.format(Locale.US, "%.1f", ambient)}°C) combined with active device charging or workload."
+                )
             }
-            ambientTempSensor == null -> {
-                "Internal Component Heat (Hardware ambient sensor unavailable on this device)."
+            ambient >= 35.0f -> {
+                ThermalCauseDiagnosisResult(
+                    state = EnvironmentalHeatDiagnosis.ENVIRONMENTAL_HEAT_LIKELY,
+                    message = "Environmental Heat Likely: Elevated ambient temperature (${String.format(Locale.US, "%.1f", ambient)}°C). Move device to shade or cooler area."
+                )
+            }
+            ambient < 30.0f && batteryTempCelsius >= 40.0f -> {
+                ThermalCauseDiagnosisResult(
+                    state = EnvironmentalHeatDiagnosis.INTERNAL_HEAT_LIKELY,
+                    message = "Internal Heat Likely: Ambient temperature is moderate (${String.format(Locale.US, "%.1f", ambient)}°C). Elevated temperature is driven by internal processor or charging workload."
+                )
+            }
+            batteryTempCelsius <= 35.0f -> {
+                ThermalCauseDiagnosisResult(
+                    state = EnvironmentalHeatDiagnosis.NORMAL_ENVIRONMENTAL_CONTEXT,
+                    message = "Thermal operating baseline normal for current environmental context."
+                )
             }
             else -> {
-                "Evaluating thermal dissipation conditions..."
+                ThermalCauseDiagnosisResult(
+                    state = EnvironmentalHeatDiagnosis.NORMAL_ENVIRONMENTAL_CONTEXT,
+                    message = "Thermal conditions operating within standard environmental parameters."
+                )
             }
         }
     }
 }
+

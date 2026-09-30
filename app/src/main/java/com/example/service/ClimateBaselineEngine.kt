@@ -97,7 +97,7 @@ object ClimateBaselineEngine {
 
         // 2. Compute Temperature Deviation
         val deviation = when {
-            actualBatteryTempCelsius == null || minExpected == null || maxExpected == null -> {
+            actualBatteryTempCelsius == null -> {
                 TemperatureDeviation.INSUFFICIENT_CONTEXT
             }
             actualBatteryTempCelsius in minExpected..maxExpected -> {

@@ -209,7 +209,40 @@ class NetraCentralDataCenter {
             voltageRaw = oldState.voltageMv ?: 0,
             connectedBluetoothCount = oldState.bluetoothDevices.count { it.isConnected }
         ) ?: return
-        _centralState.value = _centralState.value.copy(capabilities = detected)
+
+        val policy = try {
+            com.example.NetraApplication.instance.settingsRepository.settings.value.audioRoutingPolicy
+        } catch (_: Exception) {
+            com.example.model.AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK
+        }
+        val routingStatus = try {
+            com.example.util.AudioRoutingInspector.inspectRouting(com.example.NetraApplication.instance, policy)
+        } catch (_: Exception) {
+            oldState.audioRoutingStatus
+        }
+
+        _centralState.value = _centralState.value.copy(
+            capabilities = detected,
+            audioRoutingStatus = routingStatus
+        )
+    }
+
+    fun refreshAudioRouting(context: Context) {
+        val policy = try {
+            com.example.NetraApplication.instance.settingsRepository.settings.value.audioRoutingPolicy
+        } catch (_: Exception) {
+            com.example.model.AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK
+        }
+        val routingStatus = try {
+            com.example.util.AudioRoutingInspector.inspectRouting(context, policy)
+        } catch (_: Exception) {
+            _centralState.value.audioRoutingStatus
+        }
+        _centralState.value = _centralState.value.copy(audioRoutingStatus = routingStatus)
+    }
+
+    fun updateAudioRoutingStatus(status: com.example.model.AudioRoutingStatus) {
+        _centralState.value = _centralState.value.copy(audioRoutingStatus = status)
     }
 
     // Tracking for deduplication & sessions
@@ -620,7 +653,7 @@ class NetraCentralDataCenter {
                             source = source
                         )
                     )
-                } else if ((mergedLevel >= 35 || mergedIsCharging == true) && isLowBatteryControlActiveState) {
+                } else if (mergedLevel >= 35 && isLowBatteryControlActiveState) {
                     isLowBatteryControlActiveState = false
                     if (!isCriticalThermalActiveState) {
                         targetBrightnessPercentState = null
@@ -638,9 +671,17 @@ class NetraCentralDataCenter {
                 }
             }
 
-            val thermalDiagnosis = if (isCriticalThermalActiveState && mergedTempCelsius != null) {
-                thermalInvestigator?.diagnoseThermalCause(mergedTempCelsius) ?: "Thermal stress active (>40°C)."
+            val diagnosisResult = if (mergedTempCelsius != null) {
+                thermalInvestigator?.diagnoseThermalCause(
+                    batteryTempCelsius = mergedTempCelsius,
+                    weatherAmbientTempCelsius = oldState.weatherContext.temperatureCelsius,
+                    isCharging = mergedIsCharging == true,
+                    isHeavyLoad = (mergedCurrentMa != null && kotlin.math.abs(mergedCurrentMa) > 500)
+                )
             } else null
+
+            val thermalDiagnosis = diagnosisResult?.message ?: if (isCriticalThermalActiveState) "Thermal stress active (>40°C)." else null
+            val envDiagnosis = diagnosisResult?.state ?: com.example.model.EnvironmentalHeatDiagnosis.NORMAL_ENVIRONMENTAL_CONTEXT
 
             val deviceIdleState = when {
                 mergedIsCharging == true -> com.example.model.DeviceIdleState.CHARGING_IDLE
@@ -723,6 +764,7 @@ class NetraCentralDataCenter {
                 isLowBatteryControlActive = isLowBatteryControlActiveState,
                 targetBrightnessPercent = targetBrightnessPercentState,
                 thermalCauseDiagnosis = thermalDiagnosis,
+                environmentalDiagnosis = envDiagnosis,
                 locationContext = oldState.locationContext,
                 weatherContext = oldState.weatherContext,
                 deviceIdleState = deviceIdleState,
