@@ -195,7 +195,7 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             val list = BluetoothHelper.getBluetoothDevices(app)
             NetraApplication.instance.centralDataCenter.processBluetoothDevices(list)
-            _appUsageDrain.value = UsageStatsHelper.getAppUsageDrainList(app)
+            _appUsageDrain.value = if (PermissionHelper.isUsageAccessGranted(app)) UsageStatsHelper.getAppUsageDrainList(app) else emptyList()
             NetraApplication.instance.centralDataCenter.refreshLocationAndWeather()
         }
     }
@@ -207,7 +207,7 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
     fun refreshAppUsage() {
         val app = getApplication<Application>()
         viewModelScope.launch(Dispatchers.IO) {
-            _appUsageDrain.value = UsageStatsHelper.getAppUsageDrainList(app)
+            _appUsageDrain.value = if (PermissionHelper.isUsageAccessGranted(app)) UsageStatsHelper.getAppUsageDrainList(app) else emptyList()
         }
     }
 

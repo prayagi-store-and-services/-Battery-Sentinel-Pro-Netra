@@ -40,6 +40,37 @@ class TruthfulnessCardRenderTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Test
+    fun renderForegroundUsageWithUnavailableEnergy() {
+        compose.setContent {
+            MyApplicationTheme {
+                com.example.ui.screens.AppForegroundUsageContent(
+                    listOf(com.example.model.AppUsageItem("example.media", "Recorded media app", 120)), true)
+            }
+        }
+        captureCard("app-foreground-usage.png")
+    }
+
+    @Test
+    fun renderUsagePermissionUnavailable() {
+        compose.setContent {
+            MyApplicationTheme { com.example.ui.screens.AppForegroundUsageContent(emptyList(), false) }
+        }
+        captureCard("app-usage-permission.png")
+    }
+
+    @Test
+    fun renderMonitoringForegroundRow() {
+        compose.setContent {
+            MyApplicationTheme {
+                Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+                    com.example.ui.screens.AppUsageRow(com.example.model.AppUsageItem("example.media", "Recorded media app", 120))
+                }
+            }
+        }
+        captureCard("monitoring-foreground-row.png")
+    }
+
+    @Test
     fun renderWidgetUnavailableDefaults() {
         val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
         val layouts = listOf(

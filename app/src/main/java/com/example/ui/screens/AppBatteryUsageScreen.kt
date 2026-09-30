@@ -89,6 +89,8 @@ fun AppBatteryUsageScreen(
         hasUsagePermission = PermissionHelper.isUsageAccessGranted(context)
         if (hasUsagePermission) {
             appUsageList = UsageStatsHelper.getAppUsageDrainList(context)
+        } else {
+            appUsageList = emptyList()
         }
         isLoading = false
     }
@@ -111,23 +113,25 @@ fun AppBatteryUsageScreen(
         refreshAppUsage()
     }
 
-    val filteredList = remember(appUsageList, selectedCategoryFilter) {
-        if (selectedCategoryFilter == "ALL") appUsageList
-        else if (selectedCategoryFilter == "HIGH_DRAIN") appUsageList.filter { it.isHighDrain }
+    AppForegroundUsageContent(appUsageList, hasUsagePermission, selectedCategoryFilter,
+        { selectedCategoryFilter = it }, { refreshAppUsage() },
+        { UsageStatsHelper.openUsageAccessSettings(context) },
+        { UsageStatsHelper.openAppDetailsSettings(context, it) }, modifier)
+}
+
+@Composable
+internal fun AppForegroundUsageContent(
+    appUsageList: List<AppUsageItem>, hasUsagePermission: Boolean,
+    selectedCategoryFilter: String = "ALL", onSelectFilter: (String) -> Unit = {},
+    onRefresh: () -> Unit = {}, onOpenUsageSettings: () -> Unit = {},
+    onOpenAppSettings: (String) -> Unit = {}, modifier: Modifier = Modifier
+) {
+    val filteredList = if (!hasUsagePermission) emptyList() else if (selectedCategoryFilter == "ALL") appUsageList
         else appUsageList.filter { it.category.contains(selectedCategoryFilter, ignoreCase = true) }
-    }
-
-    val totalEnergyMah = remember(appUsageList) {
-        appUsageList.sumOf { it.estimatedEnergyMah }
-    }
-
-    val highestDrainApp = remember(appUsageList) {
-        appUsageList.firstOrNull { it.isHighDrain }
-    }
-
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -139,22 +143,22 @@ fun AppBatteryUsageScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(Modifier.weight(1f)) {
                         Text(
-                            text = "App Battery Consumption",
+                            text = "App Foreground Usage",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Hardware energy breakdown via Android BatteryStats & UsageStats API",
+                            text = "Android foreground-time buckets for a recent-day query. Intervals may extend beyond 24h; per-app energy unavailable.",
                             fontSize = 11.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
                     OutlinedButton(
-                        onClick = { refreshAppUsage() },
+                        onClick = onRefresh,
                         modifier = Modifier.testTag("refresh_app_usage_button")
                     ) {
                         Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh", modifier = Modifier.size(16.dp))
@@ -173,7 +177,7 @@ fun AppBatteryUsageScreen(
                     accentColor = StatusAmber
                 ) {
                     Text(
-                        text = "Android requires Usage Access permission to read individual application foreground time and background wake lock energy consumption.",
+                        text = "Android requires Usage Access permission to read application foreground time. It does not expose per-app battery energy here.",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -186,7 +190,7 @@ fun AppBatteryUsageScreen(
                     Spacer(modifier = Modifier.height(10.dp))
                     Button(
                         onClick = {
-                            PermissionHelper.openUsageAccessSettings(context)
+                            onOpenUsageSettings()
                         },
                         modifier = Modifier.fillMaxWidth().testTag("grant_usage_permission_button"),
                         colors = ButtonDefaults.buttonColors(containerColor = StatusAmber, contentColor = Color.Black)
@@ -205,59 +209,9 @@ fun AppBatteryUsageScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                AppKpiBox("TOTAL 24H APP DRAIN", "$totalEnergyMah mAh", NetraCyan, Modifier.weight(1f))
-                AppKpiBox("TRACKED APPS", "${appUsageList.size} Active", NetraEmerald, Modifier.weight(1f))
-                AppKpiBox("HIGH DRAIN APPS", "${appUsageList.count { it.isHighDrain }} Flagged", if (appUsageList.any { it.isHighDrain }) StatusRed else NetraEmerald, Modifier.weight(1f))
-            }
-        }
-
-        // Anomaly / Power-Hungry Alert Card
-        highestDrainApp?.let { app ->
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(DangerRed.copy(alpha = 0.12f))
-                        .border(1.dp, DangerRed.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
-                        .padding(14.dp)
-                ) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Warning, contentDescription = null, tint = DangerRed, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Power-Hungry App Detected", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = DangerRed)
-                            }
-                            Text("${app.estimatedDrainPercent}% Drain", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = DangerRed)
-                        }
-
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "${app.appName} used ${app.foregroundTimeMinutes} mins active time consuming ~${app.estimatedEnergyMah} mAh. ${app.anomalyWarning ?: "Consider restricting background usage."}",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Button(
-                            onClick = {
-                                UsageStatsHelper.openAppDetailsSettings(context, app.packageName)
-                            },
-                            modifier = Modifier.fillMaxWidth().testTag("restrict_app_button"),
-                            colors = ButtonDefaults.buttonColors(containerColor = DangerRed, contentColor = Color.White)
-                        ) {
-                            Icon(Icons.Default.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Restrict Background Activity for ${app.appName}", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
+                AppKpiBox("PER-APP ENERGY", "Unavailable", NetraCyan, Modifier.weight(1f))
+                AppKpiBox("TRACKED APPS", if (hasUsagePermission) "${appUsageList.size} listed" else "Unavailable", NetraEmerald, Modifier.weight(1f))
+                AppKpiBox("HIGH DRAIN APPS", "Unavailable", StatusAmber, Modifier.weight(1f))
             }
         }
 
@@ -269,7 +223,6 @@ fun AppBatteryUsageScreen(
             ) {
                 listOf(
                     "ALL" to "All Apps",
-                    "HIGH_DRAIN" to "⚡ High Drain",
                     "Media" to "Media",
                     "Social" to "Social",
                     "System" to "System"
@@ -277,7 +230,7 @@ fun AppBatteryUsageScreen(
                     val isSelected = selectedCategoryFilter == key
                     FilterChip(
                         selected = isSelected,
-                        onClick = { selectedCategoryFilter = key },
+                        onClick = { onSelectFilter(key) },
                         label = { Text(label, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = NetraCyan.copy(alpha = 0.25f),
@@ -301,7 +254,7 @@ fun AppBatteryUsageScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (hasUsagePermission) "No application drain recorded in this filter." else "Usage Access required to display application battery usage list.",
+                        text = if (hasUsagePermission) "No application usage recorded in this filter." else "Usage Access required to display application foreground usage.",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -310,7 +263,7 @@ fun AppBatteryUsageScreen(
         } else {
             items(filteredList, key = { it.packageName }) { app ->
                 AppDrainCard(app = app, onOpenSettings = {
-                    UsageStatsHelper.openAppDetailsSettings(context, app.packageName)
+                    onOpenAppSettings(app.packageName)
                 })
             }
         }
@@ -319,7 +272,7 @@ fun AppBatteryUsageScreen(
 
 @Composable
 private fun AppDrainCard(app: AppUsageItem, onOpenSettings: () -> Unit) {
-    val drainColor = if (app.isHighDrain) DangerRed else if (app.estimatedDrainPercent > 8f) StatusAmber else NetraEmerald
+    val drainColor = NetraEmerald
 
     Box(
         modifier = Modifier
@@ -356,7 +309,7 @@ private fun AppDrainCard(app: AppUsageItem, onOpenSettings: () -> Unit) {
 
                     Spacer(modifier = Modifier.width(10.dp))
 
-                    Column {
+                    Column(Modifier.weight(1f)) {
                         Text(
                             text = app.appName,
                             fontSize = 13.sp,
@@ -373,13 +326,13 @@ private fun AppDrainCard(app: AppUsageItem, onOpenSettings: () -> Unit) {
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "${app.estimatedDrainPercent}%",
+                        text = "Drain unavailable",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = drainColor
                     )
                     Text(
-                        text = "~${app.estimatedEnergyMah} mAh",
+                        text = "${app.foregroundTimeMinutes} min foreground",
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -388,19 +341,6 @@ private fun AppDrainCard(app: AppUsageItem, onOpenSettings: () -> Unit) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Drain Progress Bar
-            LinearProgressIndicator(
-                progress = { (app.estimatedDrainPercent / 40f).coerceIn(0.02f, 1f) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(5.dp)
-                    .clip(RoundedCornerShape(3.dp)),
-                color = drainColor,
-                trackColor = Color.White.copy(alpha = 0.08f)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             // Stats Sub-Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -408,14 +348,14 @@ private fun AppDrainCard(app: AppUsageItem, onOpenSettings: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Active: ${app.foregroundTimeMinutes}m • Dwell: ${app.backgroundTimeMinutes}m",
+                    text = "Foreground: ${app.foregroundTimeMinutes}m",
                     fontSize = 10.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "Rate: ${app.consumptionRateMahPerHour} mAh/h",
+                        text = "Energy unavailable",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant

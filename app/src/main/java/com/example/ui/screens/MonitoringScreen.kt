@@ -228,7 +228,7 @@ private fun AppsTabContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Application Power Drain Monitor",
+                    text = "Application Foreground Usage",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -260,7 +260,7 @@ private fun AppsTabContent(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "To track real foreground execution and battery drain per application, grant Usage Access in Android Settings.\n• Look for 'Netra Sentinel Pro' or 'Battery Sentinel Pro' in Settings.\n• Toggle permission to ON (or allow restricted settings if prompted).",
+                            text = "To see app foreground time, grant Usage Access in Android Settings. Per-app battery energy is unavailable here.",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -304,7 +304,7 @@ private fun AppsTabContent(
 }
 
 @Composable
-private fun AppUsageRow(app: AppUsageItem) {
+internal fun AppUsageRow(app: AppUsageItem) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -312,7 +312,7 @@ private fun AppUsageRow(app: AppUsageItem) {
             .background(MaterialTheme.colorScheme.surface)
             .border(
                 1.dp,
-                if (app.isHighDrain) StatusAmber.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
                 RoundedCornerShape(12.dp)
             )
             .padding(14.dp)
@@ -330,17 +330,7 @@ private fun AppUsageRow(app: AppUsageItem) {
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    if (app.isHighDrain) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(StatusAmber.copy(alpha = 0.2f))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text("HIGH DRAIN", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = StatusAmber)
-                        }
-                    }
+
                 }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
@@ -351,10 +341,10 @@ private fun AppUsageRow(app: AppUsageItem) {
             }
 
             Text(
-                text = "~${app.estimatedDrainPercent}%",
+                text = "${app.foregroundTimeMinutes} min",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = if (app.isHighDrain) StatusAmber else NetraEmerald
+                color = NetraEmerald
             )
         }
     }
