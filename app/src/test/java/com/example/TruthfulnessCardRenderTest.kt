@@ -40,6 +40,32 @@ class TruthfulnessCardRenderTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
     @Test
+    fun renderPowerProfilePreference() {
+        compose.setContent {
+            MyApplicationTheme {
+                Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+                    com.example.ui.components.PowerSavingProfileCard(com.example.model.PowerProfileState(), {})
+                    com.example.ui.components.UltraBatterySaverBanner(true, {})
+                }
+            }
+        }
+        captureCard("power-profile-preference.png")
+    }
+
+    @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+    @Test
+    fun renderQuickPowerSettings() {
+        compose.setContent {
+            MyApplicationTheme {
+                com.example.ui.components.QuickDrainActionsContent(
+                    com.example.data.repository.SentinelSettings(), {},
+                    androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true), {})
+            }
+        }
+        captureCard("quick-power-settings.png")
+    }
+
+    @Test
     fun renderForegroundUsageWithUnavailableEnergy() {
         compose.setContent {
             MyApplicationTheme {
