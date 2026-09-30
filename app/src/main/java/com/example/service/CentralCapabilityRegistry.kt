@@ -59,9 +59,6 @@ class CentralCapabilityRegistry(private val context: Context) {
         // Background Monitoring
         staticHardwareFeatures[CapabilityType.BACKGROUND_MONITORING] = CapabilityStatus.AVAILABLE
 
-        // Battery Health Status
-        staticHardwareFeatures[CapabilityType.BATTERY_HEALTH_STATUS] = CapabilityStatus.AVAILABLE
-
         // Power Save Mode Detection support
         staticHardwareFeatures[CapabilityType.POWER_SAVE_MODE] = CapabilityStatus.AVAILABLE
     }
@@ -194,8 +191,19 @@ class CentralCapabilityRegistry(private val context: Context) {
             CapabilityStatus.UNAVAILABLE
         }
 
-        // 18. Battery Health Status
-        map[CapabilityType.BATTERY_HEALTH_STATUS] = CapabilityStatus.AVAILABLE
+        // 18. Battery Health Status: sticky battery broadcast must carry a known health value.
+        val batteryIntent = try {
+            context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        } catch (_: Exception) { null }
+        val healthStatus = batteryIntent?.getIntExtra(
+            BatteryManager.EXTRA_HEALTH,
+            BatteryManager.BATTERY_HEALTH_UNKNOWN
+        ) ?: BatteryManager.BATTERY_HEALTH_UNKNOWN
+        map[CapabilityType.BATTERY_HEALTH_STATUS] = if (healthStatus != BatteryManager.BATTERY_HEALTH_UNKNOWN) {
+            CapabilityStatus.AVAILABLE
+        } else {
+            CapabilityStatus.UNAVAILABLE
+        }
 
         // 19. Charging Speed Calculation
         map[CapabilityType.CHARGING_SPEED_CALCULATION] = if (hasPowerInputs) {
