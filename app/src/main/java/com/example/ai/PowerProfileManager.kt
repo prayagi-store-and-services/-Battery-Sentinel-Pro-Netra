@@ -26,9 +26,9 @@ class PowerProfileManager(context: Context) {
         return PowerProfileState(
             selectedMode = mode,
             activeEffectiveMode = if (mode == PowerProfileMode.SMART_ADAPTIVE) PowerProfileMode.BALANCED else mode,
-            dynamicSyncThrottled = mode.isAggressiveThrottle,
-            adaptiveBrightnessSuggested = mode.brightnessCappedPercent,
-            backgroundSyncPaused = mode == PowerProfileMode.ULTRA_SAVER,
+            dynamicSyncThrottled = false,
+            adaptiveBrightnessSuggested = null,
+            backgroundSyncPaused = false,
             lastProfileTransitionReason = "Initial profile loaded: ${mode.title}"
         )
     }
@@ -39,8 +39,7 @@ class PowerProfileManager(context: Context) {
     }
 
     /**
-     * Dynamically adjusts power profile, background sync interval,
-     * and screen brightness targets based on real-time battery level thresholds.
+     * Updates a profile suggestion only. No sampling, brightness or account-sync controls are wired.
      */
     fun onTelemetryUpdate(telemetry: BatteryTelemetry) {
         val selected = _profileState.value.selectedMode
@@ -48,7 +47,8 @@ class PowerProfileManager(context: Context) {
     }
 
     private fun evaluateProfile(selected: PowerProfileMode, telemetry: BatteryTelemetry?) {
-        val level = telemetry?.level ?: 80
+        val hasData = telemetry?.isDataAvailable == true && telemetry.level in 0..100
+        val level = telemetry?.level
         val isCharging = telemetry?.isCharging ?: false
 
         val effectiveMode: PowerProfileMode
@@ -56,38 +56,42 @@ class PowerProfileManager(context: Context) {
 
         if (selected == PowerProfileMode.SMART_ADAPTIVE) {
             when {
+                !hasData -> {
+                    effectiveMode = PowerProfileMode.BALANCED
+                    reason = "Battery state unavailable; balanced preference only"
+                }
                 isCharging -> {
                     effectiveMode = PowerProfileMode.PERFORMANCE
-                    reason = "Charger connected: Full sampling rate enabled (15s sync)"
+                    reason = "Charger connected: performance preference suggested; no controls applied"
                 }
-                level <= 10 -> {
+                level!! <= 10 -> {
                     effectiveMode = PowerProfileMode.ULTRA_SAVER
-                    reason = "Critical battery (≤10%): Ultra power preservation active (900s sync, 30% brightness cap)"
+                    reason = "Critical battery (≤10%): saver preference suggested; no controls applied"
                 }
-                level <= 20 -> {
+                level!! <= 20 -> {
                     effectiveMode = PowerProfileMode.ENDURANCE
-                    reason = "Low battery (≤20%): Endurance mode engaged (300s sync, 60% brightness cap)"
+                    reason = "Low battery (≤20%): endurance preference suggested; no controls applied"
                 }
-                level <= 45 -> {
+                level!! <= 45 -> {
                     effectiveMode = PowerProfileMode.BALANCED
-                    reason = "Moderate battery (≤45%): Balanced power optimization active"
+                    reason = "Moderate battery (≤45%): balanced preference suggested"
                 }
                 else -> {
                     effectiveMode = PowerProfileMode.BALANCED
-                    reason = "Normal battery (>45%): Standard balanced operation"
+                    reason = "Normal battery (>45%): balanced preference suggested"
                 }
             }
         } else {
             effectiveMode = selected
-            reason = "Manual override profile: ${selected.title}"
+            reason = "Selected preference (no controls applied): ${selected.title}"
         }
 
         val newState = PowerProfileState(
             selectedMode = selected,
             activeEffectiveMode = effectiveMode,
-            dynamicSyncThrottled = effectiveMode.isAggressiveThrottle,
-            adaptiveBrightnessSuggested = effectiveMode.brightnessCappedPercent,
-            backgroundSyncPaused = effectiveMode == PowerProfileMode.ULTRA_SAVER,
+            dynamicSyncThrottled = false,
+            adaptiveBrightnessSuggested = null,
+            backgroundSyncPaused = false,
             lastProfileTransitionReason = reason
         )
 
