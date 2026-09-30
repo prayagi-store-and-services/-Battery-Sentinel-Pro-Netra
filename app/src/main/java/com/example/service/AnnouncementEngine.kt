@@ -550,14 +550,9 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             }
         }
 
-        // 6. Cap queue size to prevent backlog
-        if (queue.size >= 8) {
-            val discarded = queue.poll() // remove lowest priority
-            discarded?.speechState = AnnouncementSpeechState.CANCELLED
-        }
-
+        // Keep the eight most urgent items. Include the incoming item in overflow selection.
         item.speechState = AnnouncementSpeechState.QUEUED
-        queue.offer(item)
+        offerBounded(queue, item)
         processQueue()
     }
 
@@ -744,6 +739,17 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
     }
 
     companion object {
+        /** Uses the existing queue; never sacrifices an urgent item for a lower-priority arrival. */
+        internal fun offerBounded(queue: PriorityQueue<AnnouncementItem>, item: AnnouncementItem) {
+            queue.offer(item)
+            if (queue.size > 8) {
+                // Higher comparator values are less urgent; newest loses equal-priority overflow.
+                val leastUrgent = queue.maxOrNull() ?: return
+                queue.remove(leastUrgent)
+                leastUrgent.speechState = AnnouncementSpeechState.CANCELLED
+            }
+        }
+
         private const val TAG = "NetraAnnouncementEngine"
     }
 }
