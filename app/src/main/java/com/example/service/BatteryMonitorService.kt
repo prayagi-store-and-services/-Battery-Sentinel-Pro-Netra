@@ -170,6 +170,7 @@ class BatteryMonitorService : Service() {
                     startCollectorsAndPolling()
                     val center = NetraApplication.instance.centralDataCenter
                     center.expireTelemetryFreshness()
+                    NetraApplication.instance.telemetrySentinel.checkStaleStatus()
                     val state = center.centralState.value
                     if (!state.isDataFresh) {
                         _liveTelemetryFlow.value = _liveTelemetryFlow.value.copy(timeToFullMinutes = null, estimatedDischargeHours = null)
@@ -327,7 +328,7 @@ class BatteryMonitorService : Service() {
             } catch (_: Exception) {}
 
             try {
-                NetraApplication.instance.telemetrySentinel.onTelemetryReceived(telemetry)
+                NetraApplication.instance.telemetrySentinel.onTelemetryReceived(canonical)
             } catch (_: Exception) {}
 
             try {
