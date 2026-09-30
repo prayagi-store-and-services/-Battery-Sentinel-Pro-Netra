@@ -496,17 +496,17 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 )
             }
 
-            if (mergedSpeed != CanonicalChargingSpeed.UNAVAILABLE) {
-                if (lastSpeedCategory != mergedSpeed) {
+            if (mergedAnnouncementSpeed != CanonicalChargingSpeed.UNAVAILABLE) {
+                if (lastSpeedCategory != mergedAnnouncementSpeed) {
                     val prev = lastSpeedCategory?.name ?: "UNAVAILABLE"
-                    lastSpeedCategory = mergedSpeed
+                    lastSpeedCategory = mergedAnnouncementSpeed
                     eventsToEmit.add(
                         NetraCentralEvent(
                             eventId = "event_speed_change_$now",
                             eventType = NetraEventType.SPEED_CHANGED,
                             timestamp = now,
                             previousValue = prev,
-                            newValue = mergedSpeed.name,
+                            newValue = mergedAnnouncementSpeed.name,
                             source = source
                         )
                     )
