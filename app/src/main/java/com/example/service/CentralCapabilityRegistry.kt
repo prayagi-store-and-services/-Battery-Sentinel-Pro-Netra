@@ -84,8 +84,7 @@ class CentralCapabilityRegistry(private val context: Context) {
         map[CapabilityType.BATTERY_TEMPERATURE] = if (temperatureRaw > 0) {
             CapabilityStatus.AVAILABLE
         } else {
-            val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
-            if (bm != null) CapabilityStatus.AVAILABLE else CapabilityStatus.UNAVAILABLE
+            CapabilityStatus.UNAVAILABLE
         }
 
         // 3. Battery Voltage: service presence is not an observed voltage.
