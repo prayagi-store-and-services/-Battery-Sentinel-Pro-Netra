@@ -166,7 +166,7 @@ object WidgetStateAdapter {
         val tempText = state.temperatureCelsius?.let { String.format(Locale.US, "%.1f°C", it) } ?: "--"
         val voltText = state.voltageMv?.let { String.format(Locale.US, "%.2fV", it / 1000f) } ?: "--"
         val sourceText = state.pluggedType?.name ?: "Battery"
-        val healthText = "Good (Normal)"
+        val healthText = "Unavailable"
 
         val accent = if (isCharging) "#00E5FF" else "#00E676"
 
@@ -270,8 +270,8 @@ object WidgetStateAdapter {
         val level = state.batteryLevel?.let { "$it%" } ?: "--"
         val temp = state.temperatureCelsius?.let { String.format(Locale.US, "%.1f°C", it) } ?: "--"
         return HealthWidgetModel(
-            healthStatus = "Good (Protected)",
-            healthScoreText = "98/100 (Grade A)",
+            healthStatus = "Unavailable",
+            healthScoreText = "Unavailable",
             batteryPercentText = level,
             temperatureText = temp,
             accentColorHex = "#00E676"
