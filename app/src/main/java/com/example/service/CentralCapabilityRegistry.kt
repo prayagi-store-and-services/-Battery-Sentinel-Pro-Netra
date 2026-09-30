@@ -151,12 +151,14 @@ class CentralCapabilityRegistry(private val context: Context) {
         }
 
         // 11. Notifications
-        val notifGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val notifPermissionGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        } else {
-            NotificationManagerCompat.from(context).areNotificationsEnabled()
+        val notificationsEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        map[CapabilityType.NOTIFICATIONS] = when {
+            !notifPermissionGranted -> CapabilityStatus.PERMISSION_REQUIRED
+            !notificationsEnabled -> CapabilityStatus.DISABLED
+            else -> CapabilityStatus.AVAILABLE
         }
-        map[CapabilityType.NOTIFICATIONS] = if (notifGranted) CapabilityStatus.AVAILABLE else CapabilityStatus.PERMISSION_REQUIRED
 
         // 12. Text-to-Speech (from fast static cache)
         map[CapabilityType.TEXT_TO_SPEECH] = staticHardwareFeatures[CapabilityType.TEXT_TO_SPEECH] ?: CapabilityStatus.UNSUPPORTED
