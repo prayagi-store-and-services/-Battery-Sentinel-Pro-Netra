@@ -177,8 +177,8 @@ fun CircularBatteryGauge(
                 )
 
                 val etaLabel = when (canonical.isCharging) {
-                    true -> canonical.chargingEtaMinutes?.let { "Full in ~$it min" } ?: "ETA calculating..."
-                    false -> canonical.dischargingEtaMinutes?.let { "~$it min remaining" } ?: "ETA calculating..."
+                    true -> canonical.chargingEtaMinutes?.let { "Full in ~$it min" } ?: "ETA unavailable"
+                    false -> canonical.dischargingEtaMinutes?.let { "~$it min remaining" } ?: "ETA unavailable"
                     null -> null
                 }
 
