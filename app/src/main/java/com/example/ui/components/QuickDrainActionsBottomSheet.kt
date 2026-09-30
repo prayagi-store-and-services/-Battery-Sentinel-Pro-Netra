@@ -84,7 +84,6 @@ internal fun QuickDrainActionsContent(
     settings: com.example.data.repository.SentinelSettings,
     onToggleSaver: () -> Unit, sheetState: SheetState, onDismiss: () -> Unit
 ) {
-    val context = LocalContext.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -92,7 +91,17 @@ internal fun QuickDrainActionsContent(
         tonalElevation = 8.dp,
         modifier = Modifier.testTag("quick_actions_bottom_sheet")
     ) {
-        Column(
+        QuickPowerSettingsBody(settings, onToggleSaver, onDismiss)
+    }
+}
+
+@Composable
+internal fun QuickPowerSettingsBody(
+    settings: com.example.data.repository.SentinelSettings,
+    onToggleSaver: () -> Unit, onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
@@ -105,7 +114,7 @@ internal fun QuickDrainActionsContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
                             .size(36.dp)
@@ -160,7 +169,7 @@ internal fun QuickDrainActionsContent(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(Modifier.weight(1f).padding(end = 8.dp)) {
                         Text(
                             text = "BATTERY SAVINGS",
                             fontSize = 9.5.sp,
@@ -305,7 +314,6 @@ internal fun QuickDrainActionsContent(
                     }
                 }
             )
-        }
     }
 }
 
@@ -321,7 +329,7 @@ private fun QuickActionItem(
     val modifier = Modifier
         .fillMaxWidth()
         .clip(RoundedCornerShape(12.dp))
-        .background(NetraSurface)
+        .background(MaterialTheme.colorScheme.surface)
         .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
         .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
         .padding(14.dp)
