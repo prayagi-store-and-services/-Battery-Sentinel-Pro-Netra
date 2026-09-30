@@ -11,7 +11,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -19,7 +18,7 @@ import org.robolectric.annotation.Config
 class BatteryHealthCapabilityTruthfulnessTest {
     private val context: Application get() = ApplicationProvider.getApplicationContext()
     private fun broadcastHealth(health: Int) {
-        shadowOf(context).sendStickyBroadcast(
+        context.sendStickyBroadcast(
             Intent(Intent.ACTION_BATTERY_CHANGED).putExtra(BatteryManager.EXTRA_HEALTH, health)
         )
     }
