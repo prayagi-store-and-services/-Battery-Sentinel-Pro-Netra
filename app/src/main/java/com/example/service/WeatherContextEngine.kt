@@ -160,7 +160,7 @@ class WeatherContextEngine(private val context: Context) {
         )
     }
 
-    private fun mapWmoWeatherCode(code: Int, tempCelsius: Float?): Pair<WeatherCondition, String> {
+    internal fun mapWmoWeatherCode(code: Int, tempCelsius: Float?): Pair<WeatherCondition, String> {
         if (tempCelsius != null && tempCelsius >= 40.0f) {
             return Pair(WeatherCondition.EXTREME_HEAT, "Extreme Heat")
         }
@@ -173,9 +173,11 @@ class WeatherContextEngine(private val context: Context) {
             1, 2, 3 -> Pair(WeatherCondition.CLOUDY, "Partly Cloudy")
             45, 48 -> Pair(WeatherCondition.CLOUDY, "Foggy")
             51, 53, 55, 61, 63, 65, 80, 81, 82 -> Pair(WeatherCondition.RAIN, "Rain / Drizzle")
+            56, 57 -> Pair(WeatherCondition.RAIN, "Freezing Drizzle")
+            66, 67 -> Pair(WeatherCondition.RAIN, "Freezing Rain")
             71, 73, 75, 77, 85, 86 -> Pair(WeatherCondition.SNOW, "Snow")
             95, 96, 99 -> Pair(WeatherCondition.STORM, "Thunderstorm")
-            else -> Pair(WeatherCondition.CLEAR, "Normal")
+            else -> Pair(WeatherCondition.UNKNOWN, "Unavailable")
         }
     }
 }
