@@ -184,8 +184,10 @@ class CentralCapabilityRegistry(private val context: Context) {
 
         // 17. Battery Charge Counter
         val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
-        val chargeCounter = bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER) ?: Int.MIN_VALUE
-        map[CapabilityType.BATTERY_CHARGE_COUNTER] = if (chargeCounter != Int.MIN_VALUE && chargeCounter > 0) {
+        val chargeCounter = try {
+            bm?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER) ?: Int.MIN_VALUE
+        } catch (_: Exception) { Int.MIN_VALUE }
+        map[CapabilityType.BATTERY_CHARGE_COUNTER] = if (chargeCounter >= 0) {
             CapabilityStatus.AVAILABLE
         } else {
             CapabilityStatus.UNAVAILABLE
