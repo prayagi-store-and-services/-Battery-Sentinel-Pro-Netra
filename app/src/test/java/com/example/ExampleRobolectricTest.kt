@@ -116,10 +116,10 @@ class ExampleRobolectricTest {
         val telemetry = BatteryTelemetry(level = 80, isCharging = true)
 
         val reportDir = java.io.File(context.filesDir, "reports")
-        val before = reportDir.listFiles()?.map { it.name }?.toSet() ?: emptySet()
+        val before = reportDir.listFiles()?.map { it.name }?.toSet() ?: emptySet<String>()
         val pdfFile = BatteryPdfReportGenerator.generateDailyReport(context, records, sessions, report, telemetry)
         assertNull(pdfFile)
-        assertEquals(before, reportDir.listFiles()?.map { it.name }?.toSet() ?: emptySet())
+        assertEquals(before, reportDir.listFiles()?.map { it.name }?.toSet() ?: emptySet<String>())
     }
 
     @Test
