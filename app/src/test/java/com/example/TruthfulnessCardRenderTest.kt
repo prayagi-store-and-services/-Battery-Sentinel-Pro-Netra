@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.unit.dp
 import com.example.ai.BatteryDegradationPredictor
 import com.example.ui.components.GeminiHealthInsightsContent
@@ -57,11 +59,14 @@ class TruthfulnessCardRenderTest {
     fun renderQuickPowerSettings() {
         compose.setContent {
             MyApplicationTheme {
-                com.example.ui.components.QuickDrainActionsContent(
-                    com.example.data.repository.SentinelSettings(), {},
-                    androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true), {})
+                Column(Modifier.width(411.dp).background(MaterialTheme.colorScheme.background)) {
+                    com.example.ui.components.QuickPowerSettingsBody(
+                        com.example.data.repository.SentinelSettings(), {}, {})
+                }
             }
         }
+        compose.onNodeWithText("Quick Power Savers").assertIsDisplayed()
+        compose.onNodeWithText("Savings and added runtime are not measured").assertIsDisplayed()
         captureCard("quick-power-settings.png")
     }
 
@@ -203,6 +208,9 @@ class TruthfulnessCardRenderTest {
             bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
             view.draw(Canvas(bitmap))
         }
+        val pixels = IntArray(bitmap.width * bitmap.height)
+        bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+        assertTrue("Render must contain actual UI, not a flat background", pixels.toSet().size > 16)
         val output = File("build/outputs/ui-renders").apply { mkdirs() }
         val file = File(output, filename)
         file.outputStream().use {
