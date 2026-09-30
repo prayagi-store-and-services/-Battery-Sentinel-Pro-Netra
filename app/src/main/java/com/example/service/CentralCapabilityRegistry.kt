@@ -255,7 +255,21 @@ class CentralCapabilityRegistry(private val context: Context) {
         // 26. Location Capability
         val hasCoarse = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
         val hasFine = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        map[CapabilityType.LOCATION] = if (hasCoarse || hasFine) CapabilityStatus.AVAILABLE else CapabilityStatus.PERMISSION_REQUIRED
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+        val locationEnabled = try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                locationManager?.isLocationEnabled == true
+            } else {
+                locationManager?.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) == true ||
+                    locationManager?.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER) == true
+            }
+        } catch (_: Exception) { false }
+        map[CapabilityType.LOCATION] = when {
+            !hasCoarse && !hasFine -> CapabilityStatus.PERMISSION_REQUIRED
+            locationManager == null -> CapabilityStatus.UNAVAILABLE
+            !locationEnabled -> CapabilityStatus.DISABLED
+            else -> CapabilityStatus.AVAILABLE
+        }
 
         // 27. Weather Capability
         map[CapabilityType.WEATHER] = CapabilityStatus.AVAILABLE
