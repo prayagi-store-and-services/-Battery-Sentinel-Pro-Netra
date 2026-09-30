@@ -42,6 +42,44 @@ class AnnouncementEngineTest {
     }
 
     @Test
+    fun `overflow preserves critical alert against low priority arrival`() {
+        val queue = java.util.PriorityQueue<AnnouncementItem>()
+        val critical = AnnouncementItem("critical", "Critical", AnnouncementPriority.CRITICAL_THERMAL, "THERMAL", timestamp = 1L)
+        AnnouncementEngine.offerBounded(queue, critical)
+        repeat(7) { i -> AnnouncementEngine.offerBounded(queue,
+            AnnouncementItem("charger$i", "Charger$i", AnnouncementPriority.CHARGER_STATE, "CHARGER", timestamp = i + 2L)) }
+        val low = AnnouncementItem("low", "Low", AnnouncementPriority.INFORMATIONAL, "INFO", timestamp = 10L)
+        AnnouncementEngine.offerBounded(queue, low)
+        assertEquals(8, queue.size)
+        assertTrue(queue.contains(critical))
+        assertEquals(AnnouncementSpeechState.CANCELLED, low.speechState)
+        assertEquals(critical, queue.poll())
+    }
+
+    @Test
+    fun `critical incoming displaces least urgent pending item`() {
+        val queue = java.util.PriorityQueue<AnnouncementItem>()
+        val items = (1..8).map { AnnouncementItem("$it", "Info$it", AnnouncementPriority.INFORMATIONAL, "INFO", timestamp = it.toLong()) }
+        items.forEach { AnnouncementEngine.offerBounded(queue, it) }
+        val critical = AnnouncementItem("critical", "Critical", AnnouncementPriority.CRITICAL_THERMAL, "THERMAL", timestamp = 9L)
+        AnnouncementEngine.offerBounded(queue, critical)
+        assertEquals(8, queue.size)
+        assertTrue(queue.contains(items.first()))
+        assertEquals(AnnouncementSpeechState.CANCELLED, items.last().speechState)
+        assertEquals(critical, queue.poll())
+    }
+
+    @Test
+    fun `equal priority overflow preserves earlier pending alerts`() {
+        val queue = java.util.PriorityQueue<AnnouncementItem>()
+        val items = (1..9).map { AnnouncementItem("$it", "Info$it", AnnouncementPriority.INFORMATIONAL, "INFO", timestamp = it.toLong()) }
+        items.forEach { AnnouncementEngine.offerBounded(queue, it) }
+        assertEquals(8, queue.size)
+        assertEquals(AnnouncementSpeechState.CANCELLED, items.last().speechState)
+        assertEquals(items.first(), queue.poll())
+    }
+
+    @Test
     fun `test phone battery 5 percent boundary crossing calculation charging`() {
         val crossed1 = engine.getCrossed5PercentBoundaries(19, 20, isCharging = true)
         assertEquals(listOf(20), crossed1)
