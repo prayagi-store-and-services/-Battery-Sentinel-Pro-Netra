@@ -37,7 +37,7 @@ jobs:
           disable-animations: true
           script: |
             mkdir -p app/build/ci-diagnostics
-            bash -o pipefail -c 'gradle --no-daemon :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.BatteryPdfExportTest --stacktrace 2>&1 | tee app/build/ci-diagnostics/pdf-instrumentation.log'
+            bash -o pipefail -c 'gradle --no-daemon :app:connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true -Pandroid.testInstrumentationRunnerArguments.class=com.example.BatteryPdfExportTest --stacktrace 2>&1 | tee app/build/ci-diagnostics/pdf-instrumentation.log'
             mkdir -p app/build/outputs/pdf-verification
             adb pull /sdcard/Android/data/com.aistudio.batterysentinel.ntra/files/pdf-verification/. app/build/outputs/pdf-verification/
       - name: Upload real Android PDF evidence
