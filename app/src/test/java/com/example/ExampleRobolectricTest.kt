@@ -144,20 +144,22 @@ class ExampleRobolectricTest {
         profileManager.setPowerProfile(com.example.model.PowerProfileMode.SMART_ADAPTIVE)
 
         // Normal level (80%) -> Balanced
-        profileManager.onTelemetryUpdate(BatteryTelemetry(level = 80, isCharging = false))
+        profileManager.onTelemetryUpdate(BatteryTelemetry(level = 80, isCharging = false, isDataAvailable = true))
         assertEquals(com.example.model.PowerProfileMode.BALANCED, profileManager.profileState.value.activeEffectiveMode)
 
         // Low level (18%) -> Endurance
-        profileManager.onTelemetryUpdate(BatteryTelemetry(level = 18, isCharging = false))
+        profileManager.onTelemetryUpdate(BatteryTelemetry(level = 18, isCharging = false, isDataAvailable = true))
         assertEquals(com.example.model.PowerProfileMode.ENDURANCE, profileManager.profileState.value.activeEffectiveMode)
-        assertTrue(profileManager.profileState.value.dynamicSyncThrottled)
+        assertFalse(profileManager.profileState.value.dynamicSyncThrottled)
+        assertFalse(profileManager.profileState.value.backgroundSyncPaused)
+        assertNull(profileManager.profileState.value.adaptiveBrightnessSuggested)
 
         // Critical level (8%) -> Ultra Saver
-        profileManager.onTelemetryUpdate(BatteryTelemetry(level = 8, isCharging = false))
+        profileManager.onTelemetryUpdate(BatteryTelemetry(level = 8, isCharging = false, isDataAvailable = true))
         assertEquals(com.example.model.PowerProfileMode.ULTRA_SAVER, profileManager.profileState.value.activeEffectiveMode)
 
         // Charging -> Performance
-        profileManager.onTelemetryUpdate(BatteryTelemetry(level = 8, isCharging = true))
+        profileManager.onTelemetryUpdate(BatteryTelemetry(level = 8, isCharging = true, isDataAvailable = true))
         assertEquals(com.example.model.PowerProfileMode.PERFORMANCE, profileManager.profileState.value.activeEffectiveMode)
     }
 
