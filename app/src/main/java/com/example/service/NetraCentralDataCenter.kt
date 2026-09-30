@@ -20,9 +20,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.math.abs
 
-class NetraCentralDataCenter {
+class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.currentTimeMillis() }) {
 
     private val telemetryMutex = Mutex()
     private val mediaMutex = Mutex()
@@ -264,9 +263,8 @@ class NetraCentralDataCenter {
     private var dischargingStartedAt: Long? = null
     private var lastDischargingStatus = false
 
-    // Historical samples for live ETA calculation
-    private data class LevelSample(val level: Int, val timestamp: Long)
-    private val levelSamples = mutableListOf<LevelSample>()
+    // ETA evidence is separate from retained display values and never survives a session boundary.
+    private val sessionEtaEstimator = SessionEtaEstimator()
 
     suspend fun processRawInput(
         level: Int,
@@ -283,7 +281,7 @@ class NetraCentralDataCenter {
         val t0Nanos = System.nanoTime()
         val eventsToEmit = mutableListOf<NetraCentralEvent>()
         val newState = telemetryMutex.withLock {
-            val now = System.currentTimeMillis()
+            val now = telemetryClock()
             val oldState = _centralState.value
 
             if (chargerConnectedAt == null) chargerConnectedAt = oldState.chargerConnectedAt
@@ -438,36 +436,11 @@ class NetraCentralDataCenter {
             }
             lastDischargingStatus = isDischarging
 
-            // Live ETA calculation based on observed progression over time
-            if (mergedLevel != null) {
-                levelSamples.add(LevelSample(mergedLevel, now))
-                if (levelSamples.size > 20) {
-                    levelSamples.removeAt(0)
-                }
-            }
-
-            var chargingEta: Int? = null
-            var dischargingEta: Int? = null
-
-            if (levelSamples.size >= 2) {
-                val oldest = levelSamples.first()
-                val newest = levelSamples.last()
-                val timeDiffMinutes = (newest.timestamp - oldest.timestamp) / 60_000f
-                val levelDiff = newest.level - oldest.level
-
-                if (timeDiffMinutes >= 2.0f && abs(levelDiff) >= 1) {
-                    val ratePerMinute = levelDiff / timeDiffMinutes
-                    if (mergedIsCharging == true && ratePerMinute > 0.01f && mergedLevel != null && mergedLevel < 100) {
-                        val remainingPct = 100 - mergedLevel
-                        chargingEta = (remainingPct / ratePerMinute).toInt().coerceIn(1, 720)
-                    } else if (mergedIsCharging == false && ratePerMinute < -0.005f && mergedLevel != null && mergedLevel > 0) {
-                        dischargingEta = (abs(mergedLevel / ratePerMinute)).toInt().coerceIn(1, 1440)
-                    }
-                }
-            }
-
-            val mergedChargingEta = chargingEta ?: oldState.chargingEtaMinutes
-            val mergedDischargingEta = dischargingEta ?: oldState.dischargingEtaMinutes
+            // Only raw valid levels/status may establish current-session progression.
+            // Invalid input clears ETA evidence while last-valid display telemetry stays intact.
+            val eta = sessionEtaEstimator.observe(validatedLevel, status, plugged, now)
+            val mergedChargingEta = eta.chargingMinutes
+            val mergedDischargingEta = eta.dischargingMinutes
 
             // 2. Deduplication & Event Generation
             if (isConnected != null && isConnected != lastConnectedState) {

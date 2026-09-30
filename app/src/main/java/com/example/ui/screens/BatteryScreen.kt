@@ -227,8 +227,8 @@ fun BatteryScreen(
                         accentColor = NetraEmerald
                     ) {
                         val etaText = when (canonical.isCharging) {
-                            true -> canonical.chargingEtaMinutes?.let { "~$it minutes until 100% full" } ?: "ETA calculating from progression..."
-                            false -> canonical.dischargingEtaMinutes?.let { "~$it minutes of runtime remaining" } ?: "ETA calculating from progression..."
+                            true -> canonical.chargingEtaMinutes?.let { "~$it minutes until 100% full" } ?: "ETA unavailable: insufficient session data"
+                            false -> canonical.dischargingEtaMinutes?.let { "~$it minutes of runtime remaining" } ?: "ETA unavailable: insufficient session data"
                             null -> "ETA unavailable"
                         }
 
@@ -237,15 +237,15 @@ fun BatteryScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column {
+                            Column(Modifier.weight(1f).padding(end = 8.dp)) {
                                 Text(
-                                    text = "Canonical ETA",
+                                    text = "Observed progression estimate",
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
                                     text = etaText,
-                                    fontSize = 15.sp,
+                                    fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = NetraEmerald
                                 )
@@ -260,7 +260,7 @@ fun BatteryScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    text = sessionStart?.let { timeFormat.format(Date(it)) } ?: "Ongoing",
+                                    text = sessionStart?.let { timeFormat.format(Date(it)) } ?: "Unavailable",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
