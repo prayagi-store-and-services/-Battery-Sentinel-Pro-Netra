@@ -38,17 +38,17 @@ jobs:
           data=json.loads(raw)
           print('## Battery Sentinel Pro Netra — Stability Incident')
           print('')
-          print(f"- **Report ID:** {data.get('reportId','unknown')}")
-          print(f"- **Type:** {data.get('reportType','unknown')}")
-          print(f"- **Component:** {data.get('component','unknown')}")
-          print(f"- **App:** {data.get('appVersionName','unknown')} (versionCode {data.get('appVersionCode','unknown')})")
-          print(f"- **Device:** {data.get('deviceManufacturer','unknown')} {data.get('deviceModel','unknown')}")
-          print(f"- **Android:** {data.get('androidVersion','unknown')} / API {data.get('androidSdk','unknown')}")
-          print(f"- **Issue:** {data.get('issue','Crash or runtime anomaly')}")
+          print('- **Report:** Sanitized stability incident')
           print('')
           print('### Diagnostic data')
           print('```json')
-          print(json.dumps(data, indent=2, ensure_ascii=False)[:30000])
+          allowed = ('reportType','component','appVersionCode','appVersionName','deviceManufacturer','deviceModel','androidVersion','androidSdk','exceptionClass','telemetryState')
+          sanitized = {}
+          import re
+          for key in allowed:
+            value = str(data.get(key,'unknown'))
+            sanitized[key] = value if len(value) <= 120 and re.fullmatch(r'[A-Za-z0-9 ._()/+-]*', value) else '<omitted>'
+          print(json.dumps(sanitized, indent=2, ensure_ascii=False))
           print('```')
           print('')
           print('> Automatically generated from the stability intake pipeline. Do not add secrets, tokens, contacts, files, or raw location data to this issue.')
