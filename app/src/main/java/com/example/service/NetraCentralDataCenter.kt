@@ -379,9 +379,12 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             val tempCelsius = if (temperatureRaw > 0) temperatureRaw / 10.0f else null
             val voltageMv = if (voltage > 0) voltage else null
 
-            // BatteryManager.BATTERY_PROPERTY_CURRENT_NOW is specified in microamps.
+            // BATTERY_PROPERTY_CURRENT_NOW is specified in microamps; some devices report milliamps.
             val currentMa = if (currentMicroAmps != Int.MIN_VALUE) {
-                currentMicroAmps / 1000
+                chargingSpeedEngine.normalizeToMilliAmps(
+                    currentMicroAmps,
+                    status == BatteryManager.BATTERY_STATUS_CHARGING
+                )
             } else null
 
             val t1Nanos = System.nanoTime()
