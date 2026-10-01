@@ -11,7 +11,10 @@ import com.example.data.repository.SettingsRepository
 import com.example.service.BatteryMonitorService
 import com.example.service.NetraCentralDataCenter
 
-class NetraApplication : Application() {
+class NetraApplication : Application(), androidx.work.Configuration.Provider {
+
+    override val workManagerConfiguration: androidx.work.Configuration
+        get() = androidx.work.Configuration.Builder().build()
 
     val startedAtMillis: Long = System.currentTimeMillis()
 
