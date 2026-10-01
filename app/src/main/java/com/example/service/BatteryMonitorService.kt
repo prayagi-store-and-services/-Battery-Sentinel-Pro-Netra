@@ -62,15 +62,6 @@ class BatteryMonitorService : Service() {
                     val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     notificationManager.cancel(NOTIFICATION_ALARM_ID)
                 }
-                ACTION_DISMISS_ALARM -> {
-                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                    notificationManager.cancel(NOTIFICATION_ALARM_ID)
-                }
-                ACTION_SET_TARGET_100 -> {
-                    NetraApplication.instance.settingsRepository.updateChargeTarget(100)
-                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                    notificationManager.cancel(NOTIFICATION_ALARM_ID)
-                }
                 android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED,
                 android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED,
                 android.bluetooth.BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED,
@@ -151,8 +142,6 @@ class BatteryMonitorService : Service() {
                     addAction(Intent.ACTION_POWER_DISCONNECTED)
                     addAction(Intent.ACTION_BATTERY_LOW)
                     addAction(Intent.ACTION_BATTERY_OKAY)
-                    addAction(ACTION_DISMISS_ALARM)
-                    addAction(ACTION_SET_TARGET_100)
                     addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED)
                     addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED)
                     addAction(android.bluetooth.BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED)
@@ -449,14 +438,14 @@ class BatteryMonitorService : Service() {
         )
 
         // Action 1: Dismiss / Mute Alarm Broadcast
-        val dismissIntent = Intent(ACTION_DISMISS_ALARM)
+        val dismissIntent = com.example.receiver.AlarmActionReceiver.intent(this, ACTION_DISMISS_ALARM)
         val pendingDismiss = PendingIntent.getBroadcast(
             this, 201, dismissIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         // Action 2: Set Target to 100% (Continue Charging)
-        val continueIntent = Intent(ACTION_SET_TARGET_100)
+        val continueIntent = com.example.receiver.AlarmActionReceiver.intent(this, ACTION_SET_TARGET_100)
         val pendingContinue = PendingIntent.getBroadcast(
             this, 202, continueIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
