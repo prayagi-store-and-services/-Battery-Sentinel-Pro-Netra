@@ -55,12 +55,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.components.StatusDot
 import com.example.ui.navigation.NetraBottomNav
 import com.example.ui.navigation.NetraTab
+import com.example.ui.navigation.WIDGET_CATALOGUE_BUTTON_TAG
 import com.example.ui.screens.BatteryScreen
 import com.example.ui.screens.DevicesScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.MonitoringScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.StatusScreen
+import com.example.ui.screens.WidgetCatalogueScreen
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.theme.NetraCyan
 import com.example.ui.theme.NetraDarkBg
@@ -100,6 +102,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainAppContent(viewModel: NetraViewModel) {
     var currentTab by remember { mutableStateOf(NetraTab.HOME) }
+    var showWidgetCatalogue by remember { mutableStateOf(false) }
     val telemetry by viewModel.liveTelemetry.collectAsStateWithLifecycle()
     val canonical by viewModel.canonicalState.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
@@ -175,8 +178,12 @@ fun MainAppContent(viewModel: NetraViewModel) {
     }
 
     // BackHandler: return to Home tab if on secondary tab
-    BackHandler(enabled = currentTab != NetraTab.HOME) {
-        currentTab = NetraTab.HOME
+    BackHandler(enabled = showWidgetCatalogue || currentTab != NetraTab.HOME) {
+        if (showWidgetCatalogue) {
+            showWidgetCatalogue = false
+        } else {
+            currentTab = NetraTab.HOME
+        }
     }
 
     Scaffold(
@@ -269,8 +276,8 @@ fun MainAppContent(viewModel: NetraViewModel) {
                         }
                     }
                     IconButton(
-                        onClick = { /* Navigate to WidgetCatalogue */ },
-                        modifier = Modifier.testTag("top_bar_widgets_button")
+                        onClick = { showWidgetCatalogue = true },
+                        modifier = Modifier.testTag(WIDGET_CATALOGUE_BUTTON_TAG)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Widgets,
@@ -313,6 +320,7 @@ fun MainAppContent(viewModel: NetraViewModel) {
             NetraBottomNav(
                 currentTab = currentTab,
                 onTabSelected = { tab ->
+                    showWidgetCatalogue = false
                     currentTab = tab
                 }
             )
@@ -332,21 +340,26 @@ fun MainAppContent(viewModel: NetraViewModel) {
             )
 
             Crossfade(
-                targetState = currentTab,
+                targetState = showWidgetCatalogue to currentTab,
                 label = "tab_transition",
                 modifier = Modifier.weight(1f)
-            ) { tab ->
-                when (tab) {
-                    NetraTab.HOME -> HomeScreen(
-                        viewModel = viewModel,
-                        onNavigateTab = { target ->
-                            currentTab = target
-                        }
-                    )
-                    NetraTab.BATTERY -> BatteryScreen(viewModel = viewModel)
-                    NetraTab.MONITORING -> MonitoringScreen(viewModel = viewModel)
-                    NetraTab.DEVICES -> DevicesScreen(viewModel = viewModel)
-                    NetraTab.SETTINGS -> SettingsScreen(viewModel = viewModel)
+            ) { (showWidgets, tab) ->
+                if (showWidgets) {
+                    WidgetCatalogueScreen(viewModel = viewModel)
+                } else {
+                    when (tab) {
+                        NetraTab.HOME -> HomeScreen(
+                            viewModel = viewModel,
+                            onNavigateTab = { target ->
+                                showWidgetCatalogue = false
+                                currentTab = target
+                            }
+                        )
+                        NetraTab.BATTERY -> BatteryScreen(viewModel = viewModel)
+                        NetraTab.MONITORING -> MonitoringScreen(viewModel = viewModel)
+                        NetraTab.DEVICES -> DevicesScreen(viewModel = viewModel)
+                        NetraTab.SETTINGS -> SettingsScreen(viewModel = viewModel)
+                    }
                 }
             }
         }

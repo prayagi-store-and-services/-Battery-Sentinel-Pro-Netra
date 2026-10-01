@@ -65,7 +65,7 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         centralDataCenter = NetraCentralDataCenter()
         capabilityRegistry = com.example.service.CentralCapabilityRegistry(this)
         centralDataCenter.initPersistence(this)
-        centralDataCenter.initCapabilityRegistry(this)
+        centralDataCenter.initCapabilityRegistry(this, capabilityRegistry)
         storageCacheManager = com.example.data.repository.StorageCacheManager(this)
         announcementEngine = com.example.service.AnnouncementEngine(this)
         telemetrySentinel = com.example.service.TelemetrySentinel(this)

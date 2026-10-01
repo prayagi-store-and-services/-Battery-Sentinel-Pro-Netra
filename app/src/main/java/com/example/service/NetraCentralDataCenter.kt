@@ -47,8 +47,11 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
     private var weatherEngine: WeatherContextEngine? = null
     private var lastValidStatePrefs: android.content.SharedPreferences? = null
 
-    fun initCapabilityRegistry(context: Context) {
-        capabilityRegistry = CentralCapabilityRegistry(context)
+    fun initCapabilityRegistry(
+        context: Context,
+        registry: CentralCapabilityRegistry = CentralCapabilityRegistry(context)
+    ) {
+        capabilityRegistry = registry
         thermalInvestigator = ThermalCauseInvestigator(context)
         locationResolver = LocationCountryResolver(context)
         weatherEngine = WeatherContextEngine(context)
