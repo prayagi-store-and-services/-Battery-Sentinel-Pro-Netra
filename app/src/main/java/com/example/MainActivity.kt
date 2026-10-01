@@ -55,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.components.StatusDot
 import com.example.ui.navigation.NetraBottomNav
 import com.example.ui.navigation.NetraTab
+import com.example.ui.navigation.WIDGET_CATALOGUE_BUTTON_TAG
 import com.example.ui.screens.BatteryScreen
 import com.example.ui.screens.DevicesScreen
 import com.example.ui.screens.HomeScreen
@@ -276,7 +277,7 @@ fun MainAppContent(viewModel: NetraViewModel) {
                     }
                     IconButton(
                         onClick = { showWidgetCatalogue = true },
-                        modifier = Modifier.testTag("top_bar_widgets_button")
+                        modifier = Modifier.testTag(WIDGET_CATALOGUE_BUTTON_TAG)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Widgets,
