@@ -16,6 +16,7 @@ jobs:
     outputs:
       version_name: ${{ steps.version.outputs.version_name }}
       version_code: ${{ steps.version.outputs.version_code }}
+      release_sha: ${{ steps.commit.outputs.release_sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,6 +64,7 @@ jobs:
           git add gradle.properties
           git diff --cached --quiet || git commit -m "chore(release): bump version to $VERSION_NAME"
           git push origin HEAD:main
+          echo "release_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
   android-debug:
     name: Android assembleDebug + full unit suite
@@ -70,6 +72,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.release_sha }}
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "17", cache: gradle }
       - uses: gradle/actions/setup-gradle@v4
@@ -84,6 +88,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.release_sha }}
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "17", cache: gradle }
       - uses: gradle/actions/setup-gradle@v4
