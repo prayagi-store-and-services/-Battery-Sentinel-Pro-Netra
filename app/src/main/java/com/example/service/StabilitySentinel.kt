@@ -66,18 +66,19 @@ class StabilitySentinel(private val app: NetraApplication) {
                 // Never allow diagnostics to interfere with Android's crash handling.
             }
             try {
-                previousHandler?.uncaughtException(thread, throwable)
+                if (previousHandler != null) previousHandler.uncaughtException(thread, throwable)
             } catch (_: Throwable) {
-                // Keep the platform crash path intact even if an old handler fails.
+                // Fall through to termination when the platform handler cannot complete.
+            } finally {
+                android.os.Process.killProcess(android.os.Process.myPid())
+                kotlin.system.exitProcess(10)
             }
         }
     }
 
     private fun persistCrash(thread: Thread, throwable: Throwable) {
         val report = baseReport("CRASH", "runtime")
-            .put("thread", thread.name.take(120))
             .put("exceptionClass", throwable.javaClass.name.take(300))
-            .put("exceptionMessage", sanitize(throwable.message).take(1000))
             .put("stackTrace", stackTrace(throwable))
             .put("causeChain", causeChain(throwable))
             .put("centralState", centralStateSummary())
@@ -176,11 +177,7 @@ class StabilitySentinel(private val app: NetraApplication) {
             .put("lastUpdateTimestamp", state.lastUpdateTimestamp)
     }
 
-    private fun stackTrace(throwable: Throwable): String {
-        val writer = StringWriter()
-        PrintWriter(writer).use { throwable.printStackTrace(it) }
-        return writer.toString().take(MAX_STACK_CHARS)
-    }
+    private fun stackTrace(throwable: Throwable): String = StabilityDiagnosticPolicy.safeStack(throwable)
 
     private fun causeChain(throwable: Throwable): String {
         val names = mutableListOf<String>()
@@ -191,12 +188,6 @@ class StabilitySentinel(private val app: NetraApplication) {
         }
         return names.joinToString(" -> ")
     }
-
-    private fun sanitize(value: String?): String = value.orEmpty()
-        .replace(
-            Regex("(?i)(token|password|secret|authorization|api[_-]?key)\\s*[:=]\\s*[^\\s,;]+"),
-            "$1=<redacted>"
-        )
 
     private fun issueFingerprint(report: JSONObject): String =
         listOf(
@@ -219,7 +210,8 @@ class StabilitySentinel(private val app: NetraApplication) {
 
 internal object StabilityReportTransport {
     fun post(endpoint: String, payload: String): Boolean {
-        val client = okhttp3.OkHttpClient()
+        if (!StabilityDiagnosticPolicy.isSecureEndpoint(endpoint)) return false
+        val client = okhttp3.OkHttpClient.Builder().followRedirects(false).followSslRedirects(false).build()
         val request = okhttp3.Request.Builder()
             .url(endpoint)
             .header("Content-Type", "application/json")
