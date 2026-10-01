@@ -10,20 +10,13 @@ on:
 
 jobs:
   analyze:
-    name: Analyze (${{ matrix.language }})
+    name: Analyze (java-kotlin)
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       packages: read
       actions: read
       contents: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - language: java-kotlin
-            build-mode: none
 
     steps:
       - name: Checkout repository
@@ -32,10 +25,10 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
-          languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build-mode }}
+          languages: java-kotlin
+          build-mode: autobuild
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:
-          category: "/language:${{ matrix.language }}"
+          category: "/language:java-kotlin"
