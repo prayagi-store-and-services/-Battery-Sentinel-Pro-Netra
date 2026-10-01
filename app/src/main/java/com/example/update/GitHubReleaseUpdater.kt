@@ -1,6 +1,6 @@
 package com.example.update
 
-import android.app.PackageInstaller
+import android.content.pm.PackageInstaller
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -39,7 +39,8 @@ data class GitHubReleaseInfo(
     val versionCode: Long,
     val notes: String,
     val apkUrl: String,
-    val sha256: String?
+    val sha256: String?,
+    val sizeBytes: Long = -1L
 )
 
 class GitHubReleaseUpdater(context: Context) {
@@ -122,32 +123,28 @@ class GitHubReleaseUpdater(context: Context) {
                 .build()
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) throw IllegalStateException("GitHub update check failed (" + response.code + ").")
-                val json = JSONObject(response.body?.string().orEmpty())
-                if (json.optBoolean("draft") || json.optBoolean("prerelease")) {
-                    throw IllegalStateException("No stable GitHub release is available.")
-                }
-                val assets = json.optJSONArray("assets") ?: throw IllegalStateException("Release APK is missing.")
-                var apkUrl: String? = null
-                var digest: String? = null
-                for (i in 0 until assets.length()) {
-                    val asset = assets.getJSONObject(i)
-                    if (asset.optString("name").lowercase().endsWith(".apk")) {
-                        apkUrl = asset.optString("browser_download_url").takeIf { it.isNotBlank() }
-                        digest = asset.optString("digest").removePrefix("sha256:").takeIf { it.isNotBlank() }
-                        if (apkUrl != null) break
+                val metadata = response.body?.byteStream()?.use { input ->
+                    val output = java.io.ByteArrayOutputStream()
+                    val buffer = ByteArray(8192)
+                    while (true) {
+                        val count = input.read(buffer)
+                        if (count < 0) break
+                        require(output.size() + count <= 1024 * 1024) { "Release metadata too large." }
+                        output.write(buffer, 0, count)
                     }
+                    output.toString("UTF-8")
+                }.orEmpty()
+                val candidate = GitHubReleasePolicy.parse(metadata, BuildConfig.VERSION_CODE.toLong())
+                if (candidate == null) {
+                    _state.value = UpdateUiState.Idle
+                    return@use
                 }
-                val notes = json.optString("body").trim()
-                val versionCode = Regex("(?m)^versionCode\\s*[:=]\\s*(\\d+)")
-                    .find(notes)?.groupValues?.getOrNull(1)?.toLongOrNull()
-                    ?: throw IllegalStateException("Release is missing versionCode metadata.")
+                val json = JSONObject(metadata)
                 val release = GitHubReleaseInfo(
-                    tagName = json.optString("tag_name"),
-                    versionName = json.optString("tag_name").removePrefix("v"),
-                    versionCode = versionCode,
-                    notes = notes,
-                    apkUrl = apkUrl ?: throw IllegalStateException("Release APK asset is missing."),
-                    sha256 = digest
+                    tagName = json.getString("tag_name"),
+                    versionName = json.getString("tag_name").removePrefix("v"),
+                    versionCode = candidate.versionCode,
+                    notes = json.optString("body"), apkUrl = candidate.url, sha256 = candidate.sha256, sizeBytes = candidate.size
                 )
                 writeCache(release)
                 _state.value = if (release.versionCode > BuildConfig.VERSION_CODE) {
@@ -167,6 +164,9 @@ class GitHubReleaseUpdater(context: Context) {
     }
 
     private fun downloadApk(release: GitHubReleaseInfo): File {
+        require(release.versionCode > BuildConfig.VERSION_CODE && release.sizeBytes in 1..GitHubReleasePolicy.MAX_APK_BYTES)
+        require(Regex("v[0-9]+\\.[0-9]+\\.[0-9]+").matches(release.tagName))
+        require(release.apkUrl == "https://github.com/${GitHubReleasePolicy.OWNER}/${GitHubReleasePolicy.REPO}/releases/download/${release.tagName}/app-release.apk")
         val dir = File(appContext.cacheDir, "updates").apply { mkdirs() }
         val target = File(dir, "battery-sentinel-pro-netra-" + release.versionCode + ".apk")
         val request = Request.Builder()
@@ -177,16 +177,48 @@ class GitHubReleaseUpdater(context: Context) {
             if (!response.isSuccessful) throw IllegalStateException("APK download failed (" + response.code + ").")
             val body = response.body ?: throw IllegalStateException("APK download returned no data.")
             body.byteStream().use { input ->
-                target.outputStream().use { output -> input.copyTo(output) }
+                target.outputStream().use { output ->
+                    val buffer = ByteArray(8192)
+                    var total = 0L
+                    while (true) {
+                        val count = input.read(buffer)
+                        if (count < 0) break
+                        total += count
+                        require(total <= release.sizeBytes && total <= GitHubReleasePolicy.MAX_APK_BYTES) { "APK is too large." }
+                        output.write(buffer, 0, count)
+                    }
+                }
             }
         }
-        release.sha256?.let { expected ->
+        require(target.length() == release.sizeBytes) { "Incomplete APK download." }
+        val expected = release.sha256 ?: throw SecurityException("Release digest missing.")
+        require(Regex("[0-9a-fA-F]{64}").matches(expected)) { "Invalid release digest." }
+        run {
             if (!sha256(target).equals(expected, ignoreCase = true)) {
                 target.delete()
                 throw SecurityException("Downloaded APK checksum does not match the GitHub release digest.")
             }
         }
+        verifyApk(target, release)
         return target
+    }
+
+    @Suppress("DEPRECATION")
+    private fun verifyApk(apk: File, release: GitHubReleaseInfo) {
+        val flags = if (Build.VERSION.SDK_INT >= 28)
+            android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES
+            else android.content.pm.PackageManager.GET_SIGNATURES
+        val pm = appContext.packageManager
+        val archive = pm.getPackageArchiveInfo(apk.path, flags) ?: throw SecurityException("Invalid APK.")
+        val current = pm.getPackageInfo(appContext.packageName, flags)
+        val code = if (Build.VERSION.SDK_INT >= 28) archive.longVersionCode else archive.versionCode.toLong()
+        val left = if (Build.VERSION.SDK_INT >= 28) current.signingInfo?.apkContentsSigners else current.signatures
+        val right = if (Build.VERSION.SDK_INT >= 28) archive.signingInfo?.apkContentsSigners else archive.signatures
+        require(archive.packageName == appContext.packageName && code == release.versionCode &&
+            code > BuildConfig.VERSION_CODE && !left.isNullOrEmpty() && !right.isNullOrEmpty() &&
+            left.map { it.toCharsString() }.toSet() == right.map { it.toCharsString() }.toSet()) {
+            "APK identity, version or signing certificate does not match."
+        }
     }
 
     private fun sha256(file: File): String {
@@ -223,7 +255,8 @@ class GitHubReleaseUpdater(context: Context) {
                 appContext,
                 sessionId,
                 intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_UPDATE_CURRENT or
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
             )
             session.commit(pendingIntent.intentSender)
         }
@@ -237,6 +270,7 @@ class GitHubReleaseUpdater(context: Context) {
             .putString("notes", release.notes)
             .putString("apk_url", release.apkUrl)
             .putString("sha256", release.sha256)
+            .putLong("size", release.sizeBytes)
             .apply()
     }
 
@@ -252,7 +286,8 @@ class GitHubReleaseUpdater(context: Context) {
             versionCode = code,
             notes = prefs.getString("notes", "").orEmpty(),
             apkUrl = url,
-            sha256 = prefs.getString("sha256", null)
+            sha256 = prefs.getString("sha256", null),
+            sizeBytes = prefs.getLong("size", -1L)
         )
     }
 }
