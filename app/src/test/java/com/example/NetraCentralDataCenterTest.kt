@@ -486,16 +486,19 @@ class NetraCentralDataCenterTest {
         dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 2475000, null, null)
         assertEquals(CanonicalChargingSpeed.NORMAL, dataCenter.centralState.value.chargingSpeed)
 
-        // 10.0W -> Fast (>= 10W, <= 20W)
+        // 10.0W -> Fast (>= 10W, < 20W)
         dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 2500000, null, null)
         assertEquals(CanonicalChargingSpeed.FAST, dataCenter.centralState.value.chargingSpeed)
 
         // 20.0W -> Super Fast
         dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 5000000, null, null)
-        assertEquals(CanonicalChargingSpeed.FAST, dataCenter.centralState.value.chargingSpeed)
+        assertEquals(CanonicalChargingSpeed.SUPER_FAST, dataCenter.centralState.value.chargingSpeed)
 
-        // 25.0W -> Ultra Fast (> 20W)
+        // 25.0W -> Super Fast (>= 20W, < 40W)
         dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 6250000, null, null)
+        assertEquals(CanonicalChargingSpeed.SUPER_FAST, dataCenter.centralState.value.chargingSpeed)
+        // 40.0W -> Ultra Fast (>= 40W)
+        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 10000000, null, null)
         assertEquals(CanonicalChargingSpeed.ULTRA_FAST, dataCenter.centralState.value.chargingSpeed)
     }
 
