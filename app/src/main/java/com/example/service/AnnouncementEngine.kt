@@ -502,15 +502,16 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             return
         }
 
-        // 2. Night Protection Check (Delegated strictly to Central Unit canonical state)
-        val dataCenter = NetraApplication.instance.centralDataCenter
-        dataCenter.refreshNightProtectionStateSynchronously()
-        if (dataCenter.centralState.value.isNightProtectionActive) {
-            if (!item.isNightException) {
-                Log.d(TAG, "Announcement suppressed by Night Protection policy decision -> ${item.text}")
-                return
+            // 2. Night Protection Check (Delegated strictly to Central Unit canonical state)
+            val dataCenter = NetraApplication.instance.centralDataCenter
+            // Force refresh of night protection based on current time
+            dataCenter.refreshNightProtectionStateSynchronously() 
+            if (dataCenter.centralState.value.isNightProtectionActive) {
+                if (!item.isNightException) {
+                    Log.d(TAG, "Announcement suppressed by Night Protection policy decision -> ${item.text}")
+                    return
+                }
             }
-        }
 
         // 3. Prevent exact duplicate item already waiting in queue
         if (queue.any { it.text == item.text }) {

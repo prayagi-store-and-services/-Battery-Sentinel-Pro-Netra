@@ -182,7 +182,7 @@ class BatteryMonitorService : Service() {
         serviceScope.launch {
             while (true) {
                 val state = NetraApplication.instance.centralDataCenter.centralState.value
-                val pollingInterval = if (state.isIdealStateActive) 300_000L else 45_000L
+                val pollingInterval = if (state.isIdealStateActive) 900_000L else 45_000L
                 kotlinx.coroutines.delay(pollingInterval)
                 try {
                     // Ensure collectors are active and restart if stopped without spawning duplicates
@@ -329,6 +329,8 @@ class BatteryMonitorService : Service() {
 
         // Offload ALL secondary background work (widgets, calibration, power profile, sentinel, cache, Room DB)
         serviceScope.launch(Dispatchers.IO) {
+            if (canonical.isIdealStateActive) return@launch // Skip non-essential work when in Ideal State
+
             try {
                 com.example.widget.NetraBatteryWidgetProvider.updateAllWidgets(this@BatteryMonitorService, telemetry)
             } catch (_: Exception) {}

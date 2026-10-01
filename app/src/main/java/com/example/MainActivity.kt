@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,6 +57,7 @@ import com.example.ui.navigation.NetraBottomNav
 import com.example.ui.navigation.NetraTab
 import com.example.ui.screens.BatteryScreen
 import com.example.ui.screens.DevicesScreen
+import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.MonitoringScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.StatusScreen
@@ -267,6 +269,17 @@ fun MainAppContent(viewModel: NetraViewModel) {
                         }
                     }
                     IconButton(
+                        onClick = { /* Navigate to WidgetCatalogue */ },
+                        modifier = Modifier.testTag("top_bar_widgets_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Widgets,
+                            contentDescription = "Widgets Catalogue",
+                            tint = NetraCyan,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    IconButton(
                         onClick = { viewModel.toggleUltraBatterySaver() },
                         modifier = Modifier.testTag("top_bar_ultra_saver_button")
                     ) {
@@ -324,9 +337,8 @@ fun MainAppContent(viewModel: NetraViewModel) {
                 modifier = Modifier.weight(1f)
             ) { tab ->
                 when (tab) {
-                    NetraTab.HOME -> StatusScreen(
+                    NetraTab.HOME -> HomeScreen(
                         viewModel = viewModel,
-                        onOpenGraph = { currentTab = NetraTab.BATTERY },
                         onNavigateTab = { target ->
                             currentTab = target
                         }
