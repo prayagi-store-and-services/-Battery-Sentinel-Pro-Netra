@@ -49,8 +49,9 @@ Android APIs / Battery / Sensors / Bluetooth / Location / Weather
 - **Speed Classification Tiers**:
   - **Slow Charging**: < 5.0W
   - **Normal Charging**: 5.0W <= P < 10.0W
-  - **Fast Charging**: 10.0W <= P <= 20.0W
-  - **Ultra Fast Charging**: > 20.0W
+  - **Fast Charging**: 10.0W <= P < 20.0W
+  - **Super Fast Charging**: 20.0W <= P < 40.0W
+  - **Ultra Fast Charging**: >= 40.0W
 - **Canonical Charger States**:
   - `CHARGER_CONNECTED_CHARGING`
   - `CHARGER_CONNECTED_NOT_CHARGING` (e.g., connected to USB host without confirmed charge current)
@@ -107,7 +108,7 @@ The app contains five primary navigation destinations:
 | **Field-Level Last-Valid Retention**| **Verified** | Telemetry and weather fields retain last valid values during partial sample drops. |
 | **Critical Thermal Protection (>40°C)** | **Verified** | Dims brightness to 10%, starts sensor investigation, recovers at <=35°C. |
 | **Low-Battery Protection (≤30%)** | **Verified** | Dims brightness to 10%, recovers at >=35%, unaffected by charger plug-in alone. |
-| **Raw Charging Power Model** | **Verified** | V x I raw power without phone consumption subtraction; verified in unit tests. |
+| **Raw Charging Power Model** | **Verified** | V x I raw power without phone consumption subtraction; verified in unit tests. Canonical tiers: <5W Slow, 5–<10W Normal, 10–<20W Fast, 20–<40W Super Fast, >=40W Ultra Fast. |
 | **Progression-Based ETA** | **Verified** | Live progression calculation; returns null when samples are insufficient. |
 | **Voice Announcements & Deduplication** | **Verified** | Priority queue with state-level deduplication and single active TTS channel. |
 | **Night Protection (23:00–06:00)** | **Verified** | Suppresses routine notifications while allowing critical thermal safety alerts. |
@@ -168,3 +169,13 @@ The app now has a bounded, privacy-minimized crash and runtime stability pipelin
 - **GitHub issue intake:** .github/workflows/stability-report-intake.yml accepts a repository_dispatch event from a trusted backend, fingerprints incidents by environment/component, and creates or comments on a deduplicated GitHub Issue.
 - **Secure transport requirement:** netraStabilityReportUrl / NETRA_STABILITY_REPORT_URL is intentionally empty by default. A backend/GitHub App gateway must be deployed and configured outside the APK; a GitHub token is never embedded in the app.
 - **Device-specific fixes:** incidents are grouped by app version, Android API, device model, component, and normalized exception fingerprint so compatibility fixes can be targeted without creating a second app architecture. All resulting releases still use the normal CI, signing, and release gates.
+
+
+## Part 6 — Charger Session Model & Central Unit Control
+
+- Charger connection and actual charging remain separate canonical transitions.
+- Session timestamps are generated only by `NetraCentralDataCenter`; persistence consumes those canonical timestamps rather than inferring transitions independently.
+- Charging session persistence records start/end time, start/end battery level, peak temperature, average observed power, charger type, and duration.
+- Repeated telemetry cannot reset session start timestamps; reconnecting starts a new canonical session.
+- ETA evidence remains session-bound and is cleared on charging/discharging session boundaries or invalid progression input.
+- Repository/database work remains downstream of canonical state publication and does not bypass the Central Unit.

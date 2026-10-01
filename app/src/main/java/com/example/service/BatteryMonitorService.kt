@@ -227,6 +227,7 @@ class BatteryMonitorService : Service() {
             CanonicalChargingSpeed.SLOW -> ChargerSpeed.SLOW to "Slow Charging"
             CanonicalChargingSpeed.NORMAL -> ChargerSpeed.STANDARD to "Normal Charging"
             CanonicalChargingSpeed.FAST -> ChargerSpeed.FAST to "Fast Charging"
+            CanonicalChargingSpeed.SUPER_FAST -> ChargerSpeed.RAPID to "Super Fast Charging"
             CanonicalChargingSpeed.ULTRA_FAST -> ChargerSpeed.SUPER to "Ultra Fast Charging"
             CanonicalChargingSpeed.UNAVAILABLE -> ChargerSpeed.UNKNOWN to "Unavailable"
         }
@@ -341,7 +342,7 @@ class BatteryMonitorService : Service() {
                     healthStatus = healthString,
                     screenOn = lifecyclePolling.isScreenInteractive()
                 )
-                NetraApplication.instance.batteryRepository.recordTelemetryDebounced(record)
+                NetraApplication.instance.batteryRepository.recordTelemetryDebounced(record, canonical)
             } catch (_: Exception) {}
         }
     }

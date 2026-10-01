@@ -152,8 +152,9 @@ object WidgetStateAdapter {
             when (state.chargingSpeed) {
                 CanonicalChargingSpeed.SLOW -> "Slow (<5W)"
                 CanonicalChargingSpeed.NORMAL -> "Normal (5-10W)"
-                CanonicalChargingSpeed.FAST -> "Fast (10-20W)"
-                CanonicalChargingSpeed.ULTRA_FAST -> "Ultra Fast (>20W)"
+                CanonicalChargingSpeed.FAST -> "Fast (10-<20W)"
+                CanonicalChargingSpeed.SUPER_FAST -> "Super Fast (20-<40W)"
+                CanonicalChargingSpeed.ULTRA_FAST -> "Ultra Fast (≥40W)"
                 CanonicalChargingSpeed.UNAVAILABLE -> "--"
             }
         } else {

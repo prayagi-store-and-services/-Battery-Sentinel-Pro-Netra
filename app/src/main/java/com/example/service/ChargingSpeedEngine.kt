@@ -37,11 +37,12 @@ class ChargingSpeedEngine {
             null
         }
 
-        // Hardcoded speed tiers: <5W = Slow, >=5W and <10W = Normal, >=10W and <=20W = Fast, >20W = Ultra Fast
+        // Canonical raw-power tiers: <5W Slow, 5W-<10W Normal, 10W-<20W Fast, 20W-<40W Super Fast, >=40W Ultra Fast
         // Rely exclusively on raw battery input power. No 'effective' or 'net' charging power calculations.
         val speedCategory = if (isCharging == true && rawPowerWatts != null) {
             when {
-                rawPowerWatts > 20.0f -> CanonicalChargingSpeed.ULTRA_FAST
+                rawPowerWatts >= 40.0f -> CanonicalChargingSpeed.ULTRA_FAST
+                rawPowerWatts >= 20.0f -> CanonicalChargingSpeed.SUPER_FAST
                 rawPowerWatts >= 10.0f -> CanonicalChargingSpeed.FAST
                 rawPowerWatts >= 5.0f -> CanonicalChargingSpeed.NORMAL
                 else -> CanonicalChargingSpeed.SLOW

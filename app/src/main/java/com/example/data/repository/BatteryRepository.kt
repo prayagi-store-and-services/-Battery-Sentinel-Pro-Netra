@@ -5,6 +5,7 @@ import com.example.data.local.ActivityLogDao
 import com.example.data.local.BatteryDao
 import com.example.data.local.BatteryRecord
 import com.example.data.local.ChargingSession
+import com.example.model.NetraCentralState
 import com.example.data.local.ChargingSessionDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,8 @@ class BatteryRepository(
     @Volatile private var lastRecordTimeMs: Long = 0L
     @Volatile private var currentChargingSessionStart: BatteryRecord? = null
     @Volatile private var currentSessionPeakTemp: Float = 0f
+    @Volatile private var lastCanonicalChargingStartedAt: Long? = null
+    @Volatile private var lastCanonicalChargingStoppedAt: Long? = null
 
     val recentRecords: Flow<List<BatteryRecord>> = batteryDao.getRecentRecords(100)
     val latestRecord: Flow<BatteryRecord?> = batteryDao.getLatestRecord()
@@ -60,7 +63,7 @@ class BatteryRepository(
      * 3. Temperature shifted by >= 0.5°C
      * 4. More than 3 minutes (180,000ms) have elapsed since last write
      */
-    suspend fun recordTelemetryDebounced(record: BatteryRecord) = withContext(Dispatchers.IO) {
+    suspend fun recordTelemetryDebounced(record: BatteryRecord, canonicalState: NetraCentralState? = null) = withContext(Dispatchers.IO) {
         val last = lastRecordedRecord
         val now = System.currentTimeMillis()
         val timeDiff = now - lastRecordTimeMs
@@ -76,62 +79,63 @@ class BatteryRepository(
             lastRecordedRecord = record
             lastRecordTimeMs = now
 
-            // Handle Charging Session Tracking
-            handleChargingSessionTransition(record)
+            // Session transitions are determined by Central Unit timestamps only.
+            // The repository persists canonical sessions; it does not infer transitions independently.
+            canonicalState?.let { persistCanonicalChargingSession(it, record) }
         }
     }
 
-    private suspend fun handleChargingSessionTransition(current: BatteryRecord) {
-        if (current.isCharging) {
-            val session = currentChargingSessionStart
-            if (session == null) {
-                // New charging session started
-                currentChargingSessionStart = current
-                currentSessionPeakTemp = current.temperature
-                logEvent(
-                    title = "Charging Started",
-                    message = "Connected to ${current.pluggedType} power at ${current.level}%. Battery Temp: ${current.temperature}°C",
-                    category = "CHARGING",
-                    severity = "INFO",
-                    dotColor = "GREEN"
-                )
-            } else {
-                if (current.temperature > currentSessionPeakTemp) {
-                    currentSessionPeakTemp = current.temperature
-                }
-            }
-        } else {
-            val session = currentChargingSessionStart
-            if (session != null) {
-                // Charging session finished
-                val durationMs = current.timestamp - session.timestamp
-                val durationMin = kotlin.math.max(1, (durationMs / 60_000L).toInt())
-                val avgPower = (session.powerWatts + current.powerWatts) / 2f
+    private suspend fun persistCanonicalChargingSession(state: NetraCentralState, current: BatteryRecord) {
+        val startedAt = state.chargingStartedAt
+        if (state.isCharging == true && startedAt != null && startedAt != lastCanonicalChargingStartedAt) {
+            lastCanonicalChargingStartedAt = startedAt
+            currentChargingSessionStart = current.copy(timestamp = startedAt)
+            currentSessionPeakTemp = current.temperature
+            logEvent(
+                title = "Charging Started",
+                message = "Charging session started at ${current.level}%. Battery Temp: ${current.temperature}°C",
+                category = "CHARGING",
+                severity = "INFO",
+                dotColor = "GREEN"
+            )
+        }
 
+        val session = currentChargingSessionStart
+        if (session != null && state.isCharging == true) {
+            currentSessionPeakTemp = maxOf(currentSessionPeakTemp, current.temperature)
+        }
+
+        val stoppedAt = state.chargingStoppedAt
+        if (stoppedAt != null && stoppedAt != lastCanonicalChargingStoppedAt) {
+            lastCanonicalChargingStoppedAt = stoppedAt
+            val activeSession = currentChargingSessionStart
+            if (activeSession != null && stoppedAt > activeSession.timestamp) {
+                val durationMin = maxOf(1, ((stoppedAt - activeSession.timestamp) / 60_000L).toInt())
+                val endPower = current.powerWatts ?: 0f
+                val avgPower = (activeSession.powerWatts + endPower) / 2f
                 val completedSession = ChargingSession(
-                    startTime = session.timestamp,
-                    endTime = current.timestamp,
-                    startLevel = session.level,
+                    startTime = activeSession.timestamp,
+                    endTime = stoppedAt,
+                    startLevel = activeSession.level,
                     endLevel = current.level,
-                    peakTemperature = kotlin.math.max(currentSessionPeakTemp, current.temperature),
+                    peakTemperature = maxOf(currentSessionPeakTemp, current.temperature),
                     avgPowerWatts = avgPower,
-                    chargerType = session.pluggedType,
+                    chargerType = activeSession.pluggedType,
                     durationMinutes = durationMin
                 )
                 chargingSessionDao.insert(completedSession)
-                currentChargingSessionStart = null
-
                 logEvent(
-                    title = "Charging Disconnected",
-                    message = "Charged from ${session.level}% to ${current.level}% in ${durationMin}m. Peak Temp: ${completedSession.peakTemperature}°C",
+                    title = "Charging Session Ended",
+                    message = "Charged from ${activeSession.level}% to ${current.level}% in ${durationMin}m. Peak Temp: ${completedSession.peakTemperature}°C",
                     category = "CHARGING",
                     severity = "INFO",
                     dotColor = "BLUE"
                 )
             }
+            currentChargingSessionStart = null
+            currentSessionPeakTemp = 0f
         }
     }
-
     suspend fun logEvent(
         title: String,
         message: String,
@@ -154,6 +158,10 @@ class BatteryRepository(
         batteryDao.clearAll()
         chargingSessionDao.clearAll()
         lastRecordedRecord = null
+        currentChargingSessionStart = null
+        currentSessionPeakTemp = 0f
+        lastCanonicalChargingStartedAt = null
+        lastCanonicalChargingStoppedAt = null
     }
 
     suspend fun clearLogs() = withContext(Dispatchers.IO) {

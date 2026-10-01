@@ -332,12 +332,16 @@ class NetraCentralDataCenterTest {
         dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 2500000, null, null)
         assertEquals(CanonicalChargingSpeed.FAST, dataCenter.centralState.value.chargingSpeed)
 
-        // 20.0W (4000mV * 5000mA = 20.0W) -> Fast
+        // 20.0W -> Super Fast (20W to <40W)
         dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 5000000, null, null)
-        assertEquals(CanonicalChargingSpeed.FAST, dataCenter.centralState.value.chargingSpeed)
+        assertEquals(CanonicalChargingSpeed.SUPER_FAST, dataCenter.centralState.value.chargingSpeed)
 
-        // 20.1W (4000mV * 5025mA = 20.1W) -> Ultra Fast (> 20W)
-        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 5025000, null, null)
+        // 20.1W -> Super Fast
+        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BATTERY_PLUGGED_AC, 300, 4000, 5025000, null, null)
+        assertEquals(CanonicalChargingSpeed.SUPER_FAST, dataCenter.centralState.value.chargingSpeed)
+
+        // 40.0W -> Ultra Fast
+        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BATTERY_PLUGGED_AC, 300, 4000, 10000000, null, null)
         assertEquals(CanonicalChargingSpeed.ULTRA_FAST, dataCenter.centralState.value.chargingSpeed)
     }
 
@@ -391,6 +395,34 @@ class NetraCentralDataCenterTest {
         assertEquals(15.0f, state.powerWatts!!, 0.01f)
     }
 
+    @Test
+    fun `test central charger session timestamps are authoritative`() = runTest(testDispatcher) {
+        var now = 1_000L
+        val center = NetraCentralDataCenter { now }
+        val ac = android.os.BatteryManager.BATTERY_PLUGGED_AC
+        val notCharging = android.os.BatteryManager.BATTERY_STATUS_NOT_CHARGING
+        val charging = android.os.BatteryManager.BATTERY_STATUS_CHARGING
+        val discharging = android.os.BatteryManager.BATTERY_STATUS_DISCHARGING
+
+        center.processRawInput(40, 100, notCharging, ac, 300, 4000, 0, null, null)
+        assertEquals(1_000L, center.centralState.value.chargerConnectedAt)
+        assertNull(center.centralState.value.chargingStartedAt)
+
+        now = 2_000L
+        center.processRawInput(40, 100, charging, ac, 300, 4000, 2500000, null, null)
+        assertEquals(2_000L, center.centralState.value.chargingStartedAt)
+
+        now = 3_000L
+        center.processRawInput(41, 100, notCharging, ac, 300, 4000, 0, null, null)
+        assertEquals(3_000L, center.centralState.value.chargingStoppedAt)
+        assertEquals(com.example.model.CanonicalChargerState.CHARGER_CONNECTED_NOT_CHARGING, center.centralState.value.canonicalChargerState)
+
+        now = 4_000L
+        center.processRawInput(41, 100, discharging, 0, 300, 4000, -500000, null, null)
+        assertEquals(4_000L, center.centralState.value.chargerDisconnectedAt)
+        assertEquals(4_000L, center.centralState.value.dischargingStartedAt)
+        assertEquals(com.example.model.CanonicalChargerState.DISCHARGING, center.centralState.value.canonicalChargerState)
+    }
     @Test
     fun `test repeated telemetry does not reset session timestamps`() = runTest(testDispatcher) {
         dataCenter.processRawInput(40, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 2500000, null, null)
@@ -458,7 +490,7 @@ class NetraCentralDataCenterTest {
         dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 2500000, null, null)
         assertEquals(CanonicalChargingSpeed.FAST, dataCenter.centralState.value.chargingSpeed)
 
-        // 20.0W -> Fast
+        // 20.0W -> Super Fast
         dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 5000000, null, null)
         assertEquals(CanonicalChargingSpeed.FAST, dataCenter.centralState.value.chargingSpeed)
 
