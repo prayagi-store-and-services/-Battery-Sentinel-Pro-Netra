@@ -46,19 +46,19 @@ private data class WidgetOption(
 )
 
 private val availableWidgets = listOf(
-    WidgetOption("Battery Quick", "2 × 1", BatteryQuickProvider::class.java),
-    WidgetOption("Battery Stats", "2 × 2", BatteryStatsProvider::class.java),
-    WidgetOption("Battery Overview", "3 × 2", BatteryFullProvider::class.java),
-    WidgetOption("Battery Temperature", "2 × 1", TemperatureProvider::class.java),
-    WidgetOption("Battery Voltage", "2 × 1", VoltageProvider::class.java),
-    WidgetOption("Battery Current", "2 × 1", CurrentProvider::class.java),
-    WidgetOption("Battery Power", "2 × 1", PowerProvider::class.java),
-    WidgetOption("Battery Health", "2 × 1", HealthProvider::class.java),
-    WidgetOption("Current Trend", "3 × 2", GraphCurrentProvider::class.java),
-    WidgetOption("Power Trend", "3 × 2", GraphPowerProvider::class.java),
-    WidgetOption("Temperature Trend", "3 × 2", GraphTempProvider::class.java),
-    WidgetOption("Current and Voltage Trend", "3 × 2", GraphCurrentVoltageProvider::class.java),
-    WidgetOption("Wattage and Voltage Trend", "3 × 2", GraphWattageVoltageProvider::class.java)
+    WidgetOption("Battery Quick", "146 × 72 dp", BatteryQuickProvider::class.java),
+    WidgetOption("Battery Stats", "250 × 180 dp", BatteryStatsProvider::class.java),
+    WidgetOption("Battery Overview", "250 × 180 dp", BatteryFullProvider::class.java),
+    WidgetOption("Battery Temperature", "250 × 72 dp", TemperatureProvider::class.java),
+    WidgetOption("Battery Voltage", "250 × 72 dp", VoltageProvider::class.java),
+    WidgetOption("Battery Current", "250 × 72 dp", CurrentProvider::class.java),
+    WidgetOption("Battery Power", "250 × 72 dp", PowerProvider::class.java),
+    WidgetOption("Battery Health", "250 × 72 dp", HealthProvider::class.java),
+    WidgetOption("Current Trend", "250 × 72 dp", GraphCurrentProvider::class.java),
+    WidgetOption("Power Trend", "250 × 72 dp", GraphPowerProvider::class.java),
+    WidgetOption("Temperature Trend", "250 × 72 dp", GraphTempProvider::class.java),
+    WidgetOption("Current and Voltage Trend", "250 × 72 dp", GraphCurrentVoltageProvider::class.java),
+    WidgetOption("Wattage and Voltage Trend", "250 × 72 dp", GraphWattageVoltageProvider::class.java)
 )
 
 @Composable
@@ -99,7 +99,7 @@ fun WidgetCatalogueScreen(viewModel: com.example.viewmodel.NetraViewModel) {
                     ) {
                         Text(widget.name, style = MaterialTheme.typography.titleMedium)
                         Text(
-                            "Approximate size: ${widget.size}",
+                            "Minimum size: ${widget.size}",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Button(
