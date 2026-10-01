@@ -1,0 +1,270 @@
+package com.example.update
+
+import android.app.PackageInstaller
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import com.example.BuildConfig
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+import java.io.File
+import java.security.MessageDigest
+
+sealed interface UpdateUiState {
+    data object Idle : UpdateUiState
+    data object Checking : UpdateUiState
+    data class Available(val release: GitHubReleaseInfo) : UpdateUiState
+    data class Downloading(val release: GitHubReleaseInfo) : UpdateUiState
+    data class Error(val message: String) : UpdateUiState
+}
+
+data class GitHubReleaseInfo(
+    val tagName: String,
+    val versionName: String,
+    val versionCode: Long,
+    val notes: String,
+    val apkUrl: String,
+    val sha256: String?
+)
+
+class GitHubReleaseUpdater(context: Context) {
+    companion object {
+        const val API_URL = "https://api.github.com/repos/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/releases/latest"
+        private const val PREFS = "netra_release_update_cache"
+        private const val CHECK_INTERVAL_MS = 6L * 60L * 60L * 1000L
+    }
+
+    private val appContext = context.applicationContext
+    private val client = OkHttpClient()
+    private val _state = MutableStateFlow<UpdateUiState>(UpdateUiState.Idle)
+    val state: StateFlow<UpdateUiState> = _state.asStateFlow()
+    private var periodicJob: Job? = null
+
+    fun checkNow() {
+        if (_state.value is UpdateUiState.Checking || _state.value is UpdateUiState.Downloading) return
+        CoroutineScope(Dispatchers.IO).launch { checkInternal() }
+    }
+
+    fun startPeriodicChecks(scope: CoroutineScope) {
+        periodicJob?.cancel()
+        periodicJob = scope.launch {
+            while (isActive) {
+                checkInternal()
+                delay(CHECK_INTERVAL_MS)
+            }
+        }
+    }
+
+    fun stopPeriodicChecks() {
+        periodicJob?.cancel()
+        periodicJob = null
+    }
+
+    fun installLatest(onInstallStarted: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        val release = (_state.value as? UpdateUiState.Available)?.release ?: readCache()
+        if (release == null) {
+            onError("No cached release is available.")
+            return
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+            _state.value = UpdateUiState.Downloading(release)
+            try {
+                val apk = downloadApk(release)
+                withContext(Dispatchers.Main) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                        !appContext.packageManager.canRequestPackageInstalls()
+                    ) {
+                        _state.value = UpdateUiState.Available(release)
+                        appContext.startActivity(
+                            Intent(
+                                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                Uri.parse("package:" + appContext.packageName)
+                            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        )
+                        onError("Allow installs from this source, then tap Update again.")
+                        return@withContext
+                    }
+                    stageInstall(apk)
+                    onInstallStarted()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _state.value = UpdateUiState.Error(e.message ?: "Update failed.")
+                    onError(e.message ?: "Update failed.")
+                }
+            }
+        }
+    }
+
+    private suspend fun checkInternal() = withContext(Dispatchers.IO) {
+        _state.value = UpdateUiState.Checking
+        try {
+            val request = Request.Builder()
+                .url(API_URL)
+                .header("Accept", "application/vnd.github+json")
+                .header("X-GitHub-Api-Version", "2026-03-10")
+                .header("User-Agent", "Battery-Sentinel-Pro-Netra/" + BuildConfig.VERSION_NAME)
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw IllegalStateException("GitHub update check failed (" + response.code + ").")
+                val json = JSONObject(response.body?.string().orEmpty())
+                if (json.optBoolean("draft") || json.optBoolean("prerelease")) {
+                    throw IllegalStateException("No stable GitHub release is available.")
+                }
+                val assets = json.optJSONArray("assets") ?: throw IllegalStateException("Release APK is missing.")
+                var apkUrl: String? = null
+                var digest: String? = null
+                for (i in 0 until assets.length()) {
+                    val asset = assets.getJSONObject(i)
+                    if (asset.optString("name").lowercase().endsWith(".apk")) {
+                        apkUrl = asset.optString("browser_download_url").takeIf { it.isNotBlank() }
+                        digest = asset.optString("digest").removePrefix("sha256:").takeIf { it.isNotBlank() }
+                        if (apkUrl != null) break
+                    }
+                }
+                val notes = json.optString("body").trim()
+                val versionCode = Regex("(?m)^versionCode\\s*[:=]\\s*(\\d+)")
+                    .find(notes)?.groupValues?.getOrNull(1)?.toLongOrNull()
+                    ?: throw IllegalStateException("Release is missing versionCode metadata.")
+                val release = GitHubReleaseInfo(
+                    tagName = json.optString("tag_name"),
+                    versionName = json.optString("tag_name").removePrefix("v"),
+                    versionCode = versionCode,
+                    notes = notes,
+                    apkUrl = apkUrl ?: throw IllegalStateException("Release APK asset is missing."),
+                    sha256 = digest
+                )
+                writeCache(release)
+                _state.value = if (release.versionCode > BuildConfig.VERSION_CODE) {
+                    UpdateUiState.Available(release)
+                } else {
+                    UpdateUiState.Idle
+                }
+            }
+        } catch (e: Exception) {
+            val cached = readCache()
+            _state.value = if (cached != null && cached.versionCode > BuildConfig.VERSION_CODE) {
+                UpdateUiState.Available(cached)
+            } else {
+                UpdateUiState.Error(e.message ?: "Update check unavailable.")
+            }
+        }
+    }
+
+    private fun downloadApk(release: GitHubReleaseInfo): File {
+        val dir = File(appContext.cacheDir, "updates").apply { mkdirs() }
+        val target = File(dir, "battery-sentinel-pro-netra-" + release.versionCode + ".apk")
+        val request = Request.Builder()
+            .url(release.apkUrl)
+            .header("User-Agent", "Battery-Sentinel-Pro-Netra/" + BuildConfig.VERSION_NAME)
+            .build()
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IllegalStateException("APK download failed (" + response.code + ").")
+            val body = response.body ?: throw IllegalStateException("APK download returned no data.")
+            body.byteStream().use { input ->
+                target.outputStream().use { output -> input.copyTo(output) }
+            }
+        }
+        release.sha256?.let { expected ->
+            if (!sha256(target).equals(expected, ignoreCase = true)) {
+                target.delete()
+                throw SecurityException("Downloaded APK checksum does not match the GitHub release digest.")
+            }
+        }
+        return target
+    }
+
+    private fun sha256(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input ->
+            val buffer = ByteArray(32 * 1024)
+            while (true) {
+                val read = input.read(buffer)
+                if (read <= 0) break
+                digest.update(buffer, 0, read)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    private fun stageInstall(apk: File) {
+        val installer = appContext.packageManager.packageInstaller
+        val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
+            setAppPackageName(appContext.packageName)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_REQUIRED)
+            }
+        }
+        val sessionId = installer.createSession(params)
+        installer.openSession(sessionId).use { session ->
+            apk.inputStream().use { input ->
+                session.openWrite("base.apk", 0, apk.length()).use { output ->
+                    input.copyTo(output)
+                    session.fsync(output)
+                }
+            }
+            val intent = Intent(appContext, InstallResultReceiver::class.java).setPackage(appContext.packageName)
+            val pendingIntent = PendingIntent.getBroadcast(
+                appContext,
+                sessionId,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            session.commit(pendingIntent.intentSender)
+        }
+    }
+
+    private fun writeCache(release: GitHubReleaseInfo) {
+        appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putString("tag", release.tagName)
+            .putString("version_name", release.versionName)
+            .putLong("version_code", release.versionCode)
+            .putString("notes", release.notes)
+            .putString("apk_url", release.apkUrl)
+            .putString("sha256", release.sha256)
+            .apply()
+    }
+
+    private fun readCache(): GitHubReleaseInfo? {
+        val prefs = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val code = prefs.getLong("version_code", -1L)
+        val name = prefs.getString("version_name", null) ?: return null
+        val url = prefs.getString("apk_url", null) ?: return null
+        if (code < 0) return null
+        return GitHubReleaseInfo(
+            tagName = prefs.getString("tag", name) ?: name,
+            versionName = name,
+            versionCode = code,
+            notes = prefs.getString("notes", "").orEmpty(),
+            apkUrl = url,
+            sha256 = prefs.getString("sha256", null)
+        )
+    }
+}
+
+class InstallResultReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
+        if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
+            intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)?.let { confirmation ->
+                confirmation.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(confirmation)
+            }
+        }
+    }
+}
