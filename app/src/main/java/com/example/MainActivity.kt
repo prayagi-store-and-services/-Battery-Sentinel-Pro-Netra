@@ -27,6 +27,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -64,6 +66,8 @@ import com.example.ui.theme.NetraEmerald
 import com.example.ui.theme.NetraSurface
 import com.example.ui.theme.StatusRed
 import com.example.viewmodel.NetraViewModel
+import com.example.update.GitHubReleaseUpdater
+import com.example.update.UpdateUiState
 
 class MainActivity : ComponentActivity() {
 
@@ -98,6 +102,13 @@ fun MainAppContent(viewModel: NetraViewModel) {
     val canonical by viewModel.canonicalState.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
+    val releaseUpdater = remember(context) { GitHubReleaseUpdater(context) }
+    val updateState by releaseUpdater.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(releaseUpdater) {
+        releaseUpdater.checkNow()
+        releaseUpdater.startPeriodicChecks(this)
+    }
 
     // Thermal & Low Battery Brightness Protection Lock
     LaunchedEffect(canonical.targetBrightnessPercent) {
@@ -134,6 +145,31 @@ fun MainAppContent(viewModel: NetraViewModel) {
         if (permissionsToRequest.isNotEmpty()) {
             permissionLauncher.launch(permissionsToRequest.toTypedArray())
         }
+    }
+
+    val availableUpdate = (updateState as? UpdateUiState.Available)?.release
+    if (availableUpdate != null) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text("Update available: " + availableUpdate.versionName) },
+            text = {
+                Column {
+                    Text("A newer Battery Sentinel Pro Netra release is available.")
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text("What's new", fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Text(availableUpdate.notes.ifBlank { "Release notes are unavailable." })
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { releaseUpdater.installLatest() },
+                    enabled = updateState !is UpdateUiState.Downloading
+                ) {
+                    Text(if (updateState is UpdateUiState.Downloading) "Downloading…" else "Update")
+                }
+            }
+        )
     }
 
     // BackHandler: return to Home tab if on secondary tab
