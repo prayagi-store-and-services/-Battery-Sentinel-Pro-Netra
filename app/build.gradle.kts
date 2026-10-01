@@ -1,4 +1,6 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
+import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
   alias(libs.plugins.android.application)
@@ -12,23 +14,33 @@ android {
   namespace = "com.example"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
+  val netraVersionCode = providers.gradleProperty("netraVersionCode").orElse("1").get().toInt()
+  val netraVersionName = providers.gradleProperty("netraVersionName").orElse("1.0.0").get()
+  val signingProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.isFile) FileInputStream(file).use { load(it) }
+  }
+  val signingPath = System.getenv("KEYSTORE_PATH") ?: signingProperties.getProperty("storeFile")
+  val signingStorePassword = System.getenv("STORE_PASSWORD") ?: signingProperties.getProperty("storePassword")
+  val signingKeyAlias = System.getenv("KEY_ALIAS") ?: signingProperties.getProperty("keyAlias")
+  val signingKeyPassword = System.getenv("KEY_PASSWORD") ?: signingProperties.getProperty("keyPassword")
+
   defaultConfig {
     applicationId = "com.aistudio.batterysentinel.ntra"
     minSdk = 24
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    versionCode = netraVersionCode
+    versionName = netraVersionName
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
   signingConfigs {
     create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
+      if (signingPath != null) storeFile = file(signingPath)
+      storePassword = signingStorePassword
+      keyAlias = signingKeyAlias
+      keyPassword = signingKeyPassword
     }
   }
 
