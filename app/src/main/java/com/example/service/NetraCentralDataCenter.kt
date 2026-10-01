@@ -789,8 +789,26 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             powerStatus = aged(f.powerStatus, f.powerObservedAt)
         )
         val fresh = state.isDataFresh && agedFields.levelStatus == FieldStatus.LIVE
+        val agedCapabilities = state.capabilities.toMutableMap().apply {
+            fun revoke(type: CapabilityType, status: FieldStatus) {
+                if (status != FieldStatus.LIVE && this[type] == CapabilityStatus.AVAILABLE) {
+                    this[type] = CapabilityStatus.UNAVAILABLE
+                }
+            }
+            revoke(CapabilityType.BATTERY_TEMPERATURE, agedFields.tempStatus)
+            revoke(CapabilityType.BATTERY_VOLTAGE, agedFields.voltageStatus)
+            revoke(CapabilityType.BATTERY_CURRENT, agedFields.currentStatus)
+            val powerInputsLive = agedFields.currentStatus == FieldStatus.LIVE &&
+                agedFields.voltageStatus == FieldStatus.LIVE
+            if (!powerInputsLive) {
+                for (type in listOf(CapabilityType.BATTERY_POWER_CALCULATION,
+                    CapabilityType.CHARGING_SPEED_CALCULATION, CapabilityType.FAST_CHARGING_DETECTION)) {
+                    if (this[type] == CapabilityStatus.AVAILABLE) this[type] = CapabilityStatus.UNAVAILABLE
+                }
+            }
+        }
         _centralState.value = state.copy(
-            fieldStates = agedFields, isDataFresh = fresh,
+            fieldStates = agedFields, isDataFresh = fresh, capabilities = agedCapabilities,
             chargingEtaMinutes = if (fresh) state.chargingEtaMinutes else null,
             dischargingEtaMinutes = if (fresh) state.dischargingEtaMinutes else null,
             announcementSpeed = if (agedFields.powerStatus == FieldStatus.LIVE) state.announcementSpeed else CanonicalChargingSpeed.UNAVAILABLE
