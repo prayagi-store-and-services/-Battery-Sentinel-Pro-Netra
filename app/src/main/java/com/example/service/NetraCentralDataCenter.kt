@@ -245,6 +245,32 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
         _centralState.value = _centralState.value.copy(audioRoutingStatus = status)
     }
 
+    fun updateScreenState(isScreenOn: Boolean, isConfirmedOff: Boolean) {
+        _centralState.value = _centralState.value.copy(
+            isScreenOn = isScreenOn,
+            isScreenOffConfirmed = isConfirmedOff,
+            isIdealStateActive = isConfirmedOff
+        )
+    }
+
+    fun refreshSystemMetrics(context: Context) {
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+        val memInfo = android.app.ActivityManager.MemoryInfo()
+        am?.getMemoryInfo(memInfo)
+        
+        val totalMem = memInfo.totalMem.toFloat()
+        val availMem = memInfo.availMem.toFloat()
+        val ramPercent = (availMem / totalMem) * 100f
+        
+        // Placeholder for CPU headroom, as no public API gives precise headroom percentage.
+        // Documented limitation per roadmap.
+        
+        _centralState.value = _centralState.value.copy(
+            availableRamPercent = ramPercent,
+            isMemoryOptimizationNeeded = ramPercent < 40f
+        )
+    }
+
     // Tracking for deduplication & sessions
     private var lastConnectedState: Boolean? = null
     private var lastChargingState: Boolean? = null
@@ -703,6 +729,9 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 meetsBudget = totalProcessingMs <= 100f
             )
 
+            val isIdealStateActive = oldState.isScreenOffConfirmed
+            val isThermalTargetReached = (mergedTempCelsius ?: 99f) <= 30f
+
             val updatedState = NetraCentralState(
                 batteryLevel = mergedLevel,
                 isCharging = mergedIsCharging,
@@ -745,7 +774,11 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 weatherContext = oldState.weatherContext,
                 deviceIdleState = deviceIdleState,
                 adaptiveThermalContext = adaptiveThermal,
-                pipelineLatency = latencyMetrics
+                pipelineLatency = latencyMetrics,
+                isScreenOn = oldState.isScreenOn,
+                isScreenOffConfirmed = isIdealStateActive,
+                isIdealStateActive = isIdealStateActive,
+                isIdealThermalTargetReached = isThermalTargetReached
             )
 
             // Publish state IMMEDIATELY (single atomic update)

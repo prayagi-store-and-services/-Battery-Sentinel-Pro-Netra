@@ -5,23 +5,43 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.PowerManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 
 /**
  * Ultra-low power lifecycle & power state tracker.
  * Adapts engine behavior according to screen state and battery saver.
  */
-class LifecycleAwarePolling(
-    private val context: Context,
-    private val onStateChanged: (isScreenOn: Boolean, isPowerSaveMode: Boolean) -> Unit
+class LifecycleTracker(
+    private val ctx: Context,
+    private val scope: CoroutineScope,
+    private val onStateChanged: (isScreenOn: Boolean, isPowerSaveMode: Boolean, isConfirmedOff: Boolean) -> Unit
 ) {
-    private val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+    private val powerManager = ctx.getSystemService(Context.POWER_SERVICE) as? PowerManager
     private var isRegistered = false
+    private var screenOffJob: Job? = null
+    private var confirmedScreenOff = false
 
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            val isScreenOn = powerManager?.isInteractive ?: true
+            val isInteractive = powerManager?.isInteractive ?: true
             val isPowerSave = powerManager?.isPowerSaveMode ?: false
-            onStateChanged(isScreenOn, isPowerSave)
+
+            if (isInteractive) {
+                screenOffJob?.cancel()
+                confirmedScreenOff = false
+                onStateChanged(true, isPowerSave, false)
+            } else {
+                screenOffJob?.cancel()
+                screenOffJob = scope.launch(kotlinx.coroutines.Dispatchers.Default) {
+                    kotlinx.coroutines.delay(5000)
+                    confirmedScreenOff = true
+                    onStateChanged(false, isPowerSave, true)
+                }
+            }
         }
     }
 
@@ -32,19 +52,19 @@ class LifecycleAwarePolling(
                 addAction(Intent.ACTION_SCREEN_OFF)
                 addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
             }
-            context.registerReceiver(screenReceiver, filter)
+            ctx.registerReceiver(screenReceiver, filter)
             isRegistered = true
 
             val isScreenOn = powerManager?.isInteractive ?: true
             val isPowerSave = powerManager?.isPowerSaveMode ?: false
-            onStateChanged(isScreenOn, isPowerSave)
+            onStateChanged(isScreenOn, isPowerSave, !isScreenOn)
         }
     }
 
     fun stop() {
         if (isRegistered) {
             try {
-                context.unregisterReceiver(screenReceiver)
+                ctx.unregisterReceiver(screenReceiver)
             } catch (_: Exception) {}
             isRegistered = false
         }

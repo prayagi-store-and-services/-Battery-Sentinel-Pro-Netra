@@ -43,7 +43,7 @@ class BatteryMonitorService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     // Conflated channel prevents queuing lag, delivering freshest broadcast immediately
     private val batteryInputs = Channel<Intent>(Channel.CONFLATED)
-    private lateinit var lifecyclePolling: LifecycleAwarePolling
+    private lateinit var lifecycleTracker: LifecycleTracker
     private var isReceiverRegistered = false
     private var lastTemp: Float = 0f
     private var lastTempTimestamp: Long = 0L
@@ -108,19 +108,26 @@ class BatteryMonitorService : Service() {
 
     private fun startCollectorsAndPolling() {
         try {
-            if (!::lifecyclePolling.isInitialized) {
-                lifecyclePolling = LifecycleAwarePolling(this) { isScreenOn, isPowerSave ->
-                    val current = _liveTelemetryFlow.value
-                    _liveTelemetryFlow.value = current.copy(
-                        isScreenOn = isScreenOn,
-                        isPowerSaverActive = isPowerSave
-                    )
-                    if (isScreenOn) {
-                        checkBluetoothUpdates()
+            if (!::lifecycleTracker.isInitialized) {
+                lifecycleTracker = LifecycleTracker(
+                    ctx = this.applicationContext,
+                    scope = serviceScope,
+                    onStateChanged = { isScreenOn, isPowerSave, isConfirmedOff ->
+                        val current = _liveTelemetryFlow.value
+                        _liveTelemetryFlow.value = current.copy(
+                            isScreenOn = isScreenOn,
+                            isPowerSaverActive = isPowerSave
+                        )
+                        if (isScreenOn) {
+                            checkBluetoothUpdates()
+                        }
+                        serviceScope.launch {
+                            NetraApplication.instance.centralDataCenter.updateScreenState(isScreenOn, isConfirmedOff)
+                        }
                     }
-                }
+                )
             }
-            lifecyclePolling.start()
+            lifecycleTracker.start()
         } catch (e: Exception) {
             Log.e("BatteryMonitorService", "Error starting lifecycle polling", e)
         }
@@ -170,6 +177,7 @@ class BatteryMonitorService : Service() {
                     startCollectorsAndPolling()
                     val center = NetraApplication.instance.centralDataCenter
                     center.expireTelemetryFreshness()
+                    center.refreshSystemMetrics(this@BatteryMonitorService)
                     NetraApplication.instance.telemetrySentinel.checkStaleStatus()
                     val state = center.centralState.value
                     if (!state.isDataFresh) {
@@ -261,7 +269,7 @@ class BatteryMonitorService : Service() {
 
         val dotState = when {
             isCritical -> DotState.CRITICAL
-            lifecyclePolling.isPowerSaveMode() -> DotState.THROTTLED
+            lifecycleTracker.isPowerSaveMode() -> DotState.THROTTLED
             !isCharging && batteryPct <= 15 -> DotState.THROTTLED
             else -> DotState.CONNECTED
         }
@@ -291,8 +299,8 @@ class BatteryMonitorService : Service() {
             serviceDotState = dotState,
             isServiceConnected = true,
             isDataAvailable = canonical.batteryLevel != null,
-            isPowerSaverActive = lifecyclePolling.isPowerSaveMode(),
-            isScreenOn = lifecyclePolling.isScreenInteractive(),
+            isPowerSaverActive = lifecycleTracker.isPowerSaveMode(),
+            isScreenOn = lifecycleTracker.isScreenInteractive(),
             lastUpdateTimestamp = now
         )
 
@@ -340,7 +348,7 @@ class BatteryMonitorService : Service() {
                     isCharging = isCharging,
                     pluggedType = pluggedType,
                     healthStatus = healthString,
-                    screenOn = lifecyclePolling.isScreenInteractive()
+                    screenOn = lifecycleTracker.isScreenInteractive()
                 )
                 NetraApplication.instance.batteryRepository.recordTelemetryDebounced(record, canonical)
             } catch (_: Exception) {}
@@ -650,7 +658,7 @@ class BatteryMonitorService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        lifecyclePolling.stop()
+        lifecycleTracker.stop()
         try {
             unregisterReceiver(batteryReceiver)
         } catch (_: Exception) {}

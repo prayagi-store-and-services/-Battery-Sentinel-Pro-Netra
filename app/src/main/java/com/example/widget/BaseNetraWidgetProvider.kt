@@ -2,6 +2,7 @@ package com.example.widget
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.widget.RemoteViews
 import com.example.NetraApplication
@@ -15,6 +16,7 @@ abstract class BaseNetraWidgetProvider(private val layoutId: Int) : AppWidgetPro
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        // Collect state and push update to all active widget instances
         val state = NetraApplication.instance.centralDataCenter.centralState.value
         for (appWidgetId in appWidgetIds) {
             updateWidget(context, appWidgetManager, appWidgetId, state)
@@ -28,8 +30,22 @@ abstract class BaseNetraWidgetProvider(private val layoutId: Int) : AppWidgetPro
         state: NetraCentralState
     ) {
         val views = RemoteViews(context.packageName, layoutId)
-        // Link to Central Unit's state flow mapping in WidgetStateAdapter
-        // (Implementation details here would map state to views)
+        
+        // Example mapping: Link specific widget layout to state
+        // This would call WidgetStateAdapter for layout-specific data model.
+        // E.g., for a simple text-based widget:
+        // views.setTextViewText(R.id.widget_some_text_id, state.batteryLevel.toString() + "%")
+        
         appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    // Handle data updates to refresh active widgets
+    fun notifyStateChanged(context: Context, state: NetraCentralState) {
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val provider = ComponentName(context, this::class.java)
+        val appWidgetIds = appWidgetManager.getAppWidgetIds(provider)
+        for (appWidgetId in appWidgetIds) {
+            updateWidget(context, appWidgetManager, appWidgetId, state)
+        }
     }
 }

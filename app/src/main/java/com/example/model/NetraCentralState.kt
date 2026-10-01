@@ -293,6 +293,15 @@ data class NetraCentralState(
     val targetBrightnessPercent: Int? = null,
     val thermalCauseDiagnosis: String? = null,
     val environmentalDiagnosis: EnvironmentalHeatDiagnosis = EnvironmentalHeatDiagnosis.NORMAL_ENVIRONMENTAL_CONTEXT,
+    // Ideal State Foundation (Part 2)
+    val isScreenOn: Boolean = true,
+    val isScreenOffConfirmed: Boolean = false,
+    val isIdealStateActive: Boolean = false,
+    val isIdealThermalTargetReached: Boolean = false, // <= 30°C
+    val availableRamPercent: Float? = null,
+    val isMemoryOptimizationNeeded: Boolean = false,
+    val cpuHeadroomPercent: Float? = null,
+    val isCpuOptimizationNeeded: Boolean = false,
     // Geo-Climate Adaptive Environmental Context (Part 19)
     val locationContext: LocationContextState = LocationContextState(),
     val weatherContext: WeatherContextState = WeatherContextState(),

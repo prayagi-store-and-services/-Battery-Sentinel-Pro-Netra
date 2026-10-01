@@ -51,6 +51,9 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
     lateinit var stabilitySentinel: com.example.service.StabilitySentinel
         private set
 
+    lateinit var idealStateEngine: com.example.service.IdealStateEngine
+        private set
+
     override fun onCreate() {
         super.onCreate()
         instance = this
@@ -64,6 +67,7 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         announcementEngine = com.example.service.AnnouncementEngine(this)
         telemetrySentinel = com.example.service.TelemetrySentinel(this)
         stabilitySentinel = com.example.service.StabilitySentinel.installCrashHandler(this)
+        idealStateEngine = com.example.service.IdealStateEngine(this)
         com.example.service.StabilityHealthScheduler.schedule(this)
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             stabilitySentinel.flushPendingReports()
