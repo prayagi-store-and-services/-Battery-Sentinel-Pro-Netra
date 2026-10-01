@@ -60,10 +60,10 @@ class ThermalCauseInvestigator(private val context: Context) : SensorEventListen
         isCharging: Boolean = false,
         isHeavyLoad: Boolean = false
     ): ThermalCauseDiagnosisResult {
-        val ambient = lastAmbientReading ?: weatherAmbientTempCelsius
+        val ambient = (lastAmbientReading ?: weatherAmbientTempCelsius)?.takeIf { it.isFinite() }
 
         return when {
-            ambient == null -> {
+            ambient == null || !batteryTempCelsius.isFinite() -> {
                 ThermalCauseDiagnosisResult(
                     state = EnvironmentalHeatDiagnosis.INSUFFICIENT_SENSOR_DATA,
                     message = "Ambient thermal telemetry unavailable on this device. Internal protection remains authoritative."
@@ -102,4 +102,3 @@ class ThermalCauseInvestigator(private val context: Context) : SensorEventListen
         }
     }
 }
-
