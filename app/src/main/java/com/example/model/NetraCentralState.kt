@@ -21,6 +21,7 @@ enum class CanonicalChargingSpeed {
             SLOW -> "Slow Charging"
             NORMAL -> "Normal Charging"
             FAST -> "Fast Charging"
+            SUPER_FAST -> "Super Fast Charging"
             ULTRA_FAST -> "Ultra Fast Charging"
             UNAVAILABLE -> "Unavailable"
         }
@@ -28,7 +29,7 @@ enum class CanonicalChargingSpeed {
     val tierRange: String
         get() = when (this) {
             SLOW -> "< 5W"
-            NORMAL -> "5W–10W"
+            NORMAL -> "5W–<10W"
             FAST -> "10W–<20W"
             SUPER_FAST -> "20W–<40W"
             ULTRA_FAST -> "≥ 40W"

@@ -544,6 +544,7 @@ class BatteryMonitorService : Service() {
             CanonicalChargingSpeed.SLOW -> "Slow Charging"
             CanonicalChargingSpeed.NORMAL -> "Normal Charging"
             CanonicalChargingSpeed.FAST -> "Fast Charging"
+            CanonicalChargingSpeed.SUPER_FAST -> "Super Fast Charging"
             CanonicalChargingSpeed.ULTRA_FAST -> "Ultra Fast Charging"
             CanonicalChargingSpeed.UNAVAILABLE -> ""
         }
