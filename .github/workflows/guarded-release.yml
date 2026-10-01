@@ -12,12 +12,6 @@ permissions:
 jobs:
   gate:
     name: Release gate
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      startsWith(github.event.head_commit.message, 'feat') ||
-      startsWith(github.event.head_commit.message, 'fix') ||
-      contains(github.event.head_commit.message, 'security') ||
-      contains(github.event.head_commit.message, 'patch')
     runs-on: ubuntu-latest
     outputs:
       version_name: ${{ steps.version.outputs.version_name }}
@@ -172,3 +166,23 @@ jobs:
           git tag "v$VERSION_NAME"
           git push origin "v$VERSION_NAME"
           gh release create "v$VERSION_NAME" app/build/outputs/apk/release/app-release.apk --title "Battery Sentinel Pro Netra v$VERSION_NAME" --notes-file /tmp/body.md
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          p=Path("CHANGELOG.md")
+          current=p.read_text()
+          marker="## [Unreleased]"
+          start=current.index(marker)
+          body_start=start+len(marker)
+          rest=current[body_start:]
+          next_section=rest.find("\n## ")
+          unreleased=rest if next_section < 0 else rest[:next_section]
+          archived=f"## [{os.environ['VERSION_NAME']}]\n"+unreleased.strip()+"\n\n"
+          after="" if next_section < 0 else rest[next_section+1:]
+          p.write_text(current[:start]+marker+"\n\n"+archived+after)
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs(release): archive $VERSION_NAME changelog"
+          git push origin HEAD:main
