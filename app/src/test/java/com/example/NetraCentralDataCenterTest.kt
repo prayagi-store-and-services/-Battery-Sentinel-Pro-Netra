@@ -687,4 +687,31 @@ class NetraCentralDataCenterTest {
         assertNull(center.centralState.value.isCharging)
         assertEquals(false, center.centralState.value.isDataFresh)
     }
+    @Test
+    fun `negative CURRENT_NOW polarity while charging produces positive raw power and correct tier`() = runTest(testDispatcher) {
+        // Android/device current polarity can be negative even when BATTERY_STATUS says charging.
+        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, -1_500_000, null, null)
+        var state = dataCenter.centralState.value
+        assertEquals(-1500, state.currentMa)
+        assertEquals(6.0f, state.powerWatts!!, 0.01f)
+        assertEquals(CanonicalChargingSpeed.NORMAL, state.chargingSpeed)
+        assertNull(state.consumptionPowerWatts)
+
+        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, -3_000_000, null, null)
+        state = dataCenter.centralState.value
+        assertEquals(12.0f, state.powerWatts!!, 0.01f)
+        assertEquals(CanonicalChargingSpeed.FAST, state.chargingSpeed)
+
+        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, -6_000_000, null, null)
+        state = dataCenter.centralState.value
+        assertEquals(24.0f, state.powerWatts!!, 0.01f)
+        assertEquals(CanonicalChargingSpeed.SUPER_FAST, state.chargingSpeed)
+
+        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, -10_000_000, null, null)
+        state = dataCenter.centralState.value
+        assertEquals(40.0f, state.powerWatts!!, 0.01f)
+        assertEquals(CanonicalChargingSpeed.ULTRA_FAST, state.chargingSpeed)
+    }
+
+
 }
