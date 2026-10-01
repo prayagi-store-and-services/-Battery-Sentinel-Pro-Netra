@@ -35,4 +35,13 @@ class ChargingSpeedEngineTest {
         assertEquals(12.0f, result.rawPowerWatts!!, 0.001f)
         assertNull(result.consumptionPowerWatts)
     }
+
+    @Test
+    fun milliampDevicesAreNotReadAsMicroamps() {
+        assertEquals(3000, engine.normalizeToMilliAmps(3000, true))        // reported in mA
+        assertEquals(3000, engine.normalizeToMilliAmps(3_000_000, true))   // reported in uA
+        assertEquals(3, engine.normalizeToMilliAmps(3000, false))          // not actively charging: uA
+        assertEquals(-3000, engine.normalizeToMilliAmps(-3000, true))
+        assertEquals(CanonicalChargingSpeed.FAST, engine.calculate(true, 4000, engine.normalizeToMilliAmps(-3000, true)).speedCategory)
+    }
 }

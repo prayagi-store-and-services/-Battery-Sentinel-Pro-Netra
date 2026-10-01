@@ -12,6 +12,17 @@ data class SpeedEngineResult(
 
 class ChargingSpeedEngine {
 
+    /**
+     * BATTERY_PROPERTY_CURRENT_NOW is specified in microamps, but some devices report milliamps.
+     * While actively charging (not FULL, where trickle current is tiny), a magnitude of 2000..19999
+     * is only plausible as milliamps (2-20 A); as microamps it would be a 2-20 mA trickle that
+     * cannot be an actively charging phone. Everything else is treated as microamps.
+     */
+    fun normalizeToMilliAmps(raw: Int, activelyCharging: Boolean): Int {
+        val mag = abs(raw.toLong())
+        return if (activelyCharging && mag in 2000L..19999L) raw else raw / 1000
+    }
+
     fun calculate(
         isCharging: Boolean?,
         voltageMv: Int?,
