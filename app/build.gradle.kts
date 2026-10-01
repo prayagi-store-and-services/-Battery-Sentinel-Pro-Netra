@@ -16,6 +16,8 @@ android {
 
   val netraVersionCode = providers.gradleProperty("netraVersionCode").orElse("1").get().toInt()
   val netraVersionName = providers.gradleProperty("netraVersionName").orElse("1.0.0").get()
+  val stabilityReportUrl = providers.gradleProperty("netraStabilityReportUrl").orElse(providers.environmentVariable("NETRA_STABILITY_REPORT_URL")).orElse("")
+  val stabilityReportUrlEscaped = stabilityReportUrl.get().replace("\\", "\\\\").replace("\"", "\\\"")
   val signingProperties = Properties().apply {
     val file = rootProject.file("keystore.properties")
     if (file.isFile) FileInputStream(file).use { load(it) }
@@ -33,6 +35,7 @@ android {
     versionName = netraVersionName
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    buildConfigField("String", "STABILITY_REPORT_URL", "\"" + stabilityReportUrlEscaped + "\"")
   }
 
   signingConfigs {
@@ -98,6 +101,7 @@ dependencies {
   implementation(libs.androidx.core.ktx)
   // implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.lifecycle.runtime.compose)
+  implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.androidx.navigation.compose)

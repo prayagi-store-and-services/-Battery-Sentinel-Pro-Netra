@@ -1,0 +1,70 @@
+name: Stability Issue Intake
+
+on:
+  repository_dispatch:
+    types: [netra_stability_incident]
+  workflow_dispatch:
+    inputs:
+      payload:
+        description: 'JSON stability incident payload for manual verification'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-or-update-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create or update deduplicated stability issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DISPATCH_PAYLOAD: ${{ toJson(github.event.client_payload) }}
+          MANUAL_PAYLOAD: ${{ inputs.payload }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PAYLOAD="${DISPATCH_PAYLOAD}"
+          if [ -z "$PAYLOAD" ] || [ "$PAYLOAD" = "null" ] || [ "$PAYLOAD" = "{}" ]; then
+            PAYLOAD="$MANUAL_PAYLOAD"
+          fi
+          export PAYLOAD
+          python3 - <<'PY' > /tmp/issue.md
+          import json, os
+          raw=os.environ.get('PAYLOAD','')
+          data=json.loads(raw)
+          print('## Battery Sentinel Pro Netra — Stability Incident')
+          print('')
+          print(f"- **Report ID:** {data.get('reportId','unknown')}")
+          print(f"- **Type:** {data.get('reportType','unknown')}")
+          print(f"- **Component:** {data.get('component','unknown')}")
+          print(f"- **App:** {data.get('appVersionName','unknown')} (versionCode {data.get('appVersionCode','unknown')})")
+          print(f"- **Device:** {data.get('deviceManufacturer','unknown')} {data.get('deviceModel','unknown')}")
+          print(f"- **Android:** {data.get('androidVersion','unknown')} / API {data.get('androidSdk','unknown')}")
+          print(f"- **Issue:** {data.get('issue','Crash or runtime anomaly')}")
+          print('')
+          print('### Diagnostic data')
+          print('```json')
+          print(json.dumps(data, indent=2, ensure_ascii=False)[:30000])
+          print('```')
+          print('')
+          print('> Automatically generated from the stability intake pipeline. Do not add secrets, tokens, contacts, files, or raw location data to this issue.')
+          PY
+          FINGERPRINT="$(python3 - <<'PY'
+          import json, os, hashlib
+          d=json.loads(os.environ['PAYLOAD'])
+          parts=[str(d.get(k,'')) for k in ('reportType','component','issue','exceptionClass','androidSdk','deviceModel','appVersionCode')]
+          print(hashlib.sha256('|'.join(parts).encode()).hexdigest()[:16])
+          PY
+          )"
+          TITLE="[Stability][$FINGERPRINT] Automated incident"
+          EXISTING="$(gh issue list --repo "$REPO" --state open --search "in:title $FINGERPRINT" --json number --jq '.[0].number // empty')"
+          gh label create stability --repo "$REPO" --color 9C36B5 --description "Automated stability incident" --force >/dev/null 2>&1 || true
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "$REPO" --body-file /tmp/issue.md
+          else
+            gh issue create --repo "$REPO" --title "$TITLE" --body-file /tmp/issue.md --label stability
+          fi

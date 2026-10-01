@@ -150,3 +150,21 @@ Key test coverage:
 - User approval: the app never performs a silent install. Android install-source approval and user confirmation remain authoritative; if approval is missing, the updater opens the system setting for this app install-source permission.
 - Failure handling: network failures, API errors/rate limits, missing assets, download errors, and checksum mismatches return an update error state rather than crashing the app. Cached release metadata remains available for offline comparison.
 - Direct repository: prayagideepak-collab/-Battery-Sentinel-Pro-Netra.
+
+
+## Crash & Stability Sentinel
+
+The app now has a bounded, privacy-minimized crash and runtime stability pipeline integrated with the existing Central Unit.
+
+- **Crash capture:** an uncaught-exception handler persists a diagnostic report locally before delegating to Android's existing crash handler. It does not attempt network I/O on the crashing thread.
+- **Device targeting:** reports include app version/versionCode, manufacturer/model, Android release/API level, affected component, exception class/stack trace when available, and a minimal Central Unit state snapshot.
+- **Feature health:** an hourly WorkManager diagnostic check evaluates the existing telemetry sentinel and canonical battery capability state. It is not a live telemetry/UI polling loop.
+- **12-hour cadence:** the periodic diagnostic runs approximately once per hour, giving up to 12 bounded checks in a 12-hour window under Android scheduling constraints. The OS may defer background work.
+- **Healthy reports:** healthy checks are stored locally only and rotated to a bounded history. They are not sent to GitHub.
+- **Incident reports:** crashes and actionable runtime anomalies are queued locally. They are uploaded only when a stability endpoint is configured and reachable; failed uploads remain queued for retry.
+- **Offline operation:** no network is required to capture a crash or health result. Reports remain on-device until delivery succeeds.
+- **No crash-time prompt:** no runtime permission dialog or user confirmation is triggered when a crash occurs. The existing Android INTERNET permission is sufficient for HTTPS transport.
+- **Privacy boundary:** no passwords, tokens, contacts, files, or raw location history are included in the diagnostic schema.
+- **GitHub issue intake:** .github/workflows/stability-report-intake.yml accepts a repository_dispatch event from a trusted backend, fingerprints incidents by environment/component, and creates or comments on a deduplicated GitHub Issue.
+- **Secure transport requirement:** netraStabilityReportUrl / NETRA_STABILITY_REPORT_URL is intentionally empty by default. A backend/GitHub App gateway must be deployed and configured outside the APK; a GitHub token is never embedded in the app.
+- **Device-specific fixes:** incidents are grouped by app version, Android API, device model, component, and normalized exception fingerprint so compatibility fixes can be targeted without creating a second app architecture. All resulting releases still use the normal CI, signing, and release gates.

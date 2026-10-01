@@ -1,6 +1,10 @@
 package com.example
 
 import android.app.Application
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import com.example.data.local.NetraDatabase
 import com.example.data.repository.BatteryRepository
 import com.example.data.repository.SettingsRepository
@@ -8,6 +12,8 @@ import com.example.service.BatteryMonitorService
 import com.example.service.NetraCentralDataCenter
 
 class NetraApplication : Application() {
+
+    val startedAtMillis: Long = System.currentTimeMillis()
 
     lateinit var database: NetraDatabase
         private set
@@ -39,6 +45,9 @@ class NetraApplication : Application() {
     lateinit var telemetrySentinel: com.example.service.TelemetrySentinel
         private set
 
+    lateinit var stabilitySentinel: com.example.service.StabilitySentinel
+        private set
+
     override fun onCreate() {
         super.onCreate()
         instance = this
@@ -51,6 +60,11 @@ class NetraApplication : Application() {
         storageCacheManager = com.example.data.repository.StorageCacheManager(this)
         announcementEngine = com.example.service.AnnouncementEngine(this)
         telemetrySentinel = com.example.service.TelemetrySentinel(this)
+        stabilitySentinel = com.example.service.StabilitySentinel.installCrashHandler(this)
+        com.example.service.StabilityHealthScheduler.schedule(this)
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            stabilitySentinel.flushPendingReports()
+        }
         calibrationManager = com.example.ai.BatteryCalibrationManager(this)
         powerProfileManager = com.example.ai.PowerProfileManager(this)
         batteryRepository = BatteryRepository(database.batteryDao(), database.chargingSessionDao(), database.activityLogDao())
