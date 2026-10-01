@@ -10,11 +10,29 @@ class ChargingSpeedEngineTest {
 
     @Test
     fun testChargingSpeedThresholds() {
-        // Test boundaries
+        // Positive CURRENT_NOW sign convention.
         assertEquals(CanonicalChargingSpeed.SLOW, engine.calculate(true, 4000, 1000).speedCategory) // 4W
         assertEquals(CanonicalChargingSpeed.NORMAL, engine.calculate(true, 4000, 1500).speedCategory) // 6W
         assertEquals(CanonicalChargingSpeed.FAST, engine.calculate(true, 4000, 3000).speedCategory) // 12W
         assertEquals(CanonicalChargingSpeed.SUPER_FAST, engine.calculate(true, 4000, 6000).speedCategory) // 24W
         assertEquals(CanonicalChargingSpeed.ULTRA_FAST, engine.calculate(true, 4000, 10000).speedCategory) // 40W
+    }
+
+    @Test
+    fun chargingSpeedUsesCurrentMagnitudeWhenDeviceReportsNegativeChargingCurrent() {
+        // Some device fuel-gauge implementations report charging current with a negative sign.
+        // When Android confirms charging, the sign must not collapse the calculated power to 0W.
+        assertEquals(CanonicalChargingSpeed.SLOW, engine.calculate(true, 4000, -1000).speedCategory) // 4W
+        assertEquals(CanonicalChargingSpeed.NORMAL, engine.calculate(true, 4000, -1500).speedCategory) // 6W
+        assertEquals(CanonicalChargingSpeed.FAST, engine.calculate(true, 4000, -3000).speedCategory) // 12W
+        assertEquals(CanonicalChargingSpeed.SUPER_FAST, engine.calculate(true, 4000, -6000).speedCategory) // 24W
+        assertEquals(CanonicalChargingSpeed.ULTRA_FAST, engine.calculate(true, 4000, -10000).speedCategory) // 40W
+    }
+
+    @Test
+    fun negativeCurrentDuringConfirmedChargingIsNotMisreportedAsPhoneConsumption() {
+        val result = engine.calculate(true, 4000, -3000)
+        assertEquals(12.0f, result.rawPowerWatts!!, 0.001f)
+        assertNull(result.consumptionPowerWatts)
     }
 }

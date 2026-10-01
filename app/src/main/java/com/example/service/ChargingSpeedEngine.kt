@@ -23,7 +23,9 @@ class ChargingSpeedEngine {
 
         // Raw incoming charging power: strictly positive power delivered to battery while charging
         val rawPowerWatts = if (isCharging == true) {
-            batteryPowerWatts?.coerceAtLeast(0f)
+            // CURRENT_NOW sign conventions vary across device fuel-gauge implementations.
+            // Charging state is authoritative for direction; classify by current magnitude.
+            batteryPowerWatts?.let { abs(it) }
         } else if (batteryPowerWatts != null && batteryPowerWatts < 0) {
             0f
         } else {
@@ -31,7 +33,7 @@ class ChargingSpeedEngine {
         }
 
         // Monitored strictly for independent phone discharge telemetry; never modifies charging speed
-        val consumptionWatts = if (currentMa != null && currentMa < 0 && voltageMv != null) {
+        val consumptionWatts = if (isCharging != true && currentMa != null && currentMa < 0 && voltageMv != null) {
             abs(voltageMv.toFloat() * currentMa.toFloat()) / 1_000_000f
         } else {
             null
