@@ -337,11 +337,11 @@ class NetraCentralDataCenterTest {
         assertEquals(CanonicalChargingSpeed.SUPER_FAST, dataCenter.centralState.value.chargingSpeed)
 
         // 20.1W -> Super Fast
-        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BATTERY_PLUGGED_AC, 300, 4000, 5025000, null, null)
+        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 5025000, null, null)
         assertEquals(CanonicalChargingSpeed.SUPER_FAST, dataCenter.centralState.value.chargingSpeed)
 
         // 40.0W -> Ultra Fast
-        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BATTERY_PLUGGED_AC, 300, 4000, 10000000, null, null)
+        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 10000000, null, null)
         assertEquals(CanonicalChargingSpeed.ULTRA_FAST, dataCenter.centralState.value.chargingSpeed)
     }
 
