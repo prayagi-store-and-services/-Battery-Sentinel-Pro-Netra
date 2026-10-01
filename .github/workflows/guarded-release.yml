@@ -20,6 +20,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ needs.gate.outputs.release_sha }}
+        with:
+          ref: ${{ needs.gate.outputs.release_sha }}
+        with:
           fetch-depth: 0
       - name: Validate changelog
         run: |
