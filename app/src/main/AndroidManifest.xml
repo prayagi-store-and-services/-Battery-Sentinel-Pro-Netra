@@ -18,6 +18,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- Direct GitHub APK update install flow; Android still requires user approval. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Usage Stats Permission for App Drain Monitoring (granted via Settings) -->
     <uses-permission
@@ -213,6 +215,11 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_info_graph_wattage_voltage" />
         </receiver>
+
+        <receiver
+            android:name=".update.InstallResultReceiver"
+            android:enabled="true"
+            android:exported="false" />
 
         <!-- FileProvider for Sharing & Viewing Generated Battery PDF Reports -->
         <provider
