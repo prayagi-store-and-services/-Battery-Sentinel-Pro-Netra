@@ -46,6 +46,8 @@ enum class NetraTab(val title: String, val icon: ImageVector, val tag: String) {
     SETTINGS("Settings", Icons.Default.Settings, "tab_settings")
 }
 
+const val WIDGET_CATALOGUE_BUTTON_TAG = "top_bar_widgets_button"
+
 val BOTTOM_TABS = listOf(
     NetraTab.HOME,
     NetraTab.BATTERY,
