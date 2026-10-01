@@ -30,15 +30,14 @@ class IdealStateEngine(private val application: NetraApplication) {
 
     private fun evaluateIdealState(state: NetraCentralState) {
         // Ideal State: Screen Off, Low Temp (<= 30°C), Efficient CPU/RAM
-        val isScreenOff = !state.isScreenOn
+        val isScreenOff = !state.isScreenOn && state.isScreenOffConfirmed
         val isTempIdeal = (state.temperatureCelsius ?: 99f) <= 30f
         val isResourcesIdeal = !state.isMemoryOptimizationNeeded && !state.isCpuOptimizationNeeded
         
         val isIdeal = isScreenOff && isTempIdeal && isResourcesIdeal
         
-        if (isIdeal != state.isIdealStateActive) {
-            // State change detected - in a real implementation we would trigger
-            // event-driven actions here to maintain/restore Ideal State
+        if (isIdeal != state.isIdealStateActive || isTempIdeal != state.isIdealThermalTargetReached) {
+            application.centralDataCenter.updateIdealStateStatus(isIdeal, isTempIdeal)
         }
     }
 }

@@ -430,19 +430,6 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                     )
                 )
             }
-            NetraEventType.THERMAL_ANOMALY_DETECTED -> {
-                if (settings.announceThermalWarning) {
-                    enqueue(
-                        AnnouncementItem(
-                            id = "thermal_anomaly_$now",
-                            text = "Device temperature is significantly above the current environmental baseline.",
-                            priority = AnnouncementPriority.CRITICAL_THERMAL,
-                            category = "THERMAL_ANOMALY",
-                            isNightException = true
-                        )
-                    )
-                }
-            }
             else -> {}
         }
     }

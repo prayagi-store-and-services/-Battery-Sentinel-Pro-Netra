@@ -55,6 +55,13 @@ enum class CanonicalMediaState {
     PLAYING, PAUSED, STOPPED, UNKNOWN, UNSUPPORTED
 }
 
+enum class ChargingOptimizationMode {
+    NORMAL,
+    LIMITED_THERMAL,
+    RESTRICTED,
+    UNKNOWN
+}
+
 enum class CapabilityStatus {
     SUPPORTED,
     UNSUPPORTED,
@@ -254,6 +261,8 @@ data class NetraCentralState(
     val isCharging: Boolean? = null,
     val isChargerConnected: Boolean? = null,
     val canonicalChargerState: CanonicalChargerState = CanonicalChargerState.UNKNOWN,
+    val thermalStatus: Int = android.os.PowerManager.THERMAL_STATUS_NONE, // Android Thermal Status
+    val chargingOptimizationMode: ChargingOptimizationMode = ChargingOptimizationMode.NORMAL,
     val chargerConnectedAt: Long? = null,
     val chargingStartedAt: Long? = null,
     val chargingStoppedAt: Long? = null,

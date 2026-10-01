@@ -12,6 +12,7 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -95,6 +96,15 @@ class BatteryMonitorService : Service() {
         startForeground(NOTIFICATION_ID, buildSentinelNotification(NetraApplication.instance.centralDataCenter.centralState.value))
         startCollectorsAndPolling()
         startLifecycleSupervisor()
+        
+        // Add thermal status listener
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+            powerManager?.addThermalStatusListener(mainExecutor) { status ->
+                NetraApplication.instance.centralDataCenter.updateThermalStatus(status)
+            }
+        }
+
         serviceScope.launch {
             for (batteryIntent in batteryInputs) {
                 try {
@@ -171,7 +181,9 @@ class BatteryMonitorService : Service() {
     private fun startLifecycleSupervisor() {
         serviceScope.launch {
             while (true) {
-                kotlinx.coroutines.delay(45_000L) // check every 45 seconds
+                val state = NetraApplication.instance.centralDataCenter.centralState.value
+                val pollingInterval = if (state.isIdealStateActive) 300_000L else 45_000L
+                kotlinx.coroutines.delay(pollingInterval)
                 try {
                     // Ensure collectors are active and restart if stopped without spawning duplicates
                     startCollectorsAndPolling()
@@ -179,11 +191,11 @@ class BatteryMonitorService : Service() {
                     center.expireTelemetryFreshness()
                     center.refreshSystemMetrics(this@BatteryMonitorService)
                     NetraApplication.instance.telemetrySentinel.checkStaleStatus()
-                    val state = center.centralState.value
-                    if (!state.isDataFresh) {
+                    val stateAfter = center.centralState.value
+                    if (!stateAfter.isDataFresh) {
                         _liveTelemetryFlow.value = _liveTelemetryFlow.value.copy(timeToFullMinutes = null, estimatedDischargeHours = null)
                         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                        manager.notify(NOTIFICATION_ID, buildSentinelNotification(state))
+                        manager.notify(NOTIFICATION_ID, buildSentinelNotification(stateAfter))
                     }
                 } catch (e: Exception) {
                     Log.e("BatteryMonitorService", "Supervisor check failed", e)

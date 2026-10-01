@@ -245,6 +245,21 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
         _centralState.value = _centralState.value.copy(audioRoutingStatus = status)
     }
 
+    fun updateIdealStateStatus(active: Boolean, thermalTargetReached: Boolean) {
+        _centralState.value = _centralState.value.copy(
+            isIdealStateActive = active,
+            isIdealThermalTargetReached = thermalTargetReached
+        )
+    }
+
+    fun updateThermalStatus(status: Int) {
+        _centralState.value = _centralState.value.copy(thermalStatus = status)
+    }
+
+    fun updateChargingOptimizationMode(mode: com.example.model.ChargingOptimizationMode) {
+        _centralState.value = _centralState.value.copy(chargingOptimizationMode = mode)
+    }
+
     fun updateScreenState(isScreenOn: Boolean, isConfirmedOff: Boolean) {
         _centralState.value = _centralState.value.copy(
             isScreenOn = isScreenOn,
@@ -262,20 +277,33 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
         val availMem = memInfo.availMem.toFloat()
         val ramPercent = (availMem / totalMem) * 100f
         
-        // Placeholder for CPU headroom, as no public API gives precise headroom percentage.
-        // Documented limitation per roadmap.
+        // Simple CPU headroom estimation: 1.0 - (uptime / duration)
+        // Public Android API only allows process-level or aggregate loadavg.
+        // We will use a lightweight aggregate check.
+        val cpuLoad = try {
+            java.io.File("/proc/loadavg").readText().split(" ")[0].toFloatOrNull() ?: 0f
+        } catch (e: Exception) { 0f }
+        
+        val cpuHeadroom = (100f - (cpuLoad * 10f)).coerceIn(0f, 100f)
         
         _centralState.value = _centralState.value.copy(
             availableRamPercent = ramPercent,
-            isMemoryOptimizationNeeded = ramPercent < 40f
+            isMemoryOptimizationNeeded = ramPercent < 40f,
+            cpuHeadroomPercent = cpuHeadroom,
+            isCpuOptimizationNeeded = cpuHeadroom < 60f
         )
     }
 
-    // Tracking for deduplication & sessions
+    // Session Timestamp tracking
     private var lastConnectedState: Boolean? = null
     private var lastChargingState: Boolean? = null
     private var lastSpeedCategory: CanonicalChargingSpeed? = null
     private var lastBatteryLevelBoundary: Int? = null
+
+    // Screen-off drain tracking
+    private var lastScreenOffTimestamp: Long? = null
+    private var lastScreenOffBatteryLevel: Int? = null
+    private var screenOffDrainRatePerHour: Float = 0f
 
     private var lastThermalWarningState = false
     private var lastCriticalOverheatState = false
@@ -448,6 +476,25 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                     chargingStoppedAt = null
                 }
             }
+            
+            // Screen-off drain tracking
+            val currentScreenOn = _centralState.value.isScreenOn
+            if (mergedIsCharging == false) {
+                if (oldState.isScreenOn && !currentScreenOn) {
+                    lastScreenOffTimestamp = now
+                    lastScreenOffBatteryLevel = mergedLevel
+                } else if (!oldState.isScreenOn && currentScreenOn) {
+                    // Screen turned on, calculate drain if we have a valid baseline
+                    if (lastScreenOffTimestamp != null && lastScreenOffBatteryLevel != null && mergedLevel != null) {
+                        val durationHours = (now - lastScreenOffTimestamp!!) / 3600000f
+                        val drain = (lastScreenOffBatteryLevel!! - mergedLevel).toFloat()
+                        if (durationHours > 0.1f && drain >= 0) {
+                            screenOffDrainRatePerHour = drain / durationHours
+                        }
+                    }
+                }
+            }
+
             if (mergedIsCharging != null && mergedIsCharging != lastChargingState) {
                 if (mergedIsCharging) {
                     chargingStartedAt = now
@@ -794,12 +841,13 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
         // Offload disk persistence to backgroundScope strictly AFTER state publication
         backgroundScope.launch {
             try {
+                val currentState = _centralState.value
                 lastValidStatePrefs?.edit()?.apply {
-                    if (newState.batteryLevel != null) putInt("saved_battery_level", newState.batteryLevel)
-                    if (newState.temperatureCelsius != null) putFloat("saved_temp", newState.temperatureCelsius)
-                    if (newState.voltageMv != null) putInt("saved_voltage", newState.voltageMv)
-                    if (newState.currentMa != null) putInt("saved_current", newState.currentMa)
-                    if (newState.powerWatts != null) putFloat("saved_power", newState.powerWatts)
+                    if (currentState.batteryLevel != null) putInt("saved_battery_level", currentState.batteryLevel)
+                    if (currentState.temperatureCelsius != null) putFloat("saved_temp", currentState.temperatureCelsius)
+                    if (currentState.voltageMv != null) putInt("saved_voltage", currentState.voltageMv)
+                    if (currentState.currentMa != null) putInt("saved_current", currentState.currentMa)
+                    if (currentState.powerWatts != null) putFloat("saved_power", currentState.powerWatts)
                     apply()
                 }
             } catch (_: Exception) {}
