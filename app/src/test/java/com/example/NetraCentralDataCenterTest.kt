@@ -375,7 +375,7 @@ class NetraCentralDataCenterTest {
     @Test
     fun `test reverse speed thresholds`() = runTest(testDispatcher) {
         dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 5025000, null, null)
-        assertEquals(CanonicalChargingSpeed.ULTRA_FAST, dataCenter.centralState.value.chargingSpeed)
+        assertEquals(CanonicalChargingSpeed.SUPER_FAST, dataCenter.centralState.value.chargingSpeed)
 
         dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 4500000, null, null)
         assertEquals(CanonicalChargingSpeed.FAST, dataCenter.centralState.value.chargingSpeed)
