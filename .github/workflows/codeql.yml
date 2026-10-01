@@ -105,7 +105,7 @@ jobs:
     - name: Build debug app for CodeQL
       if: matrix.build-mode == 'manual'
       shell: bash
-      run: gradle --no-daemon :app:assembleDebug
+      run: gradle --no-daemon --no-build-cache --rerun-tasks :app:assembleDebug
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
