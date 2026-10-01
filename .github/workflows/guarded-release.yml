@@ -132,11 +132,16 @@ jobs:
     - uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: 9.3.1
+    - uses: android-actions/setup-android@v3
+      with:
+        packages: platform-tools
+    - name: Generate CI-only debug signing key
+      run: keytool -genkeypair -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -noprompt
     - uses: github/codeql-action/init@v4
       with:
         languages: java-kotlin
         build-mode: manual
-    - run: gradle --no-daemon :app:assembleDebug
+    - run: gradle --no-daemon --no-build-cache --rerun-tasks :app:assembleDebug
     - uses: github/codeql-action/analyze@v4
       with:
         category: /language:java-kotlin
