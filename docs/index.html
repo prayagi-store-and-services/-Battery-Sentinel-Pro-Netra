@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Battery Sentinel Pro Netra - honest battery monitoring for Android</title>
+<meta name="description" content="Battery Sentinel Pro Netra watches your phone's battery, charging and temperature using only what Android actually reports. Free APK download.">
+<link rel="icon" href="assets/icon.webp">
+<style>
+:root{--bg:#0b1220;--card:#121c30;--card2:#17233b;--line:#22314f;--text:#e8eefc;--mute:#9db0d3;--accent:#34d399;--accent2:#38bdf8;--warn:#fbbf24}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+a{color:var(--accent2)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+nav{position:sticky;top:0;z-index:10;background:rgba(11,18,32,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;gap:18px;height:56px}
+nav img{width:30px;height:30px;border-radius:8px}
+nav b{margin-right:auto}
+nav a{color:var(--mute);text-decoration:none;font-size:14px}nav a:hover{color:var(--text)}
+@media(max-width:700px){nav a.hide{display:none}}
+.hero{padding:64px 0 40px;background:radial-gradient(700px 300px at 80% 0,rgba(56,189,248,.18),transparent),radial-gradient(600px 300px at 10% 10%,rgba(52,211,153,.15),transparent)}
+.hero .wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:36px;align-items:center}
+@media(max-width:820px){.hero .wrap{grid-template-columns:1fr}}
+h1{font-size:clamp(30px,5vw,48px);line-height:1.15;margin:0 0 14px}
+h2{font-size:28px;margin:0 0 8px}
+.lead{font-size:18px;color:var(--mute);margin:0 0 24px}
+.btn{display:inline-block;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04210f;font-weight:700;padding:14px 26px;border-radius:12px;text-decoration:none;font-size:17px}
+.btn.alt{background:transparent;color:var(--text);border:1px solid var(--line);margin-left:10px}
+.meta{margin-top:12px;color:var(--mute);font-size:14px}
+.note{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.4);border-radius:12px;padding:12px 16px;margin-top:20px;font-size:14px}
+section{padding:56px 0;border-top:1px solid var(--line)}
+.sub{color:var(--mute);margin:0 0 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.card h3{margin:0 0 6px;font-size:18px}.card p{margin:0;color:var(--mute);font-size:15px}
+.tag{display:inline-block;font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mute);margin-top:10px}
+.tag.ok{color:var(--accent);border-color:rgba(52,211,153,.5)}.tag.plan{color:var(--accent2);border-color:rgba(56,189,248,.5)}.tag.idea{color:var(--warn);border-color:rgba(251,191,36,.5)}
+/* illustrative phone */
+.phone{width:260px;margin:0 auto;border:3px solid #2a3a5c;border-radius:34px;background:#0e1729;padding:16px 14px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.phone .gauge{width:150px;height:150px;margin:8px auto 10px;border-radius:50%;border:10px solid #22314f;border-top-color:var(--accent);display:grid;place-items:center;text-align:center;font-size:13px;color:var(--mute)}
+.phone .gauge b{display:block;font-size:20px;color:var(--text)}
+.row{display:flex;justify-content:space-between;background:var(--card2);border-radius:10px;padding:8px 10px;margin:6px 0;font-size:12px;color:var(--mute)}
+.row b{color:var(--text)}
+.tabs{display:flex;justify-content:space-between;margin-top:12px;font-size:10px;color:var(--mute);border-top:1px solid var(--line);padding-top:8px}
+.cap{text-align:center;color:var(--mute);font-size:12px;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--mute);font-weight:600;font-size:13px}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+ol,ul{padding-left:20px;color:var(--mute)}
+footer{padding:36px 0;border-top:1px solid var(--line);color:var(--mute);font-size:14px}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+<img src="assets/icon.webp" alt=""><b>Battery Sentinel Pro Netra</b>
+<a class="hide" href="#features">Features</a><a class="hide" href="#benefits">Benefits</a><a class="hide" href="#soon">Coming soon</a><a href="#old">Old versions</a><a href="#download">Download</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+<div>
+<h1>Know what your battery is really doing.</h1>
+<p class="lead">Battery Sentinel Pro Netra watches your phone's battery, charging and temperature using only what Android actually reports. If a reading is not available, it says so. No made-up numbers.</p>
+<a class="btn" id="dl-main" href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/releases/latest/download/app-release.apk">Download latest APK</a>
+<a class="btn alt" href="#features">See what it does</a>
+<div class="meta" id="latest-meta">Always the newest release. Free. Android only.</div>
+<div class="note"><b>Install tip:</b> sometimes the app will not install over an older build. If the install fails, uninstall the old version first, then install the new one.</div>
+</div>
+<div>
+<div class="phone" aria-label="Illustrative layout preview">
+<div class="gauge"><div><b>Battery</b>live gauge</div></div>
+<div class="row"><span>Voltage</span><b>Unavailable until Android reports it</b></div>
+<div class="row"><span>Charging speed</span><b>Shown only while charging</b></div>
+<div class="row"><span>Temperature</span><b>From the battery sensor</b></div>
+<div class="tabs"><span>Status</span><span>Battery</span><span>Monitor</span><span>Devices</span><span>Settings</span></div>
+</div>
+<div class="cap">Illustrative layout of the home screen, not a screenshot. Real screenshots will be added once captured from a device.</div>
+</div>
+</div></header>
+
+<section id="features"><div class="wrap">
+<h2>What the app does</h2>
+<p class="sub">Five tabs: Status, Battery, Monitoring, Devices, Settings.</p>
+<div class="grid">
+<div class="card"><h3>Live battery gauge</h3><p>Level, charging state, temperature, voltage and current from Android's own battery data, refreshed every second while the app is open.</p><span class="tag ok">Available</span></div>
+<div class="card"><h3>Charging power and speed</h3><p>Shows the power going into the battery (volts x amps) and labels it Slow, Normal, Fast, Super Fast or Ultra Fast. This is what the battery receives, not the charger's printed rating.</p><span class="tag ok">Available</span><span class="tag">Real-device validation pending</span></div>
+<div class="card"><h3>Time to full / empty</h3><p>Estimates come from how your battery level actually moves over time. With too little data, it shows nothing instead of guessing.</p><span class="tag ok">Available</span></div>
+<div class="card"><h3>Charging history</h3><p>Each charging session is recorded: start and end time, battery level, peak temperature and average power.</p><span class="tag ok">Available</span></div>
+<div class="card"><h3>Heat awareness</h3><p>Uses your region and local weather to tell whether a warm battery is just a hot day or something your phone is doing.</p><span class="tag ok">Available</span></div>
+<div class="card"><h3>Bluetooth device battery</h3><p>See connected earbuds and other Bluetooth devices, and the last battery level each one reported.</p><span class="tag ok">Available</span></div>
+<div class="card"><h3>Voice alerts with quiet hours</h3><p>Spoken alerts for charger and battery events. Routine alerts stay quiet from 11 PM to 6 AM; critical heat alerts still come through. Your music is paused for an alert and resumed only if the app paused it.</p><span class="tag ok">Available</span></div>
+<div class="card"><h3>Which apps use power</h3><p>Per-app usage from Android's Usage Access, so you can see what is draining your phone.</p><span class="tag ok">Available</span></div>
+<div class="card"><h3>Reports you can keep</h3><p>Export recorded readings and charging sessions to PDF or CSV. Values the phone cannot measure are marked unavailable in the report.</p><span class="tag ok">Available</span></div>
+<div class="card"><h3>Safe updates</h3><p>The app checks GitHub Releases for new versions, checks the file's checksum and signature, and only installs after you confirm.</p><span class="tag ok">Available</span></div>
+</div></div></section>
+
+<section id="benefits"><div class="wrap">
+<h2>What you get out of it</h2>
+<p class="sub">Plain benefits, no hype.</p>
+<div class="grid">
+<div class="card"><h3>Trust the numbers</h3><p>Everything on screen comes from Android. When Android gives nothing, you see "Unavailable", not a fake zero.</p></div>
+<div class="card"><h3>Spot slow chargers and bad cables</h3><p>The charging tier tells you at a glance if a charger or cable is giving your phone less power than you expect.</p></div>
+<div class="card"><h3>Catch overheating early</h3><p>Temperature tracking and heat context help you notice when your phone runs hotter than it should.</p></div>
+<div class="card"><h3>Easy on your battery</h3><p>Built to use very little power itself. The one-second live refresh runs only while the app is on screen.</p></div>
+<div class="card"><h3>Your data stays on your phone</h3><p>Readings and history are stored on the device. Crash reports are only sent if a reporting server is set up, which is not the case today.</p></div>
+</div></div></section>
+
+<section id="download"><div class="wrap">
+<h2>Download</h2>
+<p class="sub">The button always points to the newest release. No page edits needed when a new version comes out.</p>
+<p><a class="btn" href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/releases/latest/download/app-release.apk">Download latest APK</a></p>
+<ol>
+<li>Download the APK on your Android phone.</li>
+<li>Open it and allow installing from this source when Android asks.</li>
+<li>If it will not install over an older build, uninstall the old version first, then install the new one.</li>
+</ol>
+<p class="sub">Source and release notes: <a href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra">GitHub repository</a>.</p>
+</div></section>
+
+<section id="old"><div class="wrap">
+<h2>Old versions</h2>
+<p class="sub">Every release ever published. New releases appear here on their own.</p>
+<div id="old-list"><p class="sub">Loading releases...</p></div>
+<p class="sub">If the list does not load, open <a href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/releases">all releases on GitHub</a>.</p>
+</div></section>
+
+<section id="soon"><div class="wrap">
+<h2>Coming soon</h2>
+<p class="sub">Planned work first. Ideas are only ideas: nothing here is promised.</p>
+<h3>Planned</h3>
+<div class="grid">
+<div class="card"><h3>Solar monitoring</h3><p>Read-only view of solar systems from official provider accounts. A provider is added only after it passes a real account test. Nothing is enabled yet.</p><span class="tag plan">Planned</span></div>
+<div class="card"><h3>Complete battery protection</h3><p>The heat and low-battery rules exist. Automatically acting on them and restoring settings afterwards is still being finished.</p><span class="tag plan">Planned</span></div>
+<div class="card"><h3>Crash reporting</h3><p>Crashes are saved on the phone today. Sending them to the developer needs a secure server, which is not set up yet.</p><span class="tag plan">Planned</span></div>
+</div>
+<h3 style="margin-top:28px">Ideas (not committed)</h3>
+<div class="grid">
+<div class="card"><h3>Home-screen widget</h3><p>Battery level and charging speed without opening the app.</p><span class="tag idea">Idea</span></div>
+<div class="card"><h3>Battery health trend</h3><p>A long-term chart built from the readings the phone really provides.</p><span class="tag idea">Idea</span></div>
+<div class="card"><h3>Hindi and more languages</h3><p>Voice alerts and screens in more languages.</p><span class="tag idea">Idea</span></div>
+<div class="card"><h3>Weekly summary</h3><p>A short weekly note: charging habits, hottest moments, slowest charger.</p><span class="tag idea">Idea</span></div>
+<div class="card"><h3>Charger and cable scoreboard</h3><p>Compare chargers you have used by the power they actually delivered.</p><span class="tag idea">Idea</span></div>
+</div></div></section>
+
+<footer><div class="wrap">
+<p><b>Honesty note.</b> Charging figures are battery-side readings from Android and may differ from a charger's rating. Phone makers report current differently, so instant numbers can vary. Android offers no way for any app to limit a charger's output.</p>
+<p>Battery Sentinel Pro Netra &middot; <a href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra">GitHub</a> &middot; <a href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/blob/main/SECURITY.md">Security</a></p>
+</div></footer>
+
+<script>
+(function(){
+var repo="prayagideepak-collab/-Battery-Sentinel-Pro-Netra";
+function fmt(d){try{return new Date(d).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"})}catch(e){return ""}}
+function mb(n){return (n/1048576).toFixed(1)+" MB"}
+fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(rel){
+ rel=rel.filter(function(x){return !x.draft});
+ var meta=document.getElementById("latest-meta");
+ if(rel.length&&meta){meta.textContent="Latest: "+rel[0].tag_name+" - released "+fmt(rel[0].published_at)+". Free. Android only."}
+ var box=document.getElementById("old-list");
+ if(!rel.length){box.innerHTML="<p class='sub'>No releases yet.</p>";return}
+ var html="<table><thead><tr><th>Version</th><th>Released</th><th>Download</th></tr></thead><tbody>";
+ rel.forEach(function(x,i){
+  var apk=(x.assets||[]).filter(function(a){return /\.apk$/i.test(a.name)})[0];
+  html+="<tr><td><a href='"+x.html_url+"'>"+x.tag_name+"</a>"+(i===0?" <span class='tag ok'>latest</span>":"")+"</td><td>"+fmt(x.published_at)+"</td><td>"+(apk?"<a href='"+apk.browser_download_url+"'>APK ("+mb(apk.size)+")</a>":"<span class='sub'>no APK attached</span>")+"</td></tr>";
+ });
+ box.innerHTML=html+"</tbody></table>";
+}).catch(function(){var b=document.getElementById("old-list");if(b)b.innerHTML="<p class='sub'>Could not load the list right now.</p>"});
+})();
+</script>
+</body>
+</html>
