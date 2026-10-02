@@ -4,6 +4,9 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Battery tab: Voltage, Current and Phone Drain tiles now appear only when Android reports them, instead of showing "Unavailable".
+- Festival banner: added Maha Navami (Oct 20) and the end of Durga Puja / Vijaya Dashami (Oct 21) for 2026.
+
 ## [1.1.8]
 
 - Announcements now follow one fixed audio rule: they always play on the phone speaker first, and if a Bluetooth device is connected, the same announcement plays there right after. Android does not reliably allow both at the same instant, so this is one after the other. The "Audio Output Routing & Fallback" setting is removed. New "Mute announcements" control: pick 30 min, 1 hr, 2 hr or 8 hr and routine announcements are muted for that time; critical warnings still play.
