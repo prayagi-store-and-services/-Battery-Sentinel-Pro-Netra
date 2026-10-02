@@ -79,6 +79,7 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
             hardwareProvider = com.example.service.AndroidBatteryHardwareProvider(this)
         )
         com.example.service.StabilityHealthScheduler.schedule(this)
+        com.example.update.UpdateCheckWorker.schedule(this)
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             stabilitySentinel.flushPendingReports()
         }
