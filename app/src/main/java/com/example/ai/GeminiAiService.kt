@@ -24,6 +24,10 @@ object GeminiAiService {
     private const val MODEL_FLASH_LITE = "gemini-3.1-flash-lite-preview"
     private const val MODEL_PRO_THINKING = "gemini-3.1-pro-preview"
 
+    // Quota rotation order: each model has its own quota, so try the next one before local fallback.
+    private val QUICK_MODELS = listOf(MODEL_FLASH_LITE, "gemini-2.5-flash", MODEL_PRO_THINKING)
+    private val DEEP_MODELS = listOf(MODEL_PRO_THINKING, "gemini-2.5-flash", MODEL_FLASH_LITE)
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(60, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
@@ -67,22 +71,13 @@ object GeminiAiService {
                 })
             }
 
-            val url = "$BASE_URL$MODEL_FLASH_LITE:generateContent?key=$apiKey"
-            val requestBody = requestJson.toString().toRequestBody("application/json".toMediaType())
-            val request = Request.Builder()
-                .url(url)
-                .post(requestBody)
-                .build()
-
-            val response = client.newCall(request).execute()
-            if (!response.isSuccessful) {
-                val errorBody = response.body?.string() ?: ""
-                Log.e(TAG, "API error: ${response.code} $errorBody")
+            val bodyString = requestJson.toString()
+            val outcome = GeminiModelRotation.run(QUICK_MODELS) { model -> post(model, apiKey, bodyString) }
+            if (outcome !is GeminiModelRotation.Outcome.Success) {
+                Log.e(TAG, "Quick triage unavailable: $outcome")
                 return@withContext Result.success(generateLocalFallback(telemetry, isThinking = false))
             }
-
-            val responseString = response.body?.string() ?: ""
-            val parsedResult = parseGeminiResponse(responseString, MODEL_FLASH_LITE, false)
+            val parsedResult = parseGeminiResponse(outcome.body, outcome.model, false)
             Result.success(parsedResult)
         } catch (e: Exception) {
             Log.e(TAG, "Exception during Quick Triage", e)
@@ -134,26 +129,35 @@ object GeminiAiService {
                 })
             }
 
-            val url = "$BASE_URL$MODEL_PRO_THINKING:generateContent?key=$apiKey"
-            val requestBody = requestJson.toString().toRequestBody("application/json".toMediaType())
-            val request = Request.Builder()
-                .url(url)
-                .post(requestBody)
-                .build()
-
-            val response = client.newCall(request).execute()
-            if (!response.isSuccessful) {
-                val errorBody = response.body?.string() ?: ""
-                Log.e(TAG, "Thinking API error: ${response.code} $errorBody")
+            val bodyString = requestJson.toString()
+            val outcome = GeminiModelRotation.run(DEEP_MODELS) { model ->
+                // thinkingLevel is only sent to the Pro model; other models get the plain request.
+                val body = if (model == MODEL_PRO_THINKING) bodyString else {
+                    JSONObject(bodyString).apply {
+                        optJSONObject("generationConfig")?.remove("thinkingConfig")
+                    }.toString()
+                }
+                post(model, apiKey, body)
+            }
+            if (outcome !is GeminiModelRotation.Outcome.Success) {
+                Log.e(TAG, "Deep thinking unavailable: $outcome")
                 return@withContext Result.success(generateLocalFallback(telemetry, isThinking = true))
             }
-
-            val responseString = response.body?.string() ?: ""
-            val parsedResult = parseGeminiResponse(responseString, MODEL_PRO_THINKING, true)
+            val parsedResult = parseGeminiResponse(outcome.body, outcome.model, true)
             Result.success(parsedResult)
         } catch (e: Exception) {
             Log.e(TAG, "Exception during Deep Thinking Analysis", e)
             Result.success(generateLocalFallback(telemetry, isThinking = true))
+        }
+    }
+
+    private fun post(model: String, apiKey: String, body: String): GeminiModelRotation.RawResponse {
+        val request = Request.Builder()
+            .url("$BASE_URL$model:generateContent?key=$apiKey")
+            .post(body.toRequestBody("application/json".toMediaType()))
+            .build()
+        client.newCall(request).execute().use { r ->
+            return GeminiModelRotation.RawResponse(r.code, r.body?.string() ?: "")
         }
     }
 
