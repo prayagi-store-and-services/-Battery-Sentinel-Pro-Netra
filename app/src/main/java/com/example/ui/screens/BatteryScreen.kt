@@ -29,7 +29,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,7 +57,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
-import kotlinx.coroutines.delay
 
 enum class BatteryScreenSubTab {
     LIVE_TELEMETRY,
@@ -73,15 +71,6 @@ fun BatteryScreen(
     val canonical by viewModel.canonicalState.collectAsStateWithLifecycle()
     val sessions by viewModel.recentChargingSessions.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
-
-    // Refresh hardware voltage/current/power at 1 Hz only while this screen is visible.
-    // Battery broadcasts remain the primary event-driven source outside this screen.
-    LaunchedEffect(viewModel) {
-        while (true) {
-            viewModel.refreshElectricalTelemetry()
-            delay(1_000L)
-        }
-    }
 
     var selectedSubTab by remember { mutableStateOf(BatteryScreenSubTab.LIVE_TELEMETRY) }
 
