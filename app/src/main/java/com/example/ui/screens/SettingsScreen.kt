@@ -583,6 +583,7 @@ fun SettingsScreen(
         }
 
         item { com.example.ui.components.NetworkSavingCard() }
+        item { com.example.ui.components.ScreenOffSaverCard() }
 
         // 9. About App & Update Channel
         item {
