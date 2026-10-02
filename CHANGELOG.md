@@ -4,6 +4,11 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Permission pop-ups instead of hunting in settings: when something the app uses is not allowed yet (notifications, Bluetooth devices, battery optimization exemption, brightness control if you turned on savings, location), you get ONE short Hinglish pop-up at a time that explains why, with Approve or Skip. Approve opens Android's own screen or dialog - you allow it there, the app never allows anything itself. Allowed permissions are never shown again. If you skip, a later launch asks again ("Aapne pehle skip kiya tha") with allow now, remind me later, or never ask again; never ask again is permanent.
+- Monitoring > Hardware: rows that need your action are tappable and open the exact Android settings page, and re-check when you come back. Bluetooth LE shows AVAILABLE only when Bluetooth is on and permission is granted. Screen-off network optimization now shows UNSUPPORTED, because it needs a system-only permission that no user can grant to a normal app.
+
+## [1.1.4]
+
 - New update notification: once a day (only when there is internet, at a time Android chooses, no exact alarms) the app checks the official GitHub releases. If a newer version exists you get one status-bar notification, "Naya version available hai"; tapping it opens the app, where the existing verified in-app updater offers the download. Nothing is downloaded or installed automatically, and you get only one notification per version. The existing in-app update prompt is unchanged.
 
 ## [1.1.3]
