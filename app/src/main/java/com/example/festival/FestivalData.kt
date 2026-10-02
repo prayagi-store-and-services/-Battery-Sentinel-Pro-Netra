@@ -218,7 +218,6 @@ object FestivalData {
         Indep("Ecuador", 8, 10),
         Indep("Chad", 8, 11),
         Indep("Central African Republic", 8, 13),
-        Indep("Pakistan", 8, 14),
         Indep("India", 8, 15),
         Indep("Republic of the Congo", 8, 15),
         Indep("South Korea", 8, 15),
