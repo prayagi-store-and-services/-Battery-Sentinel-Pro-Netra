@@ -231,7 +231,14 @@ class CentralCapabilityRegistry(private val context: Context) {
         }
 
         // 21. Bluetooth LE (Low Energy)
-        map[CapabilityType.BLUETOOTH_LE] = staticHardwareFeatures[CapabilityType.BLUETOOTH_LE] ?: CapabilityStatus.UNSUPPORTED
+        // AVAILABLE only when the phone has BLE, Bluetooth is on and the permission is granted; otherwise an action state.
+        val bleHardware = staticHardwareFeatures[CapabilityType.BLUETOOTH_LE] ?: CapabilityStatus.UNSUPPORTED
+        map[CapabilityType.BLUETOOTH_LE] = when {
+            bleHardware != CapabilityStatus.SUPPORTED -> bleHardware
+            !hasBtPerm -> CapabilityStatus.PERMISSION_REQUIRED
+            !btEnabled -> CapabilityStatus.DISABLED
+            else -> CapabilityStatus.AVAILABLE
+        }
 
         // 22. Exact Alarm
         val alarmMgr = context.getSystemService(Context.ALARM_SERVICE) as? android.app.AlarmManager
@@ -295,12 +302,13 @@ class CentralCapabilityRegistry(private val context: Context) {
         val hasTelephony = pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
         val hasModifyPhoneState = ContextCompat.checkSelfPermission(
             context,
-            "android.Manifest.permission.MODIFY_PHONE_STATE"
+            "android.permission.MODIFY_PHONE_STATE"
         ) == PackageManager.PERMISSION_GRANTED
         map[CapabilityType.SCREEN_OFF_NETWORK_OPTIMIZATION] = when {
             !hasTelephony -> CapabilityStatus.UNSUPPORTED
             hasModifyPhoneState -> CapabilityStatus.SUPPORTED
-            else -> CapabilityStatus.PERMISSION_REQUIRED
+            // MODIFY_PHONE_STATE is a system-only permission: no user action can grant it to a normal app.
+            else -> CapabilityStatus.UNSUPPORTED
         }
 
         return map
