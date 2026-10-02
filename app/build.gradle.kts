@@ -83,6 +83,24 @@ googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.W
 
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
+// Dependabot: force patched versions of build-tool transitives (Netty, Bouncy Castle) on every
+// Gradle configuration in this module. Only versions in the same major line as the patched
+// release are rewritten, so unrelated artifacts (e.g. netty-tcnative) are left alone.
+configurations.configureEach {
+  resolutionStrategy.eachDependency {
+    val v = requested.version ?: return@eachDependency
+    if (requested.group == "io.netty" && requested.name.startsWith("netty-") &&
+      !requested.name.startsWith("netty-tcnative") && v.startsWith("4.1.")) {
+      useVersion("4.1.138.Final")
+      because("Dependabot: Netty alerts (patched in 4.1.137.Final or later)")
+    }
+    if (requested.group == "org.bouncycastle" && requested.name.endsWith("-jdk18on") && v.startsWith("1.")) {
+      useVersion("1.86")
+      because("Dependabot: Bouncy Castle alerts")
+    }
+  }
+}
+
 dependencies {
   implementation(platform(libs.androidx.compose.bom))
   implementation(platform(libs.firebase.bom))
