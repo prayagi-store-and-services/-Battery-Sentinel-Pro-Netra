@@ -358,7 +358,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
     private var lastConnectedState: Boolean? = null
     private var lastChargingState: Boolean? = null
     private var lastSpeedCategory: CanonicalChargingSpeed? = null
-    private var lastBatteryLevelBoundary: Int? = null
+    private var lastBatteryLevelSeen: Int? = null
 
     // Screen-off drain tracking
     private var lastScreenOffTimestamp: Long? = null
@@ -703,17 +703,19 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             }
 
             if (mergedLevel != null) {
-                val boundary = (mergedLevel / 5) * 5
-                if (lastBatteryLevelBoundary != boundary) {
-                    val previousBoundary = lastBatteryLevelBoundary
-                    lastBatteryLevelBoundary = boundary
+                // Announce a level only when the battery actually REACHES it (70 means exactly 70),
+                // never a rounded-down value. A level that only bounces back and forth is not repeated.
+                val previousSeen = lastBatteryLevelSeen
+                lastBatteryLevelSeen = mergedLevel
+                val reached = reachedFivePercentLevel(mergedLevel, previousSeen)
+                if (reached != null) {
                     eventsToEmit.add(
                         NetraCentralEvent(
-                            eventId = "event_battery_boundary_${boundary}_$now",
+                            eventId = "event_battery_boundary_${reached}_$now",
                             eventType = NetraEventType.BATTERY_LEVEL_CROSSED,
                             timestamp = now,
-                            previousValue = previousBoundary?.toString(),
-                            newValue = boundary.toString(),
+                            previousValue = previousSeen?.toString(),
+                            newValue = reached.toString(),
                             source = source
                         )
                     )
