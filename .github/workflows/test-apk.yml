@@ -1,0 +1,64 @@
+name: Signed test APK (not a release)
+'on':
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency:
+  group: netra-test-apk
+jobs:
+  test-apk:
+    name: Build signed test APK from main
+    runs-on: ubuntu-latest
+    steps:
+    - name: Require main
+      run: test "${GITHUB_REF}" = "refs/heads/main"
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.sha }}
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+    - uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: 9.3.1
+    - uses: android-actions/setup-android@v3
+      with:
+        packages: platform-tools
+    - name: Restore signing key
+      env:
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      run: |
+        test -n "$KEYSTORE_BASE64"
+        echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/netra-release.jks"
+    - name: Build signed release APK
+      env:
+        KEYSTORE_PATH: ${{ runner.temp }}/netra-release.jks
+        STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      run: gradle --no-daemon -PnetraVersionName=1.0.0-test :app:assembleRelease
+    - name: Verify signature, certificate, package and version
+      env:
+        EXPECTED_CERT_SHA256: ${{ secrets.RELEASE_CERT_SHA256 }}
+      run: |
+        set -euo pipefail
+        test -n "$EXPECTED_CERT_SHA256"
+        APK="app/build/outputs/apk/release/app-release.apk"
+        APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)"
+        AAPT2="$(find "$ANDROID_HOME/build-tools" -name aapt2 | sort -V | tail -1)"
+        "$APKSIGNER" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
+        ACTUAL="$(sed -n 's/Signer #1 certificate SHA-256 digest: //p' /tmp/apksigner.txt | tr -d '[:space:]')"
+        test "$ACTUAL" = "$EXPECTED_CERT_SHA256"
+        "$AAPT2" dump badging "$APK" | grep -E "^package:" | tee /tmp/badging.txt
+        cp "$APK" netra-test-${GITHUB_SHA::7}.apk
+        sha256sum netra-test-${GITHUB_SHA::7}.apk | tee netra-test-sha256.txt
+        echo "Built from commit $GITHUB_SHA" | tee -a netra-test-sha256.txt
+    - uses: actions/upload-artifact@v4
+      with:
+        name: netra-test-apk
+        path: |
+          netra-test-*.apk
+          netra-test-sha256.txt
+        retention-days: 14
+        if-no-files-found: error
