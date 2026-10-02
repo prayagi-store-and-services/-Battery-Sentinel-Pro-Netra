@@ -103,6 +103,21 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
     // Central State
     val canonicalState = NetraApplication.instance.centralDataCenter.centralState
 
+    /**
+     * Refreshes a real Android battery snapshot. The caller controls cadence and should only
+     * invoke this while the live telemetry screen is visible.
+     */
+    suspend fun refreshElectricalTelemetry() {
+        withContext(Dispatchers.IO) {
+            try {
+                (getApplication<NetraApplication>()).centralDataCenter
+                    .refreshBatteryTelemetry(getApplication())
+            } catch (_: Exception) {
+                // Hardware telemetry can be unavailable on some OEM devices; UI shows that honestly.
+            }
+        }
+    }
+
     // Charging & Discharging Lists
     val recentChargingSessions: StateFlow<List<ChargingSession>> = repository.recentChargingSessions
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
