@@ -5,6 +5,7 @@ All user-facing release notes are maintained here. The guarded release workflow 
 ## [Unreleased]
 
 - App updates: the update dialog now has a "Later" button, and if the download or install check fails you now see the exact reason (for example "Allow installs from this source" or a signature mismatch) instead of the dialog silently disappearing. The update stays offered so you can retry.
+- App updates, more reliable: if GitHub's anonymous API limit blocks the update check, the app now falls back to a backup source instead of silently showing nothing. Settings has a new "Check for updates" button with a status line (up to date, update available, or the exact failure).
 
 ## [1.1.9]
 
