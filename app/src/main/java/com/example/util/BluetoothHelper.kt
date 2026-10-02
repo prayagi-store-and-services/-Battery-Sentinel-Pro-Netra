@@ -7,6 +7,8 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.pm.PackageManager
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import com.example.model.BluetoothDeviceItem
@@ -15,8 +17,10 @@ import com.example.model.BluetoothDeviceItem
  * Returns only currently connected Bluetooth devices.
  *
  * Bonded/paired but disconnected devices are intentionally excluded.
- * Battery level is exposed only through public Android APIs when available;
- * no reflection/private API access is used.
+ * Battery level is best effort: Android has no public battery-level API for classic
+ * Bluetooth devices, so the value comes from the platform's getBatteryLevel() when the
+ * phone and the device report it. Many phones/devices do not, in which case
+ * batteryPercent is null and the UI shows "Battery: Unavailable". A value is never invented.
  */
 object BluetoothHelper {
 
@@ -24,6 +28,14 @@ object BluetoothHelper {
     private var a2dpProxy: BluetoothProfile? = null
     @Volatile
     private var headsetProxy: BluetoothProfile? = null
+    @Volatile
+    private var hearingAidProxy: BluetoothProfile? = null
+    @Volatile
+    private var leAudioProxy: BluetoothProfile? = null
+
+    // Profile ids from public BluetoothProfile constants (HEARING_AID API 29, LE_AUDIO API 33).
+    private const val PROFILE_HEARING_AID = 21
+    private const val PROFILE_LE_AUDIO = 22
 
     fun initialize(context: Context) {
         val adapter = BluetoothAdapter.getDefaultAdapter() ?: return
@@ -53,6 +65,27 @@ object BluetoothHelper {
                     }
                 }
             }, BluetoothProfile.HEADSET)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                adapter.getProfileProxy(context.applicationContext, object : BluetoothProfile.ServiceListener {
+                    override fun onServiceConnected(profile: Int, proxy: BluetoothProfile?) {
+                        if (profile == PROFILE_HEARING_AID) hearingAidProxy = proxy
+                    }
+                    override fun onServiceDisconnected(profile: Int) {
+                        if (profile == PROFILE_HEARING_AID) hearingAidProxy = null
+                    }
+                }, PROFILE_HEARING_AID)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                adapter.getProfileProxy(context.applicationContext, object : BluetoothProfile.ServiceListener {
+                    override fun onServiceConnected(profile: Int, proxy: BluetoothProfile?) {
+                        if (profile == PROFILE_LE_AUDIO) leAudioProxy = proxy
+                    }
+                    override fun onServiceDisconnected(profile: Int) {
+                        if (profile == PROFILE_LE_AUDIO) leAudioProxy = null
+                    }
+                }, PROFILE_LE_AUDIO)
+            }
         } catch (_: Exception) {}
     }
 
@@ -72,9 +105,20 @@ object BluetoothHelper {
             val adapter = manager.adapter ?: BluetoothAdapter.getDefaultAdapter() ?: return emptyList()
             if (!adapter.isEnabled) return emptyList()
 
+            // Addresses of Bluetooth audio outputs Android currently routes to (public AudioManager API).
+            // Covers phones/OEM builds where the profile proxies are not connected yet or not reported.
+            val audioAddresses = connectedAudioAddresses(context)
+
             adapter.bondedDevices
                 .asSequence()
-                .filter { isDeviceConnected(manager, it) }
+                .filter { device ->
+                    // One device failing a check must never hide the others.
+                    runCatching {
+                        isDeviceConnected(manager, device) ||
+                            (try { device.address } catch (_: SecurityException) { null })
+                                ?.uppercase()?.let { it in audioAddresses } == true
+                    }.getOrDefault(false)
+                }
                 .mapNotNull { device ->
                     val name = try {
                         device.name?.takeIf { it.isNotBlank() } ?: "Bluetooth Device"
@@ -112,23 +156,41 @@ object BluetoothHelper {
     }
 
     private fun isDeviceConnected(manager: BluetoothManager, device: BluetoothDevice): Boolean {
-        try {
-            if (a2dpProxy?.connectedDevices?.contains(device) == true) return true
-            if (headsetProxy?.connectedDevices?.contains(device) == true) return true
-            if (manager.getConnectedDevices(BluetoothProfile.GATT).contains(device)) return true
-        } catch (_: SecurityException) {
-            // Ignore security exception and fallback
-        } catch (_: Exception) {
-            // Ignore and fallback
+        val proxies = listOf(a2dpProxy, headsetProxy, hearingAidProxy, leAudioProxy)
+        for (proxy in proxies) {
+            val hit = try {
+                proxy?.connectedDevices?.contains(device) == true
+            } catch (_: Exception) {
+                false
+            }
+            if (hit) return true
         }
-
+        // BluetoothManager.getConnectionState only supports GATT / GATT_SERVER. Passing other profiles
+        // throws IllegalArgumentException, which used to discard the whole device list.
         return try {
-            manager.getConnectionState(device, BluetoothProfile.A2DP) == BluetoothProfile.STATE_CONNECTED ||
-                manager.getConnectionState(device, BluetoothProfile.HEADSET) == BluetoothProfile.STATE_CONNECTED ||
-                manager.getConnectionState(device, BluetoothProfile.GATT) == BluetoothProfile.STATE_CONNECTED ||
-                manager.getConnectionState(device, BluetoothProfile.HEALTH) == BluetoothProfile.STATE_CONNECTED
-        } catch (_: SecurityException) {
+            manager.getConnectedDevices(BluetoothProfile.GATT).contains(device) ||
+                manager.getConnectionState(device, BluetoothProfile.GATT) == BluetoothProfile.STATE_CONNECTED
+        } catch (_: Exception) {
             false
+        }
+    }
+
+    private fun connectedAudioAddresses(context: Context): Set<String> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return emptySet()
+        return try {
+            val audio = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return emptySet()
+            audio.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+                .filter {
+                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
+                        it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                            (it.type == AudioDeviceInfo.TYPE_BLE_HEADSET || it.type == AudioDeviceInfo.TYPE_BLE_SPEAKER))
+                }
+                .map { it.address.uppercase() }
+                .filter { it.isNotBlank() }
+                .toSet()
+        } catch (_: Exception) {
+            emptySet()
         }
     }
 
