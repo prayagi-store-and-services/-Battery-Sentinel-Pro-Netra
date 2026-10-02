@@ -122,6 +122,12 @@ class BatteryMonitorService : Service() {
                         if (isScreenOn) {
                             checkBluetoothUpdates()
                         }
+                        try {
+                            if (isScreenOn) NetworkSwitchCoordinator.onScreenOn(applicationContext)
+                            else if (isConfirmedOff) NetworkSwitchCoordinator.onScreenOff(applicationContext)
+                        } catch (e: Exception) {
+                            Log.e("BatteryMonitorService", "Network switch hook failed", e)
+                        }
                         serviceScope.launch {
                             NetraApplication.instance.centralDataCenter.updateScreenState(isScreenOn, isConfirmedOff)
                         }
@@ -178,6 +184,7 @@ class BatteryMonitorService : Service() {
                     startCollectorsAndPolling()
                     val center = NetraApplication.instance.centralDataCenter
                     center.expireTelemetryFreshness()
+                    NetworkSwitchCoordinator.sampleRadioTime(applicationContext)
                     center.refreshSystemMetrics(this@BatteryMonitorService)
                     NetraApplication.instance.telemetrySentinel.checkStaleStatus()
                     val stateAfter = center.centralState.value

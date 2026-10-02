@@ -51,12 +51,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import com.example.ui.components.StatusDot
 import com.example.ui.navigation.NetraBottomNav
 import com.example.ui.navigation.NetraTab
@@ -90,9 +85,27 @@ class MainActivity : ComponentActivity() {
             com.example.service.BatteryMonitorService.startService(this)
         } catch (_: Exception) {}
 
+        handleNetworkPanelExtra(intent)
+
         setContent {
             MyApplicationTheme {
                 MainAppContent(viewModel = viewModel)
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        handleNetworkPanelExtra(intent)
+    }
+
+    private fun handleNetworkPanelExtra(intent: android.content.Intent?) {
+        if (intent?.getBooleanExtra(com.example.service.NetworkSwitchCoordinator.EXTRA_OPEN_NETWORK_PANEL, false) == true) {
+            intent.removeExtra(com.example.service.NetworkSwitchCoordinator.EXTRA_OPEN_NETWORK_PANEL)
+            try {
+                startActivity(android.content.Intent(android.provider.Settings.Panel.ACTION_INTERNET_CONNECTIVITY))
+            } catch (_: Exception) {
+                try { startActivity(android.content.Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS)) } catch (_: Exception) {}
             }
         }
     }
@@ -112,20 +125,8 @@ fun MainAppContent(viewModel: NetraViewModel) {
     val canonical by viewModel.canonicalState.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
     val releaseUpdater = remember(context) { GitHubReleaseUpdater(context) }
     val updateState by releaseUpdater.state.collectAsStateWithLifecycle()
-
-    // Keep voltage/current/power live on every app tab while the app is foregrounded.
-    // Stop the 1 Hz sampling loop when Android moves the app below STARTED.
-    LaunchedEffect(viewModel, lifecycleOwner) {
-        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            while (isActive) {
-                viewModel.refreshElectricalTelemetry()
-                delay(1_000L)
-            }
-        }
-    }
 
     LaunchedEffect(releaseUpdater) {
         releaseUpdater.checkNow()
