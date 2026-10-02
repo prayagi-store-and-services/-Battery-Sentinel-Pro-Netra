@@ -37,6 +37,18 @@ class ChargingSpeedEngineTest {
     }
 
     @Test
+    fun dischargeCurrentReportedInMilliampsIsNotScaledAsMicroamps() {
+        assertEquals(-3_000, engine.normalizeToMilliAmps(-3_000, activelyCharging = true))
+        val result = engine.calculate(
+            isCharging = false,
+            voltageMv = 4_000,
+            currentMa = engine.normalizeToMilliAmps(-3_000, activelyCharging = true),
+            isDischarging = true
+        )
+        assertEquals(12.0f, result.rawPowerWatts!!, 0.001f)
+    }
+
+    @Test
     fun dischargePowerIsLivePositiveMagnitudeRegardlessOfOemCurrentSign() {
         val negativeCurrent = engine.calculate(
             isCharging = false,
