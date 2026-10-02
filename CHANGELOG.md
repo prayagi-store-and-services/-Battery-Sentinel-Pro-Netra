@@ -7,6 +7,7 @@ All user-facing release notes are maintained here. The guarded release workflow 
 - Fix wrong battery announcements while discharging: the app announced the lower 5% level as soon as the battery dropped below the previous one (75 to 74 announced "70 percent"). A level is now announced only when the battery actually reaches it (0, 5, 10 ... 100), in both charging and discharging, and never twice for the same level.
 - Devices tab now says clearly when Bluetooth is off ("Bluetooth band hai - on karein") or when the Bluetooth permission is missing, instead of showing an empty list. It updates live when Bluetooth is switched on or off.
 - Optional in-app feedback and crash reports (Settings). Nothing is sent without your consent each time, and you first see the exact list: phone model, Android version, app version, and your message or the crash stack trace (code locations only). Nothing else is sent. A privacy policy page is linked from the card and the website.
+- New optional "Charging + screen off savings" (Settings, off by default): while charging with the screen off, brightness is lowered and auto-sync is paused; your previous values are restored when the screen turns on or you unplug. Needs the "Modify system settings" permission; without it nothing changes and the card says so.
 
 ## [1.1.1]
 
