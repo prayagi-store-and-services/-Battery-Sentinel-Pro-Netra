@@ -374,6 +374,14 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
         settingsRepository.setMediaPlaybackHandlingEnabled(enabled)
     }
 
+    fun muteAnnouncementsForMinutes(minutes: Int) {
+        settingsRepository.setAnnouncementMutedUntil(System.currentTimeMillis() + minutes * 60_000L)
+    }
+
+    fun unmuteAnnouncements() {
+        settingsRepository.setAnnouncementMutedUntil(0L)
+    }
+
     fun setAudioRoutingPolicy(policy: com.example.model.AudioRoutingPolicy) {
         settingsRepository.setAudioRoutingPolicy(policy)
         NetraApplication.instance.centralDataCenter.refreshAudioRouting(getApplication())
