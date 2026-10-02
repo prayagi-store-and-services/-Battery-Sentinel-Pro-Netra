@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
@@ -56,7 +57,8 @@ import com.example.viewmodel.TimeWindowFilter
 @Composable
 fun GraphScreen(
     viewModel: NetraViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    extraItems: LazyListScope.() -> Unit = {}
 ) {
     val context = LocalContext.current
     var selectedMetric by remember { mutableStateOf(GraphMetric.LEVEL) }
@@ -216,6 +218,8 @@ fun GraphScreen(
                 topApps = topAppsList
             )
         }
+
+        extraItems()
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
