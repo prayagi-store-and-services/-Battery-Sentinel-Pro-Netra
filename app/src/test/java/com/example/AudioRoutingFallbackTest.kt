@@ -123,6 +123,15 @@ class AudioRoutingFallbackTest {
     }
 
     @Test
+    fun `settings repository persists announcement mute interval`() {
+        assertEquals(0L, settingsRepository.settings.value.announcementMutedUntilMs)
+        settingsRepository.setAnnouncementMutedUntil(123_456L)
+        assertEquals(123_456L, settingsRepository.settings.value.announcementMutedUntilMs)
+        settingsRepository.setAnnouncementMutedUntil(0L)
+        assertEquals(0L, settingsRepository.settings.value.announcementMutedUntilMs)
+    }
+
+    @Test
     fun `settings repository persists audio routing policy correctly`() {
         settingsRepository.setAudioRoutingPolicy(AudioRoutingPolicy.FORCE_PHONE_SPEAKER)
         assertEquals(AudioRoutingPolicy.FORCE_PHONE_SPEAKER, settingsRepository.settings.value.audioRoutingPolicy)
