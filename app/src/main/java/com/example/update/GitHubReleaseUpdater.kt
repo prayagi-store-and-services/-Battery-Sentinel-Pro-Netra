@@ -28,6 +28,7 @@ import java.security.MessageDigest
 sealed interface UpdateUiState {
     data object Idle : UpdateUiState
     data object Checking : UpdateUiState
+    data class UpToDate(val versionName: String) : UpdateUiState
     data class Available(val release: GitHubReleaseInfo) : UpdateUiState
     data class Downloading(val release: GitHubReleaseInfo) : UpdateUiState
     data class Error(val message: String) : UpdateUiState
@@ -46,6 +47,9 @@ data class GitHubReleaseInfo(
 class GitHubReleaseUpdater(context: Context) {
     companion object {
         const val API_URL = "https://api.github.com/repos/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/releases/latest"
+        @Volatile private var instance: GitHubReleaseUpdater? = null
+        fun shared(context: Context): GitHubReleaseUpdater =
+            instance ?: synchronized(this) { instance ?: GitHubReleaseUpdater(context).also { instance = it } }
         private const val PREFS = "netra_release_update_cache"
         private const val CHECK_INTERVAL_MS = 6L * 60L * 60L * 1000L
     }
@@ -113,55 +117,82 @@ class GitHubReleaseUpdater(context: Context) {
         }
     }
 
+    private fun fetchText(url: String, githubApi: Boolean): String {
+        val builder = Request.Builder().url(url)
+            .header("User-Agent", "Battery-Sentinel-Pro-Netra/" + BuildConfig.VERSION_NAME)
+        if (githubApi) {
+            builder.header("Accept", "application/vnd.github+json")
+                .header("X-GitHub-Api-Version", "2026-03-10")
+        }
+        return client.newCall(builder.build()).execute().use { response ->
+            if (!response.isSuccessful) throw IllegalStateException("update source answered " + response.code)
+            val input = response.body?.byteStream() ?: throw IllegalStateException("update source returned no data")
+            input.use { stream ->
+                val output = java.io.ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val count = stream.read(buffer)
+                    if (count < 0) break
+                    require(output.size() + count <= 1024 * 1024) { "Release metadata too large." }
+                    output.write(buffer, 0, count)
+                }
+                output.toString("UTF-8")
+            }
+        }
+    }
+
     private suspend fun checkInternal() = withContext(Dispatchers.IO) {
         _state.value = UpdateUiState.Checking
+        val installed = BuildConfig.VERSION_CODE.toLong()
+        var apiFailure: String? = null
+        var metadata: String? = null
         try {
-            val request = Request.Builder()
-                .url(API_URL)
-                .header("Accept", "application/vnd.github+json")
-                .header("X-GitHub-Api-Version", "2026-03-10")
-                .header("User-Agent", "Battery-Sentinel-Pro-Netra/" + BuildConfig.VERSION_NAME)
-                .build()
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw IllegalStateException("GitHub update check failed (" + response.code + ").")
-                val metadata = response.body?.byteStream()?.use { input ->
-                    val output = java.io.ByteArrayOutputStream()
-                    val buffer = ByteArray(8192)
-                    while (true) {
-                        val count = input.read(buffer)
-                        if (count < 0) break
-                        require(output.size() + count <= 1024 * 1024) { "Release metadata too large." }
-                        output.write(buffer, 0, count)
-                    }
-                    output.toString("UTF-8")
-                }.orEmpty()
-                val candidate = GitHubReleasePolicy.parse(metadata, BuildConfig.VERSION_CODE.toLong())
-                if (candidate == null) {
-                    _state.value = UpdateUiState.Idle
-                    return@use
+            metadata = fetchText(API_URL, true)
+        } catch (e: Exception) {
+            apiFailure = e.message ?: "GitHub API unreachable"
+        }
+        var candidate: GitHubReleasePolicy.Candidate? = null
+        var tag = ""
+        var notes = ""
+        try {
+            if (metadata != null) {
+                candidate = GitHubReleasePolicy.parse(metadata, installed)
+                if (candidate != null) {
+                    val json = JSONObject(metadata)
+                    tag = json.getString("tag_name")
+                    notes = json.optString("body")
                 }
-                val json = JSONObject(metadata)
-                val release = GitHubReleaseInfo(
-                    tagName = json.getString("tag_name"),
-                    versionName = json.getString("tag_name").removePrefix("v"),
-                    versionCode = candidate.versionCode,
-                    notes = json.optString("body"), apkUrl = candidate.url, sha256 = candidate.sha256, sizeBytes = candidate.size
-                )
-                writeCache(release)
-                _state.value = if (release.versionCode > BuildConfig.VERSION_CODE) {
-                    UpdateUiState.Available(release)
-                } else {
-                    UpdateUiState.Idle
+            } else {
+                // GitHub API failed (rate limit or network): use the backup source instead of silently doing nothing.
+                val backup = fetchText(GitHubReleasePolicy.FALLBACK_URL, false)
+                candidate = GitHubReleasePolicy.parseFallback(backup, installed)
+                if (candidate != null) {
+                    val json = JSONObject(backup)
+                    tag = json.getString("tag")
+                    notes = json.optString("notes")
                 }
             }
         } catch (e: Exception) {
             val cached = readCache()
-            _state.value = if (cached != null && cached.versionCode > BuildConfig.VERSION_CODE) {
+            _state.value = if (cached != null && cached.versionCode > installed) {
                 UpdateUiState.Available(cached)
             } else {
-                UpdateUiState.Error(e.message ?: "Update check unavailable.")
+                UpdateUiState.Error(((apiFailure ?: "") + " " + (e.message ?: "backup source failed")).trim())
             }
+            return@withContext
         }
+        if (candidate == null) {
+            _state.value = UpdateUiState.UpToDate(BuildConfig.VERSION_NAME)
+            return@withContext
+        }
+        val release = GitHubReleaseInfo(
+            tagName = tag,
+            versionName = tag.removePrefix("v"),
+            versionCode = candidate.versionCode,
+            notes = notes, apkUrl = candidate.url, sha256 = candidate.sha256, sizeBytes = candidate.size
+        )
+        writeCache(release)
+        _state.value = UpdateUiState.Available(release)
     }
 
     private fun downloadApk(release: GitHubReleaseInfo): File {
