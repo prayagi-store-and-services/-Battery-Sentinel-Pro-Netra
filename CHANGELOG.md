@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Discharging no longer shows a blank screen: while the app is open and the phone is on battery, the Battery tab now shows live discharge data (power draw, current, voltage, temperature, level, time on battery) and a live graph that fills every second. Anything Android does not report is hidden instead of showing "Unavailable", and graph tabs with no data are hidden. Charging and discharging data are kept separate.
+
 ## [1.1.6]
 
 - Fix crash: tapping SESSIONS & GRAPH on the Battery screen closed the app. The graph list was placed inside another scrolling list, which Android does not allow. It is now one list, and the Recent Charging Sessions card appears below the graph.
