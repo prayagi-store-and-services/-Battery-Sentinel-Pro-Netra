@@ -123,7 +123,7 @@ The app contains five primary navigation destinations:
 | **Voice Announcements & Deduplication** | **Verified** | Priority queue with state-level deduplication and single active TTS channel. |
 | **Night Protection (23:00–06:00)** | **Verified** | Suppresses routine notifications while allowing critical thermal safety alerts. |
 | **Media Playback Controller** | **Verified** | Only resumes media if paused by Nethra; preserves externally paused states. |
-| **Bluetooth Telemetry & History** | **Verified** | Differentiates live connected vs paired history with last-known battery state. |
+| **Bluetooth Telemetry & History** | **Implemented; battery % depends on device/OEM** | Lists currently connected Bluetooth devices (A2DP, headset, hearing aid, LE Audio, GATT, and Android audio routing as a fallback) and keeps paired history. Battery % is shown only when the phone and the device actually report it; otherwise the card shows "Battery: Unavailable". Android has no public battery API for classic Bluetooth devices, so some phones (reported on a Realme 9 Pro 5G) never report it. |
 | **Central Capability Registry** | **Verified** | Truthfully reports `SUPPORTED`, `AVAILABLE`, `PERMISSION_REQUIRED`, `DISABLED`, etc. |
 | **Real Android Permission Flows** | **Verified** | Native settings launchers for Usage Access, Notifications, Bluetooth, and Doze. |
 | **Geo-Climate & Weather Baseline** | **Verified** | Integrated Open-Meteo REST API, ambient sensor fallback, and climate deviation engine. |
