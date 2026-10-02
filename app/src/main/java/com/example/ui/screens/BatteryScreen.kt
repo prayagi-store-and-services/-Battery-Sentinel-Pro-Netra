@@ -160,11 +160,16 @@ fun BatteryScreen(
                         accentColor = NetraCyan
                     ) {
                         val rawPowerStr = canonical.powerWatts?.let { "${String.format(Locale.US, "%.2f", it)} W" } ?: "Unavailable"
+                        val powerFreshness = when (canonical.fieldStates.powerStatus.name) {
+                            "LIVE" -> "LIVE"
+                            "LAST_VALID" -> "LAST KNOWN"
+                            else -> "UNAVAILABLE"
+                        }
                         val powerLabel = when {
-                            canonical.isCharging == true -> "LIVE CHARGING POWER"
-                            canonical.isCharging == false && canonical.isChargerConnected == false -> "LIVE DISCHARGE POWER"
+                            canonical.isCharging == true -> "$powerFreshness CHARGING POWER"
+                            canonical.isCharging == false && canonical.isChargerConnected == false -> "$powerFreshness DISCHARGE POWER"
                             canonical.isChargerConnected == true -> "CONNECTED • NOT CHARGING"
-                            else -> "BATTERY POWER"
+                            else -> "BATTERY POWER • $powerFreshness"
                         }
                         val speedCategoryStr = when (canonical.chargingSpeed) {
                             CanonicalChargingSpeed.SLOW -> "Slow (<5W)"
@@ -216,7 +221,7 @@ fun BatteryScreen(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             ElectricBadge(
-                                label = "VOLTAGE",
+                                label = "VOLTAGE · ${canonical.fieldStates.voltageStatus.name.replace('_', ' ')}",
                                 value = canonical.voltageMv?.let {
                                     "${String.format(Locale.US, "%.2f", it / 1000f)} V"
                                 } ?: "Unavailable",
@@ -224,7 +229,7 @@ fun BatteryScreen(
                                 modifier = Modifier.weight(1f)
                             )
                             ElectricBadge(
-                                label = "CURRENT",
+                                label = "CURRENT · ${canonical.fieldStates.currentStatus.name.replace('_', ' ')}",
                                 value = canonical.currentMa?.let { currentMa ->
                                     val direction = when {
                                         canonical.isCharging == true -> "+"
