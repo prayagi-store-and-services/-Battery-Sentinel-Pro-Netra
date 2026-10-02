@@ -98,6 +98,23 @@ configurations.configureEach {
       useVersion("1.86")
       because("Dependabot: Bouncy Castle alerts")
     }
+    // Dependabot: httpclient, commons-lang3 and guava reach the build tooling through the Android
+    // Gradle Plugin. Only versions older than the patched release are rewritten.
+    if (requested.group == "org.apache.httpcomponents" && requested.name == "httpclient" &&
+      v.startsWith("4.5.") && (v.removePrefix("4.5.").toIntOrNull() ?: 99) < 13) {
+      useVersion("4.5.13")
+      because("Dependabot: Apache HttpClient XSS (patched in 4.5.13)")
+    }
+    if (requested.group == "org.apache.commons" && requested.name == "commons-lang3" &&
+      v.startsWith("3.") && (v.removePrefix("3.").substringBefore('.').toIntOrNull() ?: 99) < 18) {
+      useVersion("3.18.0")
+      because("Dependabot: Commons Lang uncontrolled recursion (patched in 3.18.0)")
+    }
+    if (requested.group == "com.google.guava" && requested.name == "guava" &&
+      v.endsWith("-android") && (v.substringBefore('.').toIntOrNull() ?: 99) < 32) {
+      useVersion("33.4.8-android")
+      because("Dependabot: Guava temp directory alerts (patched in 32.0.0-android)")
+    }
   }
 }
 
