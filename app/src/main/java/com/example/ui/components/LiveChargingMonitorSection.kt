@@ -149,13 +149,13 @@ fun LiveChargingMonitorSection(
                     )
                     Column {
                         Text(
-                            text = "CHARGER DISCONNECTED",
+                            text = "ON BATTERY",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Live Charging Monitor activates automatically when plugged in and actively charging. The 1-second telemetry refresh loop and charging-duration timer are paused while discharging to conserve battery.",
+                            text = "Charger is not connected. Live discharge data refreshes every second while this screen is open. Values Android does not report are hidden.",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -164,6 +164,9 @@ fun LiveChargingMonitorSection(
             }
         }
 
+        if (!isCharging) {
+            DischargeTelemetryCard(sessionState = sessionState)
+        } else {
         // REQUIRED 7-FIELD CANONICAL LIVE CHARGING DASHBOARD
         SentinelCard(
             title = if (isCharging) "Live Charging Telemetry" else "Charging Monitor (Idle / Discharging)",
@@ -242,6 +245,7 @@ fun LiveChargingMonitorSection(
                 )
             }
         }
+        }
 
         // Animated Battery Graphic
         SentinelCard(
@@ -257,6 +261,7 @@ fun LiveChargingMonitorSection(
             )
         }
 
+        if (isCharging) {
         // Live Session Timing & Charging Source Details
         SentinelCard(
             title = "Charging Source & Monotonic Timing",
@@ -313,15 +318,19 @@ fun LiveChargingMonitorSection(
                 }
             }
         }
+        }
 
         // Live Charging Graph
         SentinelCard(
-            title = "Live Charging Session Graph",
+            title = if (isCharging) "Live Charging Session Graph" else "Live Discharge Graph",
             icon = Icons.AutoMirrored.Filled.ShowChart,
-            dotState = if (isCharging) DotState.CONNECTED else DotState.STANDBY,
-            accentColor = NetraEmerald
+            dotState = DotState.CONNECTED,
+            accentColor = if (isCharging) NetraEmerald else NetraCyan
         ) {
-            LiveChargingGraph(samples = sessionState.rollingHistory)
+            LiveChargingGraph(
+                samples = if (isCharging) sessionState.rollingHistory else sessionState.dischargeHistory,
+                emptyText = if (isCharging) "Awaiting charging telemetry samples (~1/sec)..." else "Collecting live discharge samples (~1/sec)..."
+            )
         }
 
         // Session Telemetry History Table
@@ -331,7 +340,7 @@ fun LiveChargingMonitorSection(
             dotState = DotState.CONNECTED,
             accentColor = NetraCyan
         ) {
-            LiveChargingHistoryTable(samples = sessionState.rollingHistory)
+            LiveChargingHistoryTable(samples = if (isCharging) sessionState.rollingHistory else sessionState.dischargeHistory)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -369,5 +378,60 @@ private fun CanonicalTelemetryLine(
             fontFamily = FontFamily.Monospace,
             color = color
         )
+    }
+}
+
+
+/**
+ * Live on-battery card. Shows only values Android actually reports; a field with no data is not drawn.
+ * Power is the observed battery-side draw (voltage x current magnitude).
+ */
+@Composable
+private fun DischargeTelemetryCard(sessionState: LiveChargingSessionState) {
+    val rows = buildList<Triple<String, String, Color>> {
+        sessionState.dischargePowerWatts?.let {
+            add(Triple("Power draw:", String.format(Locale.US, "%.2f W", it), NetraEmerald))
+        }
+        sessionState.dischargeCurrentMa?.let {
+            add(Triple("Discharge current:", String.format(Locale.US, "%.2f mA", it), StatusAmber))
+        }
+        sessionState.dischargeVoltageMv?.let {
+            add(Triple("Voltage:", String.format(Locale.US, "%.2f mV", it), NetraCyan))
+        }
+        sessionState.currentTemperatureCelsius?.let {
+            add(Triple("Battery Temperature:", String.format(Locale.US, "%.1f °C", it), if (it >= 40f) StatusRed else Color.Unspecified))
+        }
+        sessionState.currentBatteryPercent?.let {
+            add(Triple("Battery Percentage:", String.format(Locale.US, "%.2f%%", it), NetraEmerald))
+        }
+        val s = sessionState.dischargeDurationSeconds
+        add(Triple("On battery for:", String.format(Locale.US, "%02d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60), Color.Unspecified))
+    }
+    SentinelCard(
+        title = "Live Discharge Telemetry",
+        icon = Icons.Default.Bolt,
+        dotState = DotState.CONNECTED,
+        accentColor = NetraCyan,
+        trailingAction = {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(NetraCyan.copy(alpha = 0.2f))
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(text = "LIVE 1s REFRESH", fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = NetraCyan)
+            }
+        }
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            rows.forEach { (label, value, color) ->
+                CanonicalTelemetryLine(
+                    label = label,
+                    value = value,
+                    tag = "discharge_" + label.lowercase(Locale.US).filter { it.isLetter() },
+                    color = if (color == Color.Unspecified) MaterialTheme.colorScheme.onSurface else color
+                )
+            }
+        }
     }
 }
