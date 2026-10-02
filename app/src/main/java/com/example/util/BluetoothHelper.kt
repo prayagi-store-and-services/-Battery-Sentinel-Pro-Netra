@@ -28,14 +28,6 @@ object BluetoothHelper {
     private var a2dpProxy: BluetoothProfile? = null
     @Volatile
     private var headsetProxy: BluetoothProfile? = null
-    @Volatile
-    private var hearingAidProxy: BluetoothProfile? = null
-    @Volatile
-    private var leAudioProxy: BluetoothProfile? = null
-
-    // Profile ids from public BluetoothProfile constants (HEARING_AID API 29, LE_AUDIO API 33).
-    private const val PROFILE_HEARING_AID = 21
-    private const val PROFILE_LE_AUDIO = 22
 
     fun initialize(context: Context) {
         val adapter = BluetoothAdapter.getDefaultAdapter() ?: return
@@ -65,27 +57,6 @@ object BluetoothHelper {
                     }
                 }
             }, BluetoothProfile.HEADSET)
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                adapter.getProfileProxy(context.applicationContext, object : BluetoothProfile.ServiceListener {
-                    override fun onServiceConnected(profile: Int, proxy: BluetoothProfile?) {
-                        if (profile == PROFILE_HEARING_AID) hearingAidProxy = proxy
-                    }
-                    override fun onServiceDisconnected(profile: Int) {
-                        if (profile == PROFILE_HEARING_AID) hearingAidProxy = null
-                    }
-                }, PROFILE_HEARING_AID)
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                adapter.getProfileProxy(context.applicationContext, object : BluetoothProfile.ServiceListener {
-                    override fun onServiceConnected(profile: Int, proxy: BluetoothProfile?) {
-                        if (profile == PROFILE_LE_AUDIO) leAudioProxy = proxy
-                    }
-                    override fun onServiceDisconnected(profile: Int) {
-                        if (profile == PROFILE_LE_AUDIO) leAudioProxy = null
-                    }
-                }, PROFILE_LE_AUDIO)
-            }
         } catch (_: Exception) {}
     }
 
@@ -156,7 +127,7 @@ object BluetoothHelper {
     }
 
     private fun isDeviceConnected(manager: BluetoothManager, device: BluetoothDevice): Boolean {
-        val proxies = listOf(a2dpProxy, headsetProxy, hearingAidProxy, leAudioProxy)
+        val proxies = listOf(a2dpProxy, headsetProxy)
         for (proxy in proxies) {
             val hit = try {
                 proxy?.connectedDevices?.contains(device) == true
@@ -183,6 +154,7 @@ object BluetoothHelper {
                 .filter {
                     it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
                         it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                        it.type == AudioDeviceInfo.TYPE_HEARING_AID ||
                         (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                             (it.type == AudioDeviceInfo.TYPE_BLE_HEADSET || it.type == AudioDeviceInfo.TYPE_BLE_SPEAKER))
                 }
