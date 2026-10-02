@@ -56,6 +56,19 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
     // Live Telemetry from 24/7 Foreground Service
     val liveTelemetry: StateFlow<BatteryTelemetry> = BatteryMonitorService.liveTelemetryFlow
 
+    // Battery Foreground Service State
+    val batteryForegroundState: StateFlow<com.example.service.BatteryTrackState> =
+        com.example.service.BatteryForegroundService.batteryState
+
+    fun toggleBatteryForegroundService(enabled: Boolean) {
+        val app = getApplication<Application>()
+        if (enabled) {
+            com.example.service.BatteryForegroundService.startService(app)
+        } else {
+            com.example.service.BatteryForegroundService.stopService(app)
+        }
+    }
+
     // Settings
     val settings: StateFlow<SentinelSettings> = settingsRepository.settings
 
@@ -78,6 +91,11 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
     // 1-Hour Records for Status Screen Sparkline
     val sparkline1HourRecords: StateFlow<List<BatteryRecord>> = repository.getRecordsSince(
         System.currentTimeMillis() - 3600_000L
+    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // 24-Hour Records for Vico Battery & Temperature Trends Dashboard
+    val recordsLast24Hours: StateFlow<List<BatteryRecord>> = repository.getRecordsSince(
+        System.currentTimeMillis() - 24 * 3600_000L
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // All-time recent records for ML Degradation analysis

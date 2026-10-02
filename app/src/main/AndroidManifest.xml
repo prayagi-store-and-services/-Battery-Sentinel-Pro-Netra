@@ -68,6 +68,17 @@
                 android:value="Real-time 24/7 ultra-low power battery health, thermal sentinel, and overheat/80% unplug safety monitoring" />
         </service>
 
+        <!-- Battery Foreground Service tracking percentage, temperature, and charging status -->
+        <service
+            android:name=".service.BatteryForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Background battery percentage, temperature, and charging status tracking using BatteryManager" />
+        </service>
+
         <!-- Explicit internal notification actions; never exported to other apps. -->
         <receiver android:name=".receiver.AlarmActionReceiver" android:exported="false" />
 

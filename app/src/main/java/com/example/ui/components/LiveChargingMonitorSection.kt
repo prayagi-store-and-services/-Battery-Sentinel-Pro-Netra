@@ -10,21 +10,27 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.DeviceThermostat
 import androidx.compose.material.icons.filled.ElectricMeter
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.HourglassBottom
 import androidx.compose.material.icons.filled.PowerOff
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -35,16 +41,21 @@ import com.example.model.DotState
 import com.example.model.LiveChargingSessionState
 import com.example.ui.theme.NetraCyan
 import com.example.ui.theme.NetraEmerald
+import com.example.ui.theme.NetraSurface
 import com.example.ui.theme.StatusAmber
 import com.example.ui.theme.StatusRed
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 /**
- * Dedicated Live Charging Monitor section.
- * Renders large animated battery graphic, electrical telemetry cards, live session graph,
- * and timestamped history. Activates strictly during confirmed charging sessions.
+ * Dedicated Live Charging Monitor section adhering strictly to the Final Coding Command:
+ * Displays all 7 required live telemetry fields while charging:
+ * 1. Voltage: XXXX.xx mV
+ * 2. Electric Current: XXXX.xx mA
+ * 3. Wattage: XX.XX W
+ * 4. Battery Temperature: XX.X °C
+ * 5. Battery Percentage: XX.xx%
+ * 6. Charging Duration: HH:mm:ss
+ * 7. Estimated Time to Full: HH:mm:ss
  */
 @Composable
 fun LiveChargingMonitorSection(
@@ -52,7 +63,64 @@ fun LiveChargingMonitorSection(
     modifier: Modifier = Modifier
 ) {
     val isCharging = sessionState.isChargingActive
-    val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+
+    // 1. Voltage: XXXX.xx mV
+    val voltageMv = sessionState.currentVoltageMv
+    val voltageFormatted = if (isCharging && voltageMv != null) {
+        String.format(Locale.US, "%.2f mV", voltageMv)
+    } else {
+        "Unavailable"
+    }
+
+    // 2. Electric Current: XXXX.xx mA
+    val currentMa = sessionState.currentCurrentMa
+    val currentFormatted = if (isCharging && currentMa != null) {
+        String.format(Locale.US, "%.2f mA", currentMa)
+    } else {
+        "Unavailable"
+    }
+
+    // 3. Wattage: XX.XX W (Power (W) = Voltage (mV) × Current (mA) / 1,000,000)
+    val wattageW = sessionState.currentPowerWatts
+    val wattageFormatted = if (isCharging && wattageW != null) {
+        String.format(Locale.US, "%.2f W", wattageW)
+    } else {
+        "Unavailable"
+    }
+
+    // 4. Battery Temperature: XX.X °C
+    val tempC = sessionState.currentTemperatureCelsius
+    val tempFormatted = if (tempC != null) {
+        String.format(Locale.US, "%.1f °C", tempC)
+    } else {
+        "Unavailable"
+    }
+
+    // 5. Battery Percentage: XX.xx%
+    val percentVal = sessionState.currentBatteryPercent
+    val percentFormatted = if (percentVal != null) {
+        String.format(Locale.US, "%.2f%%", percentVal)
+    } else {
+        "Unavailable"
+    }
+
+    // 6. Charging Duration: HH:mm:ss
+    val durationSec = sessionState.sessionDurationSeconds
+    val durHours = durationSec / 3600
+    val durMinutes = (durationSec % 3600) / 60
+    val durSeconds = durationSec % 60
+    val durationFormatted = if (isCharging) {
+        String.format(Locale.US, "%02d:%02d:%02d", durHours, durMinutes, durSeconds)
+    } else {
+        "00:00:00"
+    }
+
+    // 7. Estimated Time to Full: HH:mm:ss
+    val etaFormatted = if (isCharging) {
+        sessionState.etaDisplayStatus ?: "Calculating..."
+    } else {
+        "Unavailable"
+    }
 
     Column(
         modifier = modifier
@@ -87,7 +155,7 @@ fun LiveChargingMonitorSection(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Live Charging Monitor activates automatically when plugged in and actively charging. The 1-second telemetry loop and animation are inactive while discharging to prevent battery drain.",
+                            text = "Live Charging Monitor activates automatically when plugged in and actively charging. The 1-second telemetry refresh loop and charging-duration timer are paused while discharging to conserve battery.",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -96,9 +164,88 @@ fun LiveChargingMonitorSection(
             }
         }
 
-        // A & B. Large Animated Battery Graphic with Prominent Percentage
+        // REQUIRED 7-FIELD CANONICAL LIVE CHARGING DASHBOARD
         SentinelCard(
-            title = if (isCharging) "Live Battery Charge Dynamics" else "Battery Status (Discharging)",
+            title = if (isCharging) "Live Charging Telemetry" else "Charging Monitor (Idle / Discharging)",
+            icon = Icons.Default.Bolt,
+            dotState = if (isCharging) DotState.CONNECTED else DotState.STANDBY,
+            accentColor = if (isCharging) NetraEmerald else NetraCyan,
+            trailingAction = {
+                val badgeText = if (isCharging) "LIVE 1s REFRESH" else "IDLE"
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(if (isCharging) NetraEmerald.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = badgeText,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (isCharging) NetraEmerald else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Primary Telemetry List with Exact Required Labels and Formats
+                CanonicalTelemetryLine(
+                    label = "Voltage:",
+                    value = voltageFormatted,
+                    tag = "voltage_display",
+                    color = if (voltageFormatted != "Unavailable") NetraCyan else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                CanonicalTelemetryLine(
+                    label = "Electric Current:",
+                    value = currentFormatted,
+                    tag = "current_display",
+                    color = if (currentFormatted != "Unavailable") StatusAmber else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                CanonicalTelemetryLine(
+                    label = "Wattage:",
+                    value = wattageFormatted,
+                    tag = "wattage_display",
+                    color = if (wattageFormatted != "Unavailable") NetraEmerald else MaterialTheme.colorScheme.onSurfaceVariant,
+                    isProminent = true
+                )
+                CanonicalTelemetryLine(
+                    label = "Battery Temperature:",
+                    value = tempFormatted,
+                    tag = "temperature_display",
+                    color = if ((tempC ?: 0f) >= 40f) StatusRed else MaterialTheme.colorScheme.onSurface
+                )
+                CanonicalTelemetryLine(
+                    label = "Battery Percentage:",
+                    value = percentFormatted,
+                    tag = "percentage_display",
+                    color = NetraEmerald
+                )
+                CanonicalTelemetryLine(
+                    label = "Charging Duration:",
+                    value = durationFormatted,
+                    tag = "duration_display",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                CanonicalTelemetryLine(
+                    label = "Estimated Time to Full:",
+                    value = etaFormatted,
+                    tag = "time_to_full_display",
+                    color = if (etaFormatted == "00:00:00") NetraEmerald else NetraCyan
+                )
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f), modifier = Modifier.padding(vertical = 4.dp))
+
+                Text(
+                    text = "Wattage is calculated battery-side electrical power (Voltage × Current), not guaranteed adapter rating.",
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        // Animated Battery Graphic
+        SentinelCard(
+            title = if (isCharging) "Battery Level Dynamics" else "Battery Status (Discharging)",
             icon = Icons.Default.ElectricMeter,
             dotState = if (isCharging) DotState.CONNECTED else DotState.STANDBY,
             accentColor = if (isCharging) NetraEmerald else NetraCyan
@@ -110,135 +257,13 @@ fun LiveChargingMonitorSection(
             )
         }
 
-        // C, D, E. Electrical Telemetry Cards (Voltage, Current, Calculated Charging Power)
+        // Live Session Timing & Charging Source Details
         SentinelCard(
-            title = "Live Electrical Telemetry (~1s Refresh)",
-            icon = Icons.Default.Bolt,
-            dotState = if (isCharging) DotState.CONNECTED else DotState.STANDBY,
-            accentColor = NetraCyan
-        ) {
-            // E. Calculated Charging Power (Prominently displayed)
-            val powerWatts = sessionState.currentPowerWatts
-            val powerDisplayStr = when {
-                !isCharging -> "Unavailable (Not Charging)"
-                powerWatts == null -> "Unavailable"
-                powerWatts < 1.0f -> "${String.format(Locale.US, "%.2f", powerWatts * 1000f)} mW"
-                else -> "${String.format(Locale.US, "%.2f", powerWatts)} W"
-            }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.2f), RoundedCornerShape(10.dp))
-                    .padding(12.dp)
-            ) {
-                Text(
-                    text = "CALCULATED CHARGING POWER",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = powerDisplayStr,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = if (isCharging && powerWatts != null) NetraEmerald else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.testTag("power_card_value")
-                )
-                Text(
-                    text = "Calculated battery-side electrical power (not USB wall adapter rating).",
-                    fontSize = 10.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // C & D. Voltage and Current Cards
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                // Voltage Card
-                val voltageV = sessionState.currentVoltageV
-                val voltageStr = if (voltageV != null) String.format(Locale.US, "%.3f V", voltageV) else "Unavailable"
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(Color.Black.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
-                        .padding(10.dp)
-                        .testTag("voltage_card")
-                ) {
-                    Column {
-                        Text(
-                            text = "BATTERY VOLTAGE",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NetraCyan
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = voltageStr,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.testTag("voltage_card_value")
-                        )
-                    }
-                }
-
-                // Current Card
-                val currentA = sessionState.currentCurrentA
-                val currentStr = when {
-                    !isCharging -> "Unavailable"
-                    currentA != null -> String.format(Locale.US, "%.3f A", currentA)
-                    else -> "Unavailable"
-                }
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(Color.Black.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
-                        .padding(10.dp)
-                        .testTag("current_card")
-                ) {
-                    Column {
-                        Text(
-                            text = "CHARGING CURRENT",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = StatusAmber
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = currentStr,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.testTag("current_card_value")
-                        )
-                    }
-                }
-            }
-        }
-
-        // F. Charging Source & Session Duration Card
-        SentinelCard(
-            title = "Session Timing & Charging Source",
+            title = "Charging Source & Monotonic Timing",
             icon = Icons.Default.Schedule,
             dotState = if (isCharging) DotState.CONNECTED else DotState.STANDBY,
             accentColor = NetraEmerald
         ) {
-            val durationSec = sessionState.sessionDurationSeconds
-            val hours = durationSec / 3600
-            val minutes = (durationSec % 3600) / 60
-            val seconds = durationSec % 60
-            val durationStr = String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
-
-            val lastUpdatedStr = sessionState.lastUpdatedTimeMs?.let { timeFormat.format(Date(it)) } ?: "Unavailable"
-            val sourceStr = sessionState.pluggedSource ?: "Unavailable"
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -246,28 +271,12 @@ fun LiveChargingMonitorSection(
             ) {
                 Column {
                     Text(
-                        text = "SESSION DURATION",
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = if (isCharging) durationStr else "00:00:00 (Idle)",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
-                        color = if (isCharging) NetraEmerald else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.testTag("session_duration_value")
-                    )
-                }
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
                         text = "CHARGING SOURCE",
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = sourceStr,
+                        text = sessionState.pluggedSource ?: "Unavailable",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = NetraCyan,
@@ -275,25 +284,37 @@ fun LiveChargingMonitorSection(
                     )
                 }
 
-                Column(horizontalAlignment = Alignment.End) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "LAST UPDATED",
+                        text = "CLOCK SOURCE",
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = lastUpdatedStr,
+                        text = "Elapsed Realtime",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        fontFamily = FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.testTag("last_updated_value")
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "STATUS",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = if (isCharging) "Active (~1s)" else "Idle",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isCharging) NetraEmerald else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
         }
 
-        // G. Live Graph
+        // Live Charging Graph
         SentinelCard(
             title = "Live Charging Session Graph",
             icon = Icons.AutoMirrored.Filled.ShowChart,
@@ -303,7 +324,7 @@ fun LiveChargingMonitorSection(
             LiveChargingGraph(samples = sessionState.rollingHistory)
         }
 
-        // H. Scrollable Timestamped Charging History
+        // Session Telemetry History Table
         SentinelCard(
             title = "Session Telemetry History",
             icon = Icons.Default.History,
@@ -314,5 +335,39 @@ fun LiveChargingMonitorSection(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun CanonicalTelemetryLine(
+    label: String,
+    value: String,
+    tag: String,
+    color: Color,
+    isProminent: Boolean = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(6.dp))
+            .background(if (isProminent) NetraSurface.copy(alpha = 0.7f) else Color.Transparent)
+            .padding(horizontal = if (isProminent) 8.dp else 4.dp, vertical = if (isProminent) 6.dp else 2.dp)
+            .testTag(tag),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            fontSize = if (isProminent) 13.sp else 12.sp,
+            fontWeight = if (isProminent) FontWeight.Bold else FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = value,
+            fontSize = if (isProminent) 16.sp else 14.sp,
+            fontWeight = FontWeight.ExtraBold,
+            fontFamily = FontFamily.Monospace,
+            color = color
+        )
     }
 }

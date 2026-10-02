@@ -107,6 +107,17 @@ fun GraphScreen(
             }
         }
 
+        // 24-Hour Vico Battery & Temperature Trends Dashboard
+        item {
+            val records24h by viewModel.recordsLast24Hours.collectAsStateWithLifecycle()
+            val canonical by viewModel.canonicalState.collectAsStateWithLifecycle()
+            com.example.ui.components.VicoBatteryTrendsDashboard(
+                records = records24h,
+                currentLevel = canonical.batteryLevel,
+                currentTemperature = canonical.temperatureCelsius
+            )
+        }
+
         // Dynamic Battery Health % Over Time Line Chart
         item {
             SentinelCard(

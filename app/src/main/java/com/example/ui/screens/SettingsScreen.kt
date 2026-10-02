@@ -341,6 +341,67 @@ fun SettingsScreen(
             }
         }
 
+        // Foreground Service Battery Tracker
+        item {
+            val bgState by viewModel.batteryForegroundState.collectAsStateWithLifecycle()
+            SentinelCard(
+                title = "Battery Tracker Foreground Service",
+                icon = Icons.Default.Bolt,
+                dotState = if (bgState.isTrackingActive) DotState.CONNECTED else DotState.STANDBY,
+                accentColor = NetraEmerald
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Background BatteryManager Tracker",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Runs ongoing foreground notification tracking percentage, temperature, and charging status via BatteryManager.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = bgState.isTrackingActive,
+                        onCheckedChange = { viewModel.toggleBatteryForegroundService(it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = NetraEmerald, checkedTrackColor = NetraEmerald.copy(alpha = 0.3f)),
+                        modifier = Modifier.testTag("foreground_service_toggle")
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text("Percentage", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${bgState.percentage}%", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = NetraEmerald)
+                    }
+                    Column {
+                        Text("Temperature", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${String.format(java.util.Locale.US, "%.1f°C", bgState.temperatureCelsius)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    }
+                    Column {
+                        Text("Status", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(bgState.status, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (bgState.isCharging) NetraCyan else MaterialTheme.colorScheme.onSurface)
+                    }
+                    Column {
+                        Text("Power Source", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(bgState.pluggedSource, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    }
+                }
+            }
+        }
+
         // 4. Battery Optimization Exemption
         item {
             SentinelCard(

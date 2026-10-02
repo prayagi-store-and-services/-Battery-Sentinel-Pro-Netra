@@ -95,6 +95,11 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         try {
             BatteryMonitorService.startService(this)
         } catch (_: Exception) {}
+
+        // Start Battery Foreground Service tracking percentage, temperature, and charging status
+        try {
+            com.example.service.BatteryForegroundService.startService(this)
+        } catch (_: Exception) {}
     }
 
     companion object {

@@ -17,6 +17,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.Locale
 import kotlin.math.abs
 
 /**
@@ -28,6 +29,9 @@ interface BatteryHardwareProvider {
     fun getVoltageMv(): Int?
     fun getCurrentMicroAmps(): Int?
     fun getBatteryLevelPercent(): Float?
+    fun getTemperatureCelsius(): Float?
+    fun isBatteryFull(): Boolean
+    fun computeChargeTimeRemainingMillis(): Long? = null
 }
 
 /**
@@ -87,6 +91,33 @@ class AndroidBatteryHardwareProvider(private val context: Context) : BatteryHard
             (level.toFloat() * 100f) / scale.toFloat()
         } else null
     }
+
+    override fun getTemperatureCelsius(): Float? {
+        val intent = getStickyBatteryIntent() ?: return null
+        val raw = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1)
+        return if (raw > 0) raw / 10.0f else null
+    }
+
+    override fun isBatteryFull(): Boolean {
+        val intent = getStickyBatteryIntent() ?: return false
+        val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+        val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        return status == BatteryManager.BATTERY_STATUS_FULL || (level > 0 && scale > 0 && level >= scale)
+    }
+
+    override fun computeChargeTimeRemainingMillis(): Long? {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            val bm = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+            val remaining = try {
+                bm?.computeChargeTimeRemaining() ?: -1L
+            } catch (_: Exception) {
+                -1L
+            }
+            return if (remaining > 0L) remaining else null
+        }
+        return null
+    }
 }
 
 /**
@@ -98,6 +129,13 @@ class LiveChargingSessionEngine(
     private val hardwareProvider: BatteryHardwareProvider,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
     private val clock: () -> Long = { System.currentTimeMillis() },
+    private val elapsedRealtimeClock: () -> Long = {
+        try {
+            android.os.SystemClock.elapsedRealtime()
+        } catch (_: Throwable) {
+            System.currentTimeMillis()
+        }
+    },
     private val pollingIntervalMs: Long = 1000L
 ) {
     private val mutex = Mutex()
@@ -105,6 +143,7 @@ class LiveChargingSessionEngine(
     private var isScreenActive = false
     private val speedEngine = ChargingSpeedEngine()
     private val rollingHistoryBuffer = ArrayDeque<LiveChargingSample>(300)
+    private var sessionStartElapsedRealtime: Long = 0L
 
     private val _sessionState = MutableStateFlow(LiveChargingSessionState())
     val sessionState: StateFlow<LiveChargingSessionState> = _sessionState.asStateFlow()
@@ -128,7 +167,12 @@ class LiveChargingSessionEngine(
                     _sessionState.value = _sessionState.value.copy(
                         isChargingActive = false,
                         isDischarging = true,
-                        currentBatteryPercent = hardwareProvider.getBatteryLevelPercent()
+                        currentBatteryPercent = hardwareProvider.getBatteryLevelPercent(),
+                        currentTemperatureCelsius = hardwareProvider.getTemperatureCelsius(),
+                        currentVoltageMv = null,
+                        currentCurrentMa = null,
+                        currentPowerWatts = null,
+                        etaDisplayStatus = "Unavailable"
                     )
                 }
             }
@@ -173,8 +217,14 @@ class LiveChargingSessionEngine(
                         isDischarging = true,
                         currentPowerWatts = null,
                         currentCurrentA = null,
+                        currentVoltageV = null,
+                        currentVoltageMv = null,
+                        currentCurrentMa = null,
                         pluggedSource = if (plugged > 0) "IDLE" else "UNPLUGGED",
-                        currentBatteryPercent = hardwareProvider.getBatteryLevelPercent()
+                        currentBatteryPercent = hardwareProvider.getBatteryLevelPercent(),
+                        currentTemperatureCelsius = hardwareProvider.getTemperatureCelsius(),
+                        etaDisplayStatus = "Unavailable",
+                        estimatedTimeToFullSeconds = null
                     )
                 }
             }
@@ -183,18 +233,23 @@ class LiveChargingSessionEngine(
 
     private fun startNewSessionLocked() {
         val now = clock()
+        sessionStartElapsedRealtime = elapsedRealtimeClock()
         val currentLevel = hardwareProvider.getBatteryLevelPercent()
+        val currentTemp = hardwareProvider.getTemperatureCelsius()
         val plugged = hardwareProvider.getPluggedType()
 
         _sessionState.value = LiveChargingSessionState(
             isChargingActive = true,
             sessionStartTimeMs = now,
+            sessionElapsedRealtimeMs = sessionStartElapsedRealtime,
             sessionDurationSeconds = 0L,
             currentBatteryPercent = currentLevel,
+            currentTemperatureCelsius = currentTemp,
             pluggedSource = plugged,
             lastUpdatedTimeMs = now,
             rollingHistory = rollingHistoryBuffer.toList(),
-            isDischarging = false
+            isDischarging = false,
+            etaDisplayStatus = "Calculating..."
         )
     }
 
@@ -209,7 +264,8 @@ class LiveChargingSessionEngine(
                         stopPollingLoopLocked()
                         _sessionState.value = _sessionState.value.copy(
                             isChargingActive = false,
-                            isDischarging = !hardwareProvider.isCharging()
+                            isDischarging = !hardwareProvider.isCharging(),
+                            etaDisplayStatus = "Unavailable"
                         )
                         return@launch
                     }
@@ -240,44 +296,58 @@ class LiveChargingSessionEngine(
         val isCharging = hardwareProvider.isCharging()
         val plugged = hardwareProvider.getPluggedType()
         val levelPercent = hardwareProvider.getBatteryLevelPercent()
+        val temperatureCelsius = hardwareProvider.getTemperatureCelsius()
         val voltageMv = hardwareProvider.getVoltageMv()
         val rawCurrentMicroAmps = hardwareProvider.getCurrentMicroAmps()
+        val isFull = hardwareProvider.isBatteryFull()
 
         val startTime = _sessionState.value.sessionStartTimeMs ?: now
-        val durationSeconds = (now - startTime).coerceAtLeast(0L) / 1000L
+        val durationSeconds = if (sessionStartElapsedRealtime > 0L) {
+            (elapsedRealtimeClock() - sessionStartElapsedRealtime).coerceAtLeast(0L) / 1000L
+        } else {
+            (now - startTime).coerceAtLeast(0L) / 1000L
+        }
 
         if (!isCharging) {
             _sessionState.value = _sessionState.value.copy(
                 isChargingActive = false,
                 isDischarging = true,
                 currentBatteryPercent = levelPercent,
+                currentTemperatureCelsius = temperatureCelsius,
                 pluggedSource = plugged,
                 currentPowerWatts = null,
-                currentCurrentA = null
+                currentCurrentA = null,
+                currentVoltageV = null,
+                currentVoltageMv = null,
+                currentCurrentMa = null,
+                etaDisplayStatus = "Unavailable",
+                estimatedTimeToFullSeconds = null
             )
             stopPollingLoopLocked()
             return
         }
 
-        // Validate voltage within plausible hardware ranges (2.0V - 15.0V)
-        val voltageV = voltageMv?.let {
-            val v = it / 1000.0f
-            if (v in 2.0f..15.0f) v else null
+        // Validate voltage within plausible hardware ranges (2.0V - 15.0V / 2000mV - 15000mV)
+        val voltageMvFloat = voltageMv?.let {
+            if (it in 2000..15000) it.toFloat() else null
         }
+        val voltageV = voltageMvFloat?.let { it / 1000.0f }
 
         // Normalize current based on device fuel-gauge unit conventions
         val currentMa = rawCurrentMicroAmps?.let { raw ->
             if (raw == Int.MIN_VALUE) null
             else speedEngine.normalizeToMilliAmps(raw, activeCurrentFlow = true)
         }
-        val currentA = currentMa?.let {
-            val a = abs(it) / 1000.0f
-            if (a in 0.0f..30.0f) a else null
+        val currentMaFloat = currentMa?.let {
+            val ma = abs(it).toFloat()
+            if (ma in 0.0f..30000.0f) ma else null
         }
+        val currentA = currentMaFloat?.let { it / 1000.0f }
 
-        // Calculate power strictly from compatible valid voltage and current
-        val powerWatts = if (voltageV != null && currentA != null) {
-            voltageV * currentA
+        // Calculate power strictly from compatible valid voltage and current:
+        // Power (W) = Voltage (mV) × Current (mA) / 1,000,000
+        val powerWatts = if (voltageMvFloat != null && currentMaFloat != null) {
+            (voltageMvFloat * currentMaFloat) / 1_000_000f
         } else {
             null
         }
@@ -289,7 +359,10 @@ class LiveChargingSessionEngine(
             powerWatts = powerWatts,
             batteryPercent = levelPercent,
             pluggedSource = plugged,
-            isValid = voltageV != null || currentA != null || levelPercent != null
+            isValid = voltageV != null || currentA != null || levelPercent != null,
+            voltageMv = voltageMvFloat,
+            currentMa = currentMaFloat,
+            temperatureCelsius = temperatureCelsius
         )
 
         if (rollingHistoryBuffer.size >= 300) {
@@ -297,19 +370,89 @@ class LiveChargingSessionEngine(
         }
         rollingHistoryBuffer.addLast(sample)
 
+        // Estimated Time to Full computation per Section 9
+        val (etaSeconds, etaStatus) = calculateTimeToFull(
+            isFull = isFull,
+            currentPercent = levelPercent,
+            samples = rollingHistoryBuffer
+        )
+
         _sessionState.value = _sessionState.value.copy(
             isChargingActive = true,
             sessionStartTimeMs = startTime,
+            sessionElapsedRealtimeMs = sessionStartElapsedRealtime,
             sessionDurationSeconds = durationSeconds,
             currentVoltageV = voltageV,
             currentCurrentA = currentA,
+            currentVoltageMv = voltageMvFloat,
+            currentCurrentMa = currentMaFloat,
             currentPowerWatts = powerWatts,
             currentBatteryPercent = levelPercent,
+            currentTemperatureCelsius = temperatureCelsius,
             pluggedSource = plugged,
             lastUpdatedTimeMs = now,
             rollingHistory = rollingHistoryBuffer.toList(),
-            isDischarging = false
+            isDischarging = false,
+            estimatedTimeToFullSeconds = etaSeconds,
+            isFull = isFull,
+            etaDisplayStatus = etaStatus
         )
+    }
+
+    /**
+     * Calculates estimated time to full per Section 9 specification:
+     * - If full -> "00:00:00"
+     * - Uses rolling observations to compute charging rate (% per second)
+     * - Formula: Estimated Time (seconds) = (100 - Current Percentage) / Charging Rate (% per second)
+     * - Falls back to hardware estimate or "Calculating..." / "Unavailable"
+     */
+    private fun calculateTimeToFull(
+        isFull: Boolean,
+        currentPercent: Float?,
+        samples: List<LiveChargingSample>
+    ): Pair<Long?, String> {
+        if (isFull || (currentPercent != null && currentPercent >= 100f)) {
+            return 0L to "00:00:00"
+        }
+
+        if (currentPercent == null) {
+            return null to "Unavailable"
+        }
+
+        // Look at rolling window of valid observations
+        val validSamples = samples.filter { it.batteryPercent != null && (it.batteryPercent in 0f..100f) }
+        val first = validSamples.firstOrNull()
+        val last = validSamples.lastOrNull()
+
+        if (first != null && last != null && validSamples.size >= 4) {
+            val elapsedSeconds = (last.timestamp - first.timestamp) / 1000.0
+            val deltaPercent = (last.batteryPercent ?: 0f) - (first.batteryPercent ?: 0f)
+
+            // If we have at least 10 seconds of observation and battery has increased
+            if (elapsedSeconds >= 10.0 && deltaPercent > 0.005f) {
+                val ratePercentPerSec = deltaPercent / elapsedSeconds
+                val remainingPercent = (100.0f - (last.batteryPercent ?: 0f)).coerceAtLeast(0f)
+                val etaSeconds = (remainingPercent / ratePercentPerSec).toLong().coerceIn(0L, 86400L)
+                val h = etaSeconds / 3600
+                val m = (etaSeconds % 3600) / 60
+                val s = etaSeconds % 60
+                val formatted = String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
+                return etaSeconds to formatted
+            }
+        }
+
+        // Fallback to system hardware estimate if available
+        val sysEstimateMs = hardwareProvider.computeChargeTimeRemainingMillis()
+        if (sysEstimateMs != null && sysEstimateMs > 0L) {
+            val etaSeconds = (sysEstimateMs / 1000L).coerceIn(0L, 86400L)
+            val h = etaSeconds / 3600
+            val m = (etaSeconds % 3600) / 60
+            val s = etaSeconds % 60
+            val formatted = String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
+            return etaSeconds to formatted
+        }
+
+        return null to "Calculating..."
     }
 
     /**
@@ -330,5 +473,6 @@ class LiveChargingSessionEngine(
         rollingHistoryBuffer.clear()
         _sessionState.value = LiveChargingSessionState()
         isScreenActive = false
+        sessionStartElapsedRealtime = 0L
     }
 }
