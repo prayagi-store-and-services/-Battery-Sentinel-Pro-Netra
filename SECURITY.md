@@ -2,13 +2,13 @@
 
 ## Supported Versions
 
-Battery Sentinel Pro Nethra is currently under active development and UI/architecture rebuild.
+Battery Sentinel Pro Nethra is under active development. The first public release is v1.0.0. Only the latest published release receives security fixes.
 
 | Version | Supported |
 | ------- | --------- |
-| Latest release | :white_check_mark: |
+| Latest GitHub release (currently v1.0.0) | :white_check_mark: |
 | Older releases | :x: |
-| Development builds | Best effort |
+| Development builds and CI test APKs | Best effort |
 
 ## Reporting a Vulnerability
 
@@ -87,6 +87,50 @@ The following should normally be reported through regular GitHub Issues instead:
 
 If a normal bug also creates a security vulnerability, report it privately as a security issue.
 
+## What the App Does With Your Data and Permissions
+
+This section describes what the current code does. It is updated with the app.
+
+### Live battery telemetry (charging and discharging)
+- Voltage, current, temperature, percentage, power and time estimates are read on the device from Android battery APIs (the battery status broadcast and `BatteryManager`). They are not sent anywhere for display.
+- The 1-second refresh loop runs only while the Live Power screen is visible.
+- Power is calculated battery-side power (voltage x current). It is not wall-adapter wattage.
+- Estimates (time to full, time until empty) come only from observed percentage progress. They show `Calculating...` or `Unavailable` when data is missing or inconsistent.
+
+### Network Saving (screen off) suggestion
+- The app can suggest switching down from 5G to 4G, or 4G to 3G, after the screen has been off. It uses these permissions:
+  - `READ_PHONE_STATE`: to read the current network type. Requested at runtime.
+  - Usage Access (`PACKAGE_USAGE_STATS`): to read recent mobile data use. Granted by you in Android Settings. If recent data use is 2 MB or more, no suggestion is made.
+- By default the app only shows a notification. A normal app cannot change the preferred network type.
+- **Experimental ADB switch:** `WRITE_SECURE_SETTINGS` is declared in the manifest but is not granted by Android to normal apps. Only you can grant it, from a computer, with `adb shell pm grant com.aistudio.batterysentinel.ntra android.permission.WRITE_SECURE_SETTINGS`. Without that grant the switch does nothing. This path is experimental and has not been verified on real devices. Do not grant it unless you understand it, and you can revoke it with `adb shell pm revoke` using the same package and permission.
+
+### Other permissions
+The manifest also declares internet and network state, notifications, boot completed, foreground service, battery-optimization request, approximate and precise location (weather and climate context), Bluetooth, vibration, and `REQUEST_INSTALL_PACKAGES` (for the in-app update flow; Android still asks you to approve every install). Report any permission you think is not needed.
+
+### Solar monitoring (planned, not enabled)
+No solar provider is enabled in the app today. Before any provider ships, these rules apply (see `docs/SOLAR_MONITORING_INTEGRATION_PLAN.md`):
+- Provider credentials or tokens are stored on the device only, encrypted with Android Keystore-backed storage.
+- They must be excluded from Android backup and device transfer. The current backup rule files are still the default templates, so this must be done before solar credentials are stored.
+- They are never written to logs, crash reports, analytics, source control or app resources. Provider app secrets are never embedded in the APK.
+- Official OAuth or token flows are preferred over collecting passwords. No scraping of private dashboards. Read-only in the first release.
+- A provider is listed as supported only after a real, authorized account test returns real data.
+
+### Honest data: no fake values
+The app must not invent telemetry. A reading the phone or provider does not give is shown as `Unavailable`, never as a fake zero, a sample value or a guess. Readings differ between phones, and the app does not claim every reading works on every device.
+
+### AI features
+Some features call an AI service (Gemini) over the network. Do not enter secrets in AI prompts. Report any case where private data is sent that you did not expect.
+
+## Releases and Signing
+- Release APKs are built by the repository's guarded release workflow from a reviewed commit on `main` and published on the GitHub Releases page.
+- The workflow signs the APK with the project release key and checks that the signing certificate matches the earlier one before publishing. The key is stored as a repository secret and is never committed.
+- Install APKs only from this repository's Releases page. CI test APKs are debug builds, signed with a throwaway key, and are not releases.
+- Compare the SHA-256 digest shown on the release page with the file you downloaded.
+
+## Dependencies
+- Dependabot alerts and updates are enabled. Security alerts are reviewed and fixed through pull requests that must pass the build and tests. Alerts are not dismissed without a reason.
+- Some alerts come from build-tool dependencies (Android Gradle Plugin and Gradle plugins), not code shipped in the APK. They are still tracked and fixed.
+
 ## Security Principles
 
 Battery Sentinel Pro Nethra follows these principles:
@@ -96,10 +140,9 @@ Battery Sentinel Pro Nethra follows these principles:
 - Do not fabricate permission states or security status.
 - Do not expose sensitive information unnecessarily.
 - Do not claim security capabilities that the application does not actually implement.
+- Show `Unavailable` when a value cannot be read. Never show invented values.
 - Keep security-sensitive functionality subject to testing and verification.
 
 ## Development Status
 
-Battery Sentinel Pro Nethra is currently undergoing a zero-based UI and architecture rebuild.
-
-Development and pre-release versions should not be assumed to provide the same stability or security guarantees as a future production release.
+Battery Sentinel Pro Nethra is in active development. v1.0.0 is the first published release. Features marked experimental or planned above have not been verified on real devices or are not implemented yet, and should not be assumed to provide production-level guarantees.
