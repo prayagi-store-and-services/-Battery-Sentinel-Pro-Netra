@@ -77,6 +77,11 @@ class StabilitySentinel(private val app: NetraApplication) {
     }
 
     private fun persistCrash(thread: Thread, throwable: Throwable) {
+        // Stack trace only (class names and code locations, no exception messages), kept locally so the
+        // user can choose to send it from Settings. Nothing is sent automatically.
+        runCatching {
+            File(app.filesDir, "pending_crash_report.txt").writeText(com.example.util.FeedbackBuilder.sanitizeStackTrace(throwable))
+        }
         val report = baseReport("CRASH", "runtime")
             .put("exceptionClass", throwable.javaClass.name.take(300))
             .put("stackTrace", stackTrace(throwable))
