@@ -380,41 +380,36 @@ fun BatteryScreen(
             }
             BatteryScreenSubTab.SESSIONS_AND_GRAPH -> {
                 // SESSIONS & GRAPH VIEW
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    item {
-                        GraphScreen(viewModel = viewModel)
-                    }
-
-                    item {
-                        SentinelCard(
-                            title = "Recent Charging Sessions",
-                            icon = Icons.Default.History,
-                            dotState = DotState.CONNECTED,
-                            accentColor = NetraCyan
-                        ) {
-                            if (sessions.isEmpty()) {
-                                Text(
-                                    text = "No charging sessions recorded yet. Plug in your charger to start recording session metrics.",
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            } else {
-                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    sessions.take(5).forEach { session ->
-                                        ChargingSessionItemRow(session = session)
+                // GraphScreen is itself a LazyColumn. It must not be nested inside another
+                // vertically scrolling LazyColumn (that crashes with infinite height), so the
+                // sessions card is passed in as extra items of the same list.
+                GraphScreen(
+                    viewModel = viewModel,
+                    extraItems = {
+                        item {
+                            SentinelCard(
+                                title = "Recent Charging Sessions",
+                                icon = Icons.Default.History,
+                                dotState = DotState.CONNECTED,
+                                accentColor = NetraCyan
+                            ) {
+                                if (sessions.isEmpty()) {
+                                    Text(
+                                        text = "No charging sessions recorded yet. Plug in your charger to start recording session metrics.",
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                } else {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        sessions.take(5).forEach { session ->
+                                            ChargingSessionItemRow(session = session)
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                }
+                )
             }
         }
     }
