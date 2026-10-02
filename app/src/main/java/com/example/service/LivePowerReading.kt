@@ -23,7 +23,7 @@ data class LivePowerReading(
         fun from(voltageMv: Int, rawCurrent: Int, isCharging: Boolean): LivePowerReading {
             val v = if (voltageMv > 0) voltageMv / 1000f else null
             val currentOk = rawCurrent != Int.MIN_VALUE && rawCurrent != Int.MAX_VALUE
-            val ma = if (currentOk) ChargingSpeedEngine.normalizeToMilliAmps(rawCurrent, isCharging) else null
+            val ma = if (currentOk) ChargingSpeedEngine().normalizeToMilliAmps(rawCurrent, true) else null
             val w = if (v != null && ma != null) abs(v * ma / 1000f) else null
             return LivePowerReading(v, ma, isCharging, w)
         }
