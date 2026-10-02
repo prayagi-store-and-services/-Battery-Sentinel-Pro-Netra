@@ -29,7 +29,7 @@ Android APIs / Battery / Sensors / Bluetooth / Location / Weather
 ```
 
 - **Single Source of Truth**: `NetraCentralDataCenter` produces immutable `NetraCentralState` flows and discrete `NetraCentralEvent` emissions. No UI screen or sub-service calculates independent battery, thermal, or permission states.
-- **Pipeline Latency**: Critical telemetry ingestion and emission completes well within the <=100ms budget without artificial delays or synthetic polling loops.
+- **Pipeline Latency**: Critical telemetry ingestion and emission completes within the <=100ms budget; the separate foreground electrical sampler runs at 1 Hz only while the app is in the STARTED lifecycle state.
 
 ---
 
@@ -64,7 +64,7 @@ Android APIs / Battery / Sensors / Bluetooth / Location / Weather
 
 ## Live Electrical Telemetry (Foreground)
 
-- While the Battery screen is visible, the app requests a fresh Android battery snapshot every 1 second and routes it through the existing `NetraCentralDataCenter`.
+- While the app is foregrounded (Android lifecycle STARTED), the app requests a fresh Android battery snapshot every 1 second and routes it through the existing `NetraCentralDataCenter`.
 - Voltage is displayed in volts to two decimal places; current is displayed in amperes to two decimal places; power is displayed in watts to two decimal places.
 - Confirmed charging displays the observed battery-terminal charging power. Confirmed discharging displays the magnitude of observed battery-terminal discharge power, regardless of OEM current-sign convention.
 - Charging speed classification is only applied while charging. Discharge wattage is not labeled as a charging tier.
