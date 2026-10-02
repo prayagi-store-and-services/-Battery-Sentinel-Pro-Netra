@@ -153,10 +153,11 @@ fun MainAppContent(viewModel: NetraViewModel) {
     // Permissions are now explained one at a time (Approve / Skip) instead of firing system dialogs blindly.
     com.example.permissions.PermissionOnboardingHost(onChanged = { viewModel.refreshHardwareState() })
 
+    var updateDismissedFor by remember { mutableStateOf(-1L) }
     val availableUpdate = (updateState as? UpdateUiState.Available)?.release
-    if (availableUpdate != null) {
+    if (availableUpdate != null && updateDismissedFor != availableUpdate.versionCode) {
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { updateDismissedFor = availableUpdate.versionCode },
             title = { Text("Update available: " + availableUpdate.versionName) },
             text = {
                 Column {
@@ -169,10 +170,19 @@ fun MainAppContent(viewModel: NetraViewModel) {
             },
             confirmButton = {
                 Button(
-                    onClick = { releaseUpdater.installLatest() },
+                    onClick = {
+                        releaseUpdater.installLatest(onError = { message ->
+                            android.widget.Toast.makeText(context, "Update problem: $message", android.widget.Toast.LENGTH_LONG).show()
+                        })
+                    },
                     enabled = updateState !is UpdateUiState.Downloading
                 ) {
                     Text(if (updateState is UpdateUiState.Downloading) "Downloading…" else "Update")
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { updateDismissedFor = availableUpdate.versionCode }) {
+                    Text("Later")
                 }
             }
         )
