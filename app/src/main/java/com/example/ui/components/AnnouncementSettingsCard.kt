@@ -236,135 +236,9 @@ fun AnnouncementSettingsCard(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Audio Routing & Fallback Policy Card
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(NetraCyan.copy(alpha = 0.08f))
-                        .border(1.dp, NetraCyan.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-                        .padding(12.dp)
-                ) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Tune,
-                                    contentDescription = null,
-                                    tint = NetraCyan,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Audio Output Routing & Fallback",
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                        }
+                // Fixed audio output + mute interval
+                MuteAndOutputCard(settings = settings, viewModel = viewModel)
 
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // Technical limitation notice
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                .padding(8.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.Top) {
-                                Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = null,
-                                    tint = StatusAmber,
-                                    modifier = Modifier.size(14.dp).padding(top = 2.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Android AOSP audio policy routes streams to a single active sink (Bluetooth when connected). Simultaneous dual-sink output to speaker + Bluetooth is restricted by Android HAL. Netra enforces automatic speaker fallback on volume mutes, drops, or TTS failures.",
-                                    fontSize = 9.5.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    lineHeight = 13.sp
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Text(
-                            text = "ROUTING POLICY",
-                            fontSize = 9.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // Policy Options
-                        val currentPolicy = settings.audioRoutingPolicy
-                        listOf(
-                            Triple(
-                                AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK,
-                                "Auto: Bluetooth with Speaker Fallback",
-                                "Uses connected Bluetooth, automatically fails over to phone speaker if muted or disconnected"
-                            ),
-                            Triple(
-                                AudioRoutingPolicy.FORCE_PHONE_SPEAKER,
-                                "Always Use Built-in Phone Speaker",
-                                "Directs all announcements to the phone speaker regardless of Bluetooth connections"
-                            ),
-                            Triple(
-                                AudioRoutingPolicy.DUAL_ATTEMPT_SEQUENTIAL,
-                                "Dual Mode (BT Speech + Speaker Chime)",
-                                "Speaks to Bluetooth and emits companion safety chime on speaker for critical alerts"
-                            )
-                        ).forEach { (policyOption, title, desc) ->
-                            val isSelected = currentPolicy == policyOption
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isSelected) NetraCyan.copy(alpha = 0.15f) else Color.Transparent)
-                                    .border(
-                                        1.dp,
-                                        if (isSelected) NetraCyan.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.1f),
-                                        RoundedCornerShape(8.dp)
-                                    )
-                                    .clickable { viewModel.setAudioRoutingPolicy(policyOption) }
-                                    .padding(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(12.dp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(if (isSelected) NetraCyan else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column {
-                                    Text(
-                                        text = title,
-                                        fontSize = 11.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) NetraCyan else MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = desc,
-                                        fontSize = 9.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        lineHeight = 12.sp
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                        }
-                    }
-                }
 
                 Spacer(modifier = Modifier.height(14.dp))
 
@@ -546,5 +420,79 @@ private fun AnnouncementToggleItem(
             ),
             modifier = Modifier.testTag(testTag)
         )
+    }
+}
+
+
+/**
+ * Audio output is fixed (phone speaker first, then the connected Bluetooth device), so there is no routing choice.
+ * The user can mute routine announcements for a chosen interval; critical warnings still play.
+ */
+@Composable
+private fun MuteAndOutputCard(
+    settings: com.example.data.repository.SentinelSettings,
+    viewModel: com.example.viewmodel.NetraViewModel
+) {
+    val mutedUntil = settings.announcementMutedUntilMs
+    val isMuted = System.currentTimeMillis() < mutedUntil
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(NetraCyan.copy(alpha = 0.08f))
+            .border(1.dp, NetraCyan.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+            .padding(12.dp)
+    ) {
+        Column {
+            Text(
+                text = "Mute announcements",
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Announcements always play on the phone speaker first. If a Bluetooth device is connected, the same announcement plays there right after.",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 13.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (isMuted) {
+                    "Muted until " + java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(java.util.Date(mutedUntil)) + ". Critical warnings still play."
+                } else {
+                    "Pick how long to mute routine announcements. Critical warnings always play."
+                },
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (isMuted) StatusAmber else MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf(30 to "30 min", 60 to "1 hr", 120 to "2 hr", 480 to "8 hr").forEach { (minutes, label) ->
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(NetraCyan.copy(alpha = 0.18f))
+                            .clickable { viewModel.muteAnnouncementsForMinutes(minutes) }
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(text = label, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = NetraCyan)
+                    }
+                }
+                if (isMuted) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(StatusAmber.copy(alpha = 0.2f))
+                            .clickable { viewModel.unmuteAnnouncements() }
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(text = "Unmute", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = StatusAmber)
+                    }
+                }
+            }
+        }
     }
 }
