@@ -145,6 +145,7 @@ footer{padding:36px 0;border-top:1px solid var(--line);color:var(--mute);font-si
 
 <footer><div class="wrap">
 <p><b>Honesty note.</b> Charging figures are battery-side readings from Android and may differ from a charger's rating. Phone makers report current differently, so instant numbers can vary. Android offers no way for any app to limit a charger's output.</p>
+<p>Visitors: <b id="visits">...</b> (counted with a free third-party counter; no personal data is stored by this site)</p>
 <p>Battery Sentinel Pro Netra &middot; <a href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra">GitHub</a> &middot; <a href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/blob/main/SECURITY.md">Security</a></p>
 </div></footer>
 
@@ -166,6 +167,8 @@ fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(functi
  });
  box.innerHTML=html+"</tbody></table>";
 }).catch(function(){var b=document.getElementById("old-list");if(b)b.innerHTML="<p class='sub'>Could not load the list right now.</p>"});
+var key="visits";if(sessionStorage.getItem("netra_counted")){var path="get"}else{var path="hit"}
+fetch("https://abacus.jasoncameron.dev/"+path+"/netra-pages/"+key).then(function(r){return r.json()}).then(function(d){sessionStorage.setItem("netra_counted","1");var e=document.getElementById("visits");if(e&&d.value!=null)e.textContent=Number(d.value).toLocaleString()}).catch(function(){var e=document.getElementById("visits");if(e)e.textContent="unavailable"});
 })();
 </script>
 </body>
