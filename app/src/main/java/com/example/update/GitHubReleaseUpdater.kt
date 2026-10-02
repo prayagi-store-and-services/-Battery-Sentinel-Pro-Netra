@@ -105,7 +105,8 @@ class GitHubReleaseUpdater(context: Context) {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    _state.value = UpdateUiState.Error(e.message ?: "Update failed.")
+                    // Keep the update offered (so the user can retry) and tell them exactly why it failed.
+                    _state.value = UpdateUiState.Available(release)
                     onError(e.message ?: "Update failed.")
                 }
             }
