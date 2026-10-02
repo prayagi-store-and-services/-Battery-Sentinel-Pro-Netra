@@ -235,10 +235,10 @@ fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(functi
  if(rel.length&&meta){meta.textContent="Latest: "+rel[0].tag_name+" - released "+fmt(rel[0].published_at)+". Free. Android only."}
  var box=document.getElementById("old-list");
  if(!rel.length){box.innerHTML="<p class='sub'>No releases yet.</p>";return}
- var html="<table><thead><tr><th>Version</th><th>Released</th><th>Download</th></tr></thead><tbody>";
+ var html="<table><thead><tr><th>Version</th><th>Released</th><th>Download</th><th>Downloads</th></tr></thead><tbody>";
  rel.forEach(function(x,i){
   var apk=(x.assets||[]).filter(function(a){return /\.apk$/i.test(a.name)})[0];
-  html+="<tr><td><a href='"+x.html_url+"'>"+x.tag_name+"</a>"+(i===0?" <span class='tag ok'>latest</span>":"")+"</td><td>"+fmt(x.published_at)+"</td><td>"+(apk?"<a href='"+apk.browser_download_url+"'>APK ("+mb(apk.size)+")</a>":"<span class='sub'>no APK attached</span>")+"</td></tr>";
+  html+="<tr><td><a href='"+x.html_url+"'>"+x.tag_name+"</a>"+(i===0?" <span class='tag ok'>latest</span>":"")+"</td><td>"+fmt(x.published_at)+"</td><td>"+(apk?"<a href='"+apk.browser_download_url+"'>APK ("+mb(apk.size)+")</a>":"<span class='sub'>no APK attached</span>")+"</td><td>"+(apk&&typeof apk.download_count==="number"?apk.download_count.toLocaleString():"<span class='sub'>unavailable</span>")+"</td></tr>";
  });
  box.innerHTML=html+"</tbody></table>";
 }).catch(function(){var b=document.getElementById("old-list");if(b)b.innerHTML="<p class='sub'>Could not load the list right now.</p>"});
