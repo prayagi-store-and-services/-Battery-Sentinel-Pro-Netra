@@ -26,3 +26,6 @@ var CONDOLENCES=[
 - `from` and `to` are inclusive dates (`yyyy-mm-dd`). A condolence overrides any festival while it is active, and the whole site switches to a somber grey/black theme.
 - Keep the text short and factual. Check the news from a reliable source first.
 - Remove the entry after it expires (optional; it stops showing by itself after `to`).
+
+## Roadmap
+The website roadmap section lists planned items without dates.
