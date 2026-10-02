@@ -70,7 +70,7 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 <p class="lead">Battery Sentinel Pro Netra watches your phone's battery, charging and temperature using only what Android actually reports. If a reading is not available, it says so. No made-up numbers.</p>
 <a class="btn" id="dl-main" href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/releases/latest/download/app-release.apk">Download latest APK</a>
 <a class="btn alt" href="#features">See what it does</a>
-<div class="stats"><div><b id="visits2">...</b>visits</div><div><b id="dls">...</b>downloads (all releases, from GitHub)</div><div><b id="avg">-</b><span id="avgn">no ratings yet</span></div></div>
+<div class="stats"><div><b id="visits2">...</b>visits</div><div><b id="dls">...</b>downloads (all releases, from GitHub)</div></div>
 <div class="meta" id="latest-meta">Always the newest release. Free. Android only.</div>
 <div class="note"><b>Install tip:</b> sometimes the app will not install over an older build. If the install fails, uninstall the old version first, then install the new one.</div>
 </div>
@@ -141,7 +141,7 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 <div class="card"><h3>Complete battery protection</h3><p>The heat and low-battery rules exist. Automatically acting on them and restoring settings afterwards is still being finished.</p><span class="tag plan">Planned</span></div>
 <div class="card"><h3>Crash reporting</h3><p>Crashes are saved on the phone today. Sending them to the developer needs a secure server, which is not set up yet.</p><span class="tag plan">Planned</span></div>
 <div class="card"><h3>Feedback inside the app</h3><p>Send comments, ratings, suggestions and complaints from the app itself. They would go to the same place as the website, so you never need to visit the site.</p><span class="tag plan">Planned</span></div>
-<div class="card"><h3>Automatic problem reports and update notices</h3><p>The app would send problem reports on its own, so issues can be found and fixed per phone model. New fixes would be released here and the app would tell you an update is available.</p><span class="tag plan">Planned</span></div>
+<div class="card"><h3>Automatic problem reports and update notices</h3><p>The app would send problem reports on its own, so issues can be found and fixed per phone model. New fixes would be released here and the app would tell you an update is available. Privacy: only the app version, phone model, Android version and the error details would be sent. No passwords, contacts, files or location history.</p><span class="tag plan">Planned</span></div>
 </div>
 <h3 style="margin-top:28px">Ideas (not committed)</h3>
 <div class="grid">
@@ -153,11 +153,10 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 </div></div></section>
 
 <section id="feedback"><div class="wrap">
-<h2>Rate, comment, suggest, report a problem</h2>
-<p class="sub">Messages go straight to the developer's inbox. Add an email if you want a reply.</p>
-<div class="card" style="margin-bottom:16px"><h3>Rate the app</h3><div class="stars" id="stars"></div><div class="msg" id="ratemsg"></div></div>
+<h2>Rate, suggest, report a problem</h2>
+<p class="sub">Messages are private and go to the developer. Ratings are not shown publicly. Add an email if you want a reply. Public comments may come later.</p>
 <div class="grid">
-<div class="card"><h3>Comment</h3><form class="fb" data-kind="Comment"><input name="name" placeholder="Your name (optional)"><textarea name="message" required placeholder="Your comment"></textarea><input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send comment</button><div class="msg"></div></form></div>
+<div class="card"><h3>Rate the app</h3><form class="fb" data-kind="Rating"><select name="rating" required><option value="">Choose 1 to 5 stars</option><option>5 - Great</option><option>4 - Good</option><option>3 - Okay</option><option>2 - Poor</option><option>1 - Bad</option></select><textarea name="message" placeholder="Anything to add? (optional)"></textarea><input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send rating</button><div class="msg"></div></form></div>
 <div class="card"><h3>Suggestion box</h3><form class="fb" data-kind="Suggestion"><textarea name="message" required placeholder="What should we add or improve?"></textarea><input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send suggestion</button><div class="msg"></div></form></div>
 <div class="card"><h3>Complaint / problem report</h3><form class="fb" data-kind="Complaint"><input name="device" placeholder="Phone model and Android version (optional)"><textarea name="message" required placeholder="What went wrong?"></textarea><input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send report</button><div class="msg"></div></form></div>
 </div></div></section>
@@ -190,12 +189,6 @@ var AB="https://abacus.jasoncameron.dev/";
 function setv(v){["visits","visits2"].forEach(function(i){var e=document.getElementById(i);if(e)e.textContent=v})}
 fetch(AB+(sessionStorage.getItem("netra_counted")?"get":"hit")+"/netra-pages/visits").then(function(r){return r.json()}).then(function(d){sessionStorage.setItem("netra_counted","1");setv(d.value!=null?Number(d.value).toLocaleString():"unavailable")}).catch(function(){setv("unavailable")});
 fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(function(r){return r.json()}).then(function(rel){var t=0;rel.forEach(function(x){(x.assets||[]).forEach(function(a){t+=a.download_count||0})});document.getElementById("dls").textContent=t.toLocaleString()}).catch(function(){document.getElementById("dls").textContent="unavailable"});
-function loadRating(){Promise.all([1,2,3,4,5].map(function(n){return fetch(AB+"get/netra-pages/rating-"+n).then(function(r){return r.ok?r.json():{value:0}}).catch(function(){return {value:0}})})).then(function(a){var c=0,sum=0;a.forEach(function(d,i){c+=d.value||0;sum+=(d.value||0)*(i+1)});if(c){document.getElementById("avg").textContent=(sum/c).toFixed(1)+" / 5";document.getElementById("avgn").textContent=c+" rating"+(c>1?"s":"")}})}
-loadRating();
-var st=document.getElementById("stars");
-for(var i=1;i<=5;i++){(function(n){var b=document.createElement("button");b.type="button";b.textContent="\u2605";b.title=n+" star"+(n>1?"s":"");b.onclick=function(){
- if(localStorage.getItem("netra_rated")){document.getElementById("ratemsg").textContent="You already rated from this browser. Thanks!";return}
- fetch(AB+"hit/netra-pages/rating-"+n).then(function(){localStorage.setItem("netra_rated",n);document.getElementById("ratemsg").textContent="Thanks for rating "+n+" / 5!";Array.prototype.forEach.call(st.children,function(x,k){x.className=k<n?"on":""});loadRating()}).catch(function(){document.getElementById("ratemsg").textContent="Could not save the rating right now."})};st.appendChild(b)})(i)}
 document.querySelectorAll("form.fb").forEach(function(f){f.addEventListener("submit",function(e){e.preventDefault();var m=f.querySelector(".msg"),kind=f.getAttribute("data-kind"),o={};
  new FormData(f).forEach(function(v,k){o[k]=v});o._subject="[Netra] "+kind;o._template="table";o._captcha="false";
  m.textContent="Sending...";
