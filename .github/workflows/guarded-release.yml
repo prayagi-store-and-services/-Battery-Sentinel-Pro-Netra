@@ -190,7 +190,7 @@ jobs:
         test -n "$EXPECTED_CERT_SHA256"
         APK="app/build/outputs/apk/release/app-release.apk"
         APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)"
-        ACTUAL="$("$APKSIGNER" verify --print-certs "$APK" | sed -n 's/Signer #1 certificate SHA-256 digest: //p' | tr -d '[:space:]')"
+        ACTUAL="$("$APKSIGNER" verify --print-certs "$APK" | sed -n 's/^.*[Ss]igner[^c]*certificate SHA-256 digest: //p' | head -1 | tr -d '[:space:]')"
         test "$ACTUAL" = "$EXPECTED_CERT_SHA256"
     - name: Publish release only after all checks pass
       env:
