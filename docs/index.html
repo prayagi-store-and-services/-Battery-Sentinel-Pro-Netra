@@ -65,9 +65,12 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 .rl{margin-top:30px}.rl h3{margin:0 0 4px}
 .rv{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 14px;margin:10px 0}
 .rv .top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:14px}.rv .st{color:var(--warn);letter-spacing:2px}.rv .dv{color:var(--mute);font-size:13px}.rv p{margin:6px 0 0;color:var(--text);font-size:15px;word-break:break-word}.rv button.rp{margin-left:auto;background:none;border:0;color:var(--mute);font-size:12px;cursor:pointer;text-decoration:underline}
+.festbar{padding:10px 16px;text-align:center;font-weight:600;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#04101a}.festbar.sorrow{background:#000;color:#e4e4e7;border-bottom:3px solid #e4e4e7}.festbar.soon{opacity:.92;font-weight:500}.clockbar{text-align:center;font-size:13px;color:var(--mute);padding:6px 12px;border-bottom:1px solid var(--line)}#whatsnew-list h3{margin:14px 0 4px}#whatsnew-list ul{margin:4px 0 10px 20px}
 </style>
 </head>
 <body>
+<div id="festbar" class="festbar" hidden></div>
+<div class="clockbar" id="liveclock" aria-live="off"></div>
 <nav><div class="wrap">
 <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2312203a'/%3E%3Crect x='18' y='14' width='28' height='38' rx='5' fill='none' stroke='%2334d399' stroke-width='4'/%3E%3Crect x='26' y='9' width='12' height='6' rx='2' fill='%2334d399'/%3E%3Cpath d='M34 22l-8 12h6l-2 10 8-12h-6z' fill='%2338bdf8'/%3E%3C/svg%3E" alt=""><b>Battery Sentinel Pro Netra</b>
 <a class="hide" href="#features">Features</a><a class="hide" href="#benefits">Benefits</a><a class="hide" href="#soon">Coming soon</a><a class="hide" href="#feedback">Feedback</a><a href="#old">Old versions</a><a href="#download">Download</a>
@@ -81,7 +84,7 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 <a class="btn alt" href="#features">See what it does</a>
 <div class="stats"><div><b id="visits2">...</b>visits</div><div><b id="dls">...</b>downloads (all releases, from GitHub)</div></div>
 <div class="meta" id="latest-meta">Always the newest release. Free. Android only.</div>
-<div class="note"><b>Install tip:</b> sometimes the app will not install over an older build. If the install fails, uninstall the old version first, then install the new one.</div>
+<div class="note"><b>Install tip:</b> if the install fails, first download the APK again and check that it finished. The APK is signed by the project; Android refuses an update when the signing key differs from the installed copy (for example one installed from a different source). Only in that case an uninstall is needed, as a last resort. <b>Dhyan dein:</b> uninstall karne par app ka local data (history aur settings) phone se hat jata hai.</div>
 </div>
 <div>
 <div class="phone" aria-label="Illustrative layout preview">
@@ -129,9 +132,15 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 <ol>
 <li>Download the APK on your Android phone.</li>
 <li>Open it and allow installing from this source when Android asks.</li>
-<li>If it will not install over an older build, uninstall the old version first, then install the new one.</li>
+<li>If it will not install, download the APK again and check the download completed. Android blocks an update only when the signing key differs from the installed copy. Only then, as a last resort, uninstall the old version. Warning (Hinglish): uninstall karne se app ka local data (history, settings) delete ho jata hai - pehle soch lein.</li>
 </ol>
 <p class="sub">Source and release notes: <a href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra">GitHub repository</a>.</p>
+</div></section>
+
+<section id="whatsnew"><div class="wrap">
+<h2>What's new</h2>
+<p class="sub">Read live from the GitHub releases, so it updates itself with every release.</p>
+<div id="whatsnew-list"><p class="sub">Loading...</p></div>
 </div></section>
 
 <section id="old"><div class="wrap">
@@ -300,5 +309,6 @@ document.querySelectorAll("form.fb").forEach(function(f){f.addEventListener("sub
  pub.then(function(pr){return fetch("https://formsubmit.co/ajax/prayagideepak@gmail.com",{method:"POST",headers:{Accept:"application/json"},body:fd}).then(function(r){return r.json()}).then(function(d){if(d.success==="true"||d.success===true){m.textContent=(pr==="fail"?"Sent to the developer. It could not be shown publicly right now.":"Sent. Thank you!");if(kind==="Rating"&&pr!=="fail")localStorage.setItem("netra_rated","1");f.reset();resetPicks()}else{m.textContent="Could not send right now. Please try again later."}})}).catch(function(){m.textContent="Could not send right now. Please try again later."})})});
 })();
 </script>
+<script src="banner.js"></script>
 </body>
 </html>
