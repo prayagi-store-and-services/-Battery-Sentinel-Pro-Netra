@@ -478,6 +478,7 @@ private fun SystemTelemetryTabContent(
     powerSaverEnabled: Boolean,
     viewModel: NetraViewModel
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val cacheStats by viewModel.cacheStats.collectAsStateWithLifecycle()
     var cleanNotice by remember { mutableStateOf<String?>(null) }
 
@@ -596,13 +597,16 @@ private fun SystemTelemetryTabContent(
                                 com.example.model.CapabilityStatus.UNSUPPORTED -> StatusRed
                                 com.example.model.CapabilityStatus.UNKNOWN -> MaterialTheme.colorScheme.onSurfaceVariant
                             }
+                            val tapAction = capabilityTapAction(context, type, status)
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .then(if (tapAction != null) Modifier.clickable { tapAction() } else Modifier),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = type.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() },
+                                    text = type.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() } + if (tapAction != null) "  (tap to fix)" else "",
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -645,5 +649,31 @@ fun TemperatureChart(records: List<com.example.data.local.BatteryRecord>) {
             metric = com.example.ui.components.GraphMetric.TEMP,
             modifier = Modifier.height(200.dp)
         )
+    }
+}
+
+/** A tap target for rows that need a user action. The user still grants it on the Android screen. */
+private fun capabilityTapAction(
+    context: android.content.Context,
+    type: com.example.model.CapabilityType,
+    status: com.example.model.CapabilityStatus
+): (() -> Unit)? {
+    val needsAction = status == com.example.model.CapabilityStatus.PERMISSION_REQUIRED ||
+        (type == com.example.model.CapabilityType.BLUETOOTH_LE && status == com.example.model.CapabilityStatus.DISABLED)
+    if (!needsAction) return null
+    val intent: android.content.Intent? = when (type) {
+        com.example.model.CapabilityType.BATTERY_OPTIMIZATION_WHITELIST ->
+            com.example.permissions.PermissionCheck.settingsIntent(context, com.example.permissions.Perm.BATTERY_OPT)
+        com.example.model.CapabilityType.BRIGHTNESS_CONTROL ->
+            com.example.permissions.PermissionCheck.settingsIntent(context, com.example.permissions.Perm.WRITE_SETTINGS)
+        com.example.model.CapabilityType.BLUETOOTH_LE ->
+            if (status == com.example.model.CapabilityStatus.DISABLED) android.content.Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS)
+            else com.example.permissions.PermissionCheck.appDetailsIntent(context)
+        else -> null
+    } ?: return null
+    return {
+        try { context.startActivity(intent) } catch (_: Exception) {
+            runCatching { context.startActivity(com.example.permissions.PermissionCheck.appDetailsIntent(context)) }
+        }
     }
 }
