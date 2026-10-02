@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+## [1.1.9]
+
 - Battery tab: Voltage, Current and Phone Drain tiles now appear only when Android reports them, instead of showing "Unavailable".
 - Festival banner: added Maha Navami (Oct 20) and the end of Durga Puja / Vijaya Dashami (Oct 21) for 2026.
 
