@@ -276,6 +276,31 @@ class NetraCentralDataCenterTest {
     }
 
     @Test
+    fun `live discharge power replaces charging power and uses current magnitude`() = runTest(testDispatcher) {
+        dataCenter.processRawInput(
+            level = 50, scale = 100,
+            status = android.os.BatteryManager.BATTERY_STATUS_CHARGING,
+            plugged = android.os.BatteryManager.BATTERY_PLUGGED_AC,
+            temperatureRaw = 300, voltage = 4000, currentMicroAmps = 3_000_000,
+            bluetoothConnected = null, bluetoothBattery = null
+        )
+        assertEquals(12.0f, dataCenter.centralState.value.powerWatts!!, 0.01f)
+
+        dataCenter.processRawInput(
+            level = 49, scale = 100,
+            status = android.os.BatteryManager.BATTERY_STATUS_DISCHARGING,
+            plugged = 0,
+            temperatureRaw = 300, voltage = 4000, currentMicroAmps = -500_000,
+            bluetoothConnected = null, bluetoothBattery = null
+        )
+        val state = dataCenter.centralState.value
+        assertEquals(2.0f, state.powerWatts!!, 0.01f)
+        assertEquals(2.0f, state.consumptionPowerWatts!!, 0.01f)
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, state.chargingSpeed)
+        assertEquals(com.example.model.FieldStatus.LIVE, state.fieldStates.powerStatus)
+    }
+
+    @Test
     fun `test unavailable telemetry produces no fabricated fallback values`() = runTest(testDispatcher) {
         dataCenter.processRawInput(
             level = -1, scale = -1,
