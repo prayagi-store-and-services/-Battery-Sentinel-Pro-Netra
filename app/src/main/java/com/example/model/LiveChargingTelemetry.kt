@@ -38,5 +38,11 @@ data class LiveChargingSessionState(
     val isDischarging: Boolean = false,
     val estimatedTimeToFullSeconds: Long? = null,
     val isFull: Boolean = false,
+    // Discharge (on battery) live data. Kept apart from the charging fields so the two flows are never mixed.
+    val dischargeVoltageMv: Float? = null,
+    val dischargeCurrentMa: Float? = null,
+    val dischargePowerWatts: Float? = null,
+    val dischargeHistory: List<LiveChargingSample> = emptyList(), // Bounded up to 300 entries
+    val dischargeDurationSeconds: Long = 0L,
     val etaDisplayStatus: String? = null // e.g. "Calculating...", "Unavailable", "00:00:00", or formatted "HH:mm:ss"
 )
