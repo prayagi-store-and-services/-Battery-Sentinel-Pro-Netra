@@ -30,6 +30,18 @@ data class ConversationalLongevityInsight(
 object FirebaseAiHealthService {
     private const val TAG = "FirebaseAiHealthService"
     private const val REST_MODEL_NAME = "gemini-3.1-flash-lite-preview"
+    // Quota rotation order for the REST path: each model has its own quota.
+    private val REST_MODELS = listOf(REST_MODEL_NAME, "gemini-2.5-flash-lite", "gemini-3.1-pro-preview")
+
+    private fun restPost(model: String, apiKey: String, body: String): GeminiModelRotation.RawResponse {
+        val request = Request.Builder()
+            .url("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey")
+            .post(body.toRequestBody("application/json".toMediaType()))
+            .build()
+        httpClient.newCall(request).execute().use { r ->
+            return GeminiModelRotation.RawResponse(r.code, r.body?.string() ?: "")
+        }
+    }
 
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(60, TimeUnit.SECONDS)
@@ -94,14 +106,9 @@ object FirebaseAiHealthService {
                     })
                 }
 
-                val url = "https://generativelanguage.googleapis.com/v1beta/models/$REST_MODEL_NAME:generateContent?key=$apiKey"
-                val requestBody = requestJson.toString().toRequestBody("application/json".toMediaType())
-                val request = Request.Builder().url(url).post(requestBody).build()
-                val response = httpClient.newCall(request).execute()
-
-                if (response.isSuccessful) {
-                    val bodyString = response.body?.string() ?: ""
-                    val root = JSONObject(bodyString)
+                val outcome = GeminiModelRotation.run(REST_MODELS) { m -> restPost(m, apiKey, requestJson.toString()) }
+                if (outcome is GeminiModelRotation.Outcome.Success) {
+                    val root = JSONObject(outcome.body)
                     val candidateText = root.optJSONArray("candidates")
                         ?.optJSONObject(0)
                         ?.optJSONObject("content")
@@ -110,7 +117,7 @@ object FirebaseAiHealthService {
                         ?.optString("text", "") ?: ""
 
                     if (candidateText.isNotBlank()) {
-                        return@withContext parseLongevityJson(candidateText, "Gemini REST API ($REST_MODEL_NAME)")
+                        return@withContext parseLongevityJson(candidateText, "Gemini REST API (${outcome.model})")
                     }
                 }
             } catch (e: Exception) {
@@ -172,13 +179,9 @@ object FirebaseAiHealthService {
                     }
                     put("contents", contents)
                 }
-                val url = "https://generativelanguage.googleapis.com/v1beta/models/$REST_MODEL_NAME:generateContent?key=$apiKey"
-                val requestBody = requestJson.toString().toRequestBody("application/json".toMediaType())
-                val request = Request.Builder().url(url).post(requestBody).build()
-                val response = httpClient.newCall(request).execute()
-                if (response.isSuccessful) {
-                    val bodyString = response.body?.string() ?: ""
-                    val root = JSONObject(bodyString)
+                val outcome = GeminiModelRotation.run(REST_MODELS) { m -> restPost(m, apiKey, requestJson.toString()) }
+                if (outcome is GeminiModelRotation.Outcome.Success) {
+                    val root = JSONObject(outcome.body)
                     val candidateText = root.optJSONArray("candidates")
                         ?.optJSONObject(0)
                         ?.optJSONObject("content")
