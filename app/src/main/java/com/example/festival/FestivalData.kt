@@ -65,6 +65,8 @@ object FestivalData {
         Fest(20261018, "Maha Saptami", false),
         Fest(20261019, "Maha Ashtami", false),
         Fest(20261020, "Dussehra", false),
+        Fest(20261020, "Maha Navami", true),
+        Fest(20261021, "Durga Puja ends (Vijaya Dashami)", true),
         Fest(20261026, "Maharishi Valmiki Jayanti", false),
         Fest(20261029, "Karaka Chaturthi", false),
         Fest(20261108, "Diwali/Deepavali", false),
