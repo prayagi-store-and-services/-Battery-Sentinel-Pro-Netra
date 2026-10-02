@@ -57,6 +57,9 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
     lateinit var chargingOptimizationEngine: com.example.service.ChargingOptimizationEngine
         private set
 
+    lateinit var liveChargingSessionEngine: com.example.service.LiveChargingSessionEngine
+        private set
+
     override fun onCreate() {
         super.onCreate()
         instance = this
@@ -72,6 +75,9 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         stabilitySentinel = com.example.service.StabilitySentinel.installCrashHandler(this)
         idealStateEngine = com.example.service.IdealStateEngine(this)
         chargingOptimizationEngine = com.example.service.ChargingOptimizationEngine(this)
+        liveChargingSessionEngine = com.example.service.LiveChargingSessionEngine(
+            hardwareProvider = com.example.service.AndroidBatteryHardwareProvider(this)
+        )
         com.example.service.StabilityHealthScheduler.schedule(this)
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             stabilitySentinel.flushPendingReports()

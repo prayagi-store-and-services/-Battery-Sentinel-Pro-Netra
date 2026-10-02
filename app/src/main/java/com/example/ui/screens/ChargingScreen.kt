@@ -28,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.ChargingSession
 import com.example.model.DotState
 import com.example.model.hasCompleteLegacyReading
+import com.example.ui.components.LiveChargingMonitorSection
 import com.example.ui.components.SentinelCard
 import com.example.ui.components.StatusDot
 import com.example.ui.theme.DangerRed
@@ -61,8 +63,26 @@ fun ChargingScreen(
 ) {
     val telemetry by viewModel.liveTelemetry.collectAsStateWithLifecycle()
     val canonicalReading by viewModel.canonicalState.collectAsStateWithLifecycle()
+    val liveChargingState by viewModel.liveChargingSessionState.collectAsStateWithLifecycle()
     val sessions by viewModel.recentChargingSessions.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        viewModel.onChargingMonitorScreenResumed()
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_RESUME -> viewModel.onChargingMonitorScreenResumed()
+                androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> viewModel.onChargingMonitorScreenPaused()
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.onChargingMonitorScreenPaused()
+        }
+    }
 
     if (canonicalReading.batteryLevel == null && !telemetry.isDataAvailable) {
         Column(modifier = modifier.fillMaxSize().padding(24.dp)) {
@@ -78,6 +98,11 @@ fun ChargingScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Dedicated Live Charging Monitor Section
+        item {
+            LiveChargingMonitorSection(sessionState = liveChargingState)
+        }
+
         // Prominent Temperature Display (Large Header Banner)
         item {
             Box(

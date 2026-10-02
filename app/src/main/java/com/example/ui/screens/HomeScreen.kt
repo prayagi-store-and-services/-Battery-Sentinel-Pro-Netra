@@ -4,14 +4,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.model.DotState
 import com.example.ui.components.CircularBatteryGauge
@@ -40,6 +47,34 @@ fun HomeScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Live Charging Active Shortcut Card
+        if (canonical.isCharging == true) {
+            SentinelCard(
+                title = "⚡ Live Charging Telemetry Active",
+                icon = Icons.Default.Bolt,
+                dotState = DotState.CONNECTED,
+                accentColor = NetraEmerald
+            ) {
+                Text(
+                    text = "Charging session is actively streaming live 1-second electrical telemetry and animated fill dynamics.",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Button(
+                    onClick = { onNavigateTab(NetraTab.BATTERY) },
+                    modifier = Modifier.fillMaxWidth().testTag("home_view_live_charging_button"),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = NetraEmerald
+                    )
+                ) {
+                    Icon(Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Open Live Charging Monitor", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
         // Battery Overview
         SentinelCard(
             title = "Nethra Overview",

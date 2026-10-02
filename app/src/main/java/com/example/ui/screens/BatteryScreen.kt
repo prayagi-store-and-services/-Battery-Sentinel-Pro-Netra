@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +47,7 @@ import com.example.data.local.ChargingSession
 import com.example.model.CanonicalChargingSpeed
 import com.example.model.DotState
 import com.example.ui.components.CircularBatteryGauge
+import com.example.ui.components.LiveChargingMonitorSection
 import com.example.ui.components.SentinelCard
 import com.example.ui.theme.DangerRed
 import com.example.ui.theme.NetraCyan
@@ -58,6 +60,7 @@ import java.util.Date
 import java.util.Locale
 
 enum class BatteryScreenSubTab {
+    LIVE_CHARGING,
     LIVE_TELEMETRY,
     SESSIONS_AND_GRAPH
 }
@@ -68,17 +71,46 @@ fun BatteryScreen(
     modifier: Modifier = Modifier
 ) {
     val canonical by viewModel.canonicalState.collectAsStateWithLifecycle()
+    val liveChargingState by viewModel.liveChargingSessionState.collectAsStateWithLifecycle()
     val sessions by viewModel.recentChargingSessions.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
 
-    var selectedSubTab by remember { mutableStateOf(BatteryScreenSubTab.LIVE_TELEMETRY) }
+    var selectedSubTab by remember {
+        mutableStateOf(
+            if (canonical.isCharging == true) BatteryScreenSubTab.LIVE_CHARGING
+            else BatteryScreenSubTab.LIVE_CHARGING
+        )
+    }
+
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, selectedSubTab) {
+        if (selectedSubTab == BatteryScreenSubTab.LIVE_CHARGING) {
+            viewModel.onChargingMonitorScreenResumed()
+        }
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (selectedSubTab == BatteryScreenSubTab.LIVE_CHARGING) {
+                when (event) {
+                    androidx.lifecycle.Lifecycle.Event.ON_RESUME -> viewModel.onChargingMonitorScreenResumed()
+                    androidx.lifecycle.Lifecycle.Event.ON_PAUSE -> viewModel.onChargingMonitorScreenPaused()
+                    else -> {}
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            if (selectedSubTab == BatteryScreenSubTab.LIVE_CHARGING) {
+                viewModel.onChargingMonitorScreenPaused()
+            }
+        }
+    }
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // 1. Sub-Tab Switcher (Live Telemetry vs Sessions & Graph)
+        // 1. Sub-Tab Switcher (Live Charging vs Health & Specs vs Sessions & Graph)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -86,12 +118,22 @@ fun BatteryScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             FilterChip(
-                selected = selectedSubTab == BatteryScreenSubTab.LIVE_TELEMETRY,
-                onClick = { selectedSubTab = BatteryScreenSubTab.LIVE_TELEMETRY },
-                label = { Text("LIVE TELEMETRY", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                selected = selectedSubTab == BatteryScreenSubTab.LIVE_CHARGING,
+                onClick = { selectedSubTab = BatteryScreenSubTab.LIVE_CHARGING },
+                label = { Text("LIVE CHARGING", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = NetraEmerald.copy(alpha = 0.2f),
                     selectedLabelColor = NetraEmerald
+                ),
+                modifier = Modifier.weight(1f).testTag("tab_live_charging")
+            )
+            FilterChip(
+                selected = selectedSubTab == BatteryScreenSubTab.LIVE_TELEMETRY,
+                onClick = { selectedSubTab = BatteryScreenSubTab.LIVE_TELEMETRY },
+                label = { Text("HEALTH & SPECS", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = NetraCyan.copy(alpha = 0.2f),
+                    selectedLabelColor = NetraCyan
                 ),
                 modifier = Modifier.weight(1f).testTag("tab_live_telemetry")
             )
@@ -109,7 +151,18 @@ fun BatteryScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        if (selectedSubTab == BatteryScreenSubTab.LIVE_TELEMETRY) {
+        when (selectedSubTab) {
+            BatteryScreenSubTab.LIVE_CHARGING -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item {
+                        LiveChargingMonitorSection(sessionState = liveChargingState)
+                    }
+                }
+            }
+            BatteryScreenSubTab.LIVE_TELEMETRY -> {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -324,41 +377,43 @@ fun BatteryScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             }
-        } else {
-            // SESSIONS & GRAPH VIEW
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item {
-                    GraphScreen(viewModel = viewModel)
-                }
+            }
+            BatteryScreenSubTab.SESSIONS_AND_GRAPH -> {
+                // SESSIONS & GRAPH VIEW
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item {
+                        GraphScreen(viewModel = viewModel)
+                    }
 
-                item {
-                    SentinelCard(
-                        title = "Recent Charging Sessions",
-                        icon = Icons.Default.History,
-                        dotState = DotState.CONNECTED,
-                        accentColor = NetraCyan
-                    ) {
-                        if (sessions.isEmpty()) {
-                            Text(
-                                text = "No charging sessions recorded yet. Plug in your charger to start recording session metrics.",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                sessions.take(5).forEach { session ->
-                                    ChargingSessionItemRow(session = session)
+                    item {
+                        SentinelCard(
+                            title = "Recent Charging Sessions",
+                            icon = Icons.Default.History,
+                            dotState = DotState.CONNECTED,
+                            accentColor = NetraCyan
+                        ) {
+                            if (sessions.isEmpty()) {
+                                Text(
+                                    text = "No charging sessions recorded yet. Plug in your charger to start recording session metrics.",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    sessions.take(5).forEach { session ->
+                                        ChargingSessionItemRow(session = session)
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
             }
         }
