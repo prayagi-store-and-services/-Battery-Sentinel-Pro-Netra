@@ -146,6 +146,9 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
 
                 override fun onDone(utteranceId: String?) {
                     Log.d(TAG, "TTS done: $utteranceId")
+                    if (utteranceId != null && !utteranceId.endsWith(BT_REPLAY_SUFFIX) && replayOnBluetoothIfConnected()) {
+                        return
+                    }
                     currentPlayingAnnouncement?.let {
                         if (it.speechState == AnnouncementSpeechState.SPEAKING) {
                             it.speechState = AnnouncementSpeechState.COMPLETED
@@ -502,6 +505,14 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             return
         }
 
+        // 1b. User mute interval: routine announcements are held back, critical warnings still play
+        if (item.priority != AnnouncementPriority.CRITICAL_THERMAL &&
+            System.currentTimeMillis() < settings.announcementMutedUntilMs
+        ) {
+            Log.d(TAG, "Announcement suppressed: muted by user until ${settings.announcementMutedUntilMs} -> ${item.text}")
+            return
+        }
+
             // 2. Night Protection Check (Delegated strictly to Central Unit canonical state)
             val dataCenter = NetraApplication.instance.centralDataCenter
             // Force refresh of night protection based on current time
@@ -583,16 +594,11 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             val routingStatus = AudioRoutingInspector.inspectRouting(context, settings.audioRoutingPolicy)
             val isCritical = nextItem.priority == AnnouncementPriority.CRITICAL_THERMAL
 
+            // Fixed behaviour: the phone speaker always speaks first (notification stream).
+            // If a Bluetooth device is connected, the same announcement is replayed there right after (see onDone).
             val params = Bundle().apply {
                 putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, nextItem.id)
-                if (settings.audioRoutingPolicy == AudioRoutingPolicy.FORCE_PHONE_SPEAKER) {
-                    putString(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_NOTIFICATION.toString())
-                }
-            }
-
-            // If dual sequential mode is selected and alert is critical thermal, trigger companion speaker chime
-            if (settings.audioRoutingPolicy == AudioRoutingPolicy.DUAL_ATTEMPT_SEQUENTIAL && isCritical) {
-                playSpeakerAlertChime()
+                putString(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_NOTIFICATION.toString())
             }
 
             nextItem.speechState = AnnouncementSpeechState.SPEAKING
@@ -652,6 +658,33 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             toneGen.release()
         } catch (e: Exception) {
             Log.e(TAG, "Unable to generate ToneGenerator alert tone", e)
+        }
+    }
+
+    /**
+     * Second pass of the fixed routing: after the phone speaker finished, speak the same text on the default
+     * (media) stream, which Android routes to a connected Bluetooth device. Android does not promise speaker and
+     * Bluetooth at the same moment, so this is sequential. Returns true when a replay was started.
+     */
+    private fun replayOnBluetoothIfConnected(): Boolean {
+        val item = currentPlayingAnnouncement ?: return false
+        if (item.speechState == AnnouncementSpeechState.CANCELLED) return false
+        return try {
+            val status = AudioRoutingInspector.inspectRouting(context)
+            if (!status.isBluetoothA2dpConnected) return false
+            val params = Bundle().apply {
+                putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, item.id + BT_REPLAY_SUFFIX)
+            }
+            val result = tts?.speak(item.text, TextToSpeech.QUEUE_ADD, params, item.id + BT_REPLAY_SUFFIX)
+            if (result == TextToSpeech.SUCCESS) {
+                Log.i(TAG, "Replaying on Bluetooth after speaker: '${item.text}'")
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Bluetooth replay failed", e)
+            false
         }
     }
 
@@ -739,5 +772,6 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         }
 
         private const val TAG = "NetraAnnouncementEngine"
+        private const val BT_REPLAY_SUFFIX = "#bt"
     }
 }
