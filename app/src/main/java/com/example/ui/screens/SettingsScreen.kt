@@ -593,7 +593,7 @@ fun SettingsScreen(
                 accentColor = NetraCyan
             ) {
                 Text(text = "App Name: Battery Sentinel Pro Netra", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                Text(text = "Version: 1.0.0 Pro • Autonomous Engine", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "Version: ${com.example.BuildConfig.VERSION_NAME} Pro • Autonomous Engine", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(text = "Protocol: Ultra-Low Power 24/7 Event-Driven Architecture", fontSize = 11.sp, color = NetraEmerald)
             }
         }
