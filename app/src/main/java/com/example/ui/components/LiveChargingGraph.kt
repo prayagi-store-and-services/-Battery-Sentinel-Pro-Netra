@@ -52,9 +52,25 @@ enum class LiveGraphMetric {
 @Composable
 fun LiveChargingGraph(
     samples: List<LiveChargingSample>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    emptyText: String = "Awaiting charging telemetry samples (~1/sec)..."
 ) {
-    var selectedMetric by remember { mutableStateOf(LiveGraphMetric.POWER) }
+    var requestedMetric by remember { mutableStateOf(LiveGraphMetric.POWER) }
+
+    // Only offer metrics that have at least one real value; a tab with no data is hidden, not shown blank.
+    val metricsWithData = LiveGraphMetric.values().filter { m ->
+        when (m) {
+            LiveGraphMetric.POWER -> samples.any { it.powerWatts != null }
+            LiveGraphMetric.VOLTAGE -> samples.any { it.voltageV != null }
+            LiveGraphMetric.CURRENT -> samples.any { it.currentA != null }
+            LiveGraphMetric.PERCENTAGE -> samples.any { it.batteryPercent != null }
+        }
+    }
+    val selectedMetric = if (metricsWithData.isEmpty() || requestedMetric in metricsWithData) {
+        requestedMetric
+    } else {
+        metricsWithData.first()
+    }
 
     val primaryColor = when (selectedMetric) {
         LiveGraphMetric.POWER -> NetraEmerald
@@ -76,11 +92,11 @@ fun LiveChargingGraph(
                 LiveGraphMetric.VOLTAGE to "Voltage",
                 LiveGraphMetric.CURRENT to "Current",
                 LiveGraphMetric.PERCENTAGE to "Level"
-            ).forEach { (metric, label) ->
+            ).filter { (metric, _) -> metricsWithData.isEmpty() || metric in metricsWithData }.forEach { (metric, label) ->
                 val isSelected = selectedMetric == metric
                 FilterChip(
                     selected = isSelected,
-                    onClick = { selectedMetric = metric },
+                    onClick = { requestedMetric = metric },
                     label = { Text(label, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = primaryColor.copy(alpha = 0.25f),
@@ -108,7 +124,7 @@ fun LiveChargingGraph(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Awaiting charging telemetry samples (~1/sec)...",
+                    text = emptyText,
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
