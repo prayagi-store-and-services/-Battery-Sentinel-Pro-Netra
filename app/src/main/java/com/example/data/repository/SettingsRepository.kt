@@ -35,6 +35,7 @@ data class SentinelSettings(
     val mediaPlaybackHandlingEnabled: Boolean = true,
     val audioRoutingPolicy: com.example.model.AudioRoutingPolicy = com.example.model.AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK,
     val screenOffNetworkOptEnabled: Boolean = true,
+    val announcementMutedUntilMs: Long = 0L, // 0 = not muted; critical alerts always play
     val networkTrafficThresholdBytesPerSec: Long = 2_097_152L // 2 MB/s
 )
 
@@ -80,6 +81,7 @@ class SettingsRepository(context: Context) {
             mediaPlaybackHandlingEnabled = prefs.getBoolean("media_playback_handling", true),
             audioRoutingPolicy = policy,
             screenOffNetworkOptEnabled = prefs.getBoolean("screen_off_network_opt_enabled", true),
+            announcementMutedUntilMs = prefs.getLong("announcement_muted_until", 0L),
             networkTrafficThresholdBytesPerSec = prefs.getLong("network_traffic_threshold", 2_097_152L)
         )
     }
@@ -197,6 +199,12 @@ class SettingsRepository(context: Context) {
     fun setAudioRoutingPolicy(policy: com.example.model.AudioRoutingPolicy) {
         prefs.edit().putString("audio_routing_policy", policy.name).apply()
         _settings.value = _settings.value.copy(audioRoutingPolicy = policy)
+    }
+
+    /** Mutes routine announcements until the given time (epoch ms). 0 clears the mute. Critical alerts still play. */
+    fun setAnnouncementMutedUntil(untilMs: Long) {
+        prefs.edit().putLong("announcement_muted_until", untilMs).apply()
+        _settings.value = _settings.value.copy(announcementMutedUntilMs = untilMs)
     }
 
     fun setScreenOffNetworkOptEnabled(enabled: Boolean) {
