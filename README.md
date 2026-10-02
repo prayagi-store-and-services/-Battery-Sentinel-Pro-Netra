@@ -62,6 +62,16 @@ Android APIs / Battery / Sensors / Bluetooth / Location / Weather
 
 ---
 
+## Live Electrical Telemetry (Foreground)
+
+- While the Battery screen is visible, the app requests a fresh Android battery snapshot every 1 second and routes it through the existing `NetraCentralDataCenter`.
+- Voltage is displayed in volts to two decimal places; current is displayed in amperes to two decimal places; power is displayed in watts to two decimal places.
+- Confirmed charging displays the observed battery-terminal charging power. Confirmed discharging displays the magnitude of observed battery-terminal discharge power, regardless of OEM current-sign convention.
+- Charging speed classification is only applied while charging. Discharge wattage is not labeled as a charging tier.
+- If Android does not provide a fresh valid voltage/current sample, the app must not fabricate a number. Existing retained values are distinguished by telemetry freshness state; otherwise the UI displays `Unavailable`.
+- The calculated value is battery-terminal power (`voltage × current`), not a guarantee of the external adapter's advertised output wattage. OEM fuel-gauge behavior can limit the accuracy of instantaneous power estimates.
+- **Status: Implemented; automated test added. Physical-device validation remains pending.** A real-device charging and discharging session is required before marking the live readings Verified.
+
 ## 🌍 Geo-Climate Adaptive Thermal Baseline
 
 - **Hierarchical Country Detection**: `LocationCountryResolver` determines country and region using Telephony/SIM ISO -> Device Locale -> Coarse Geocoder when permissions are available. Works internationally without hardcoded regions.
@@ -179,3 +189,10 @@ The app now has a bounded, privacy-minimized crash and runtime stability pipelin
 - Repeated telemetry cannot reset session start timestamps; reconnecting starts a new canonical session.
 - ETA evidence remains session-bound and is cleared on charging/discharging session boundaries or invalid progression input.
 - Repository/database work remains downstream of canonical state publication and does not bypass the Central Unit.
+
+
+## Feature Changelog
+
+| Date | Change | Status |
+|---|---|---|
+| 2026-10-02 | Foreground live voltage/current/power refresh and discharge wattage calculation | Implemented; device validation pending |
