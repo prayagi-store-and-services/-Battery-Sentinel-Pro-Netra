@@ -86,7 +86,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Level: ${canonical.batteryLevel?.let { "$it%" } ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
-                Text("Temp: ${canonical.temperatureCelsius?.let { "${String.format("%.1f", it)}°C" } ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
+                Text("Temp: ${canonical.temperatureCelsius?.let { "${String.format(java.util.Locale.US, "%.1f", it)}°C" } ?: "N/A"}", style = MaterialTheme.typography.bodyMedium)
             }
         }
         

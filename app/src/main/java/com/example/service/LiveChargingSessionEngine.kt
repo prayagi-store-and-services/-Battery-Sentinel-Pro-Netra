@@ -268,7 +268,7 @@ class LiveChargingSessionEngine(
         // Normalize current based on device fuel-gauge unit conventions
         val currentMa = rawCurrentMicroAmps?.let { raw ->
             if (raw == Int.MIN_VALUE) null
-            else speedEngine.normalizeToMilliAmps(raw, activelyCharging = true)
+            else speedEngine.normalizeToMilliAmps(raw, activeCurrentFlow = true)
         }
         val currentA = currentMa?.let {
             val a = abs(it) / 1000.0f

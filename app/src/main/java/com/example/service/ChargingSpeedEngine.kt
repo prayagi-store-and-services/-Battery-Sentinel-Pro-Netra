@@ -12,16 +12,21 @@ data class SpeedEngineResult(
 
 class ChargingSpeedEngine {
 
-    /**
-     * BATTERY_PROPERTY_CURRENT_NOW is specified in microamps, but some devices report milliamps.
-     * During active charging or discharging, a magnitude of 2000..19999 is treated as
-     * milliamps (2-20 A); as microamps it would be a 2-20 mA trickle. This is an OEM heuristic,
-     * not a guaranteed unit detector. Everything else is treated as microamps.
-     */
-    fun normalizeToMilliAmps(raw: Int, activeCurrentFlow: Boolean): Int {
-        val mag = abs(raw.toLong())
-        return if (activeCurrentFlow && mag in 2000L..19999L) raw else raw / 1000
+    companion object {
+        /**
+         * BATTERY_PROPERTY_CURRENT_NOW is specified in microamps, but some devices report milliamps.
+         * During active charging or discharging, a magnitude of 2000..19999 is treated as
+         * milliamps (2-20 A); as microamps it would be a 2-20 mA trickle. This is an OEM heuristic,
+         * not a guaranteed unit detector. Everything else is treated as microamps.
+         */
+        fun normalizeToMilliAmps(raw: Int, activeCurrentFlow: Boolean): Int {
+            val mag = abs(raw.toLong())
+            return if (activeCurrentFlow && mag in 2000L..19999L) raw else raw / 1000
+        }
     }
+
+    fun normalizeToMilliAmps(raw: Int, activeCurrentFlow: Boolean): Int =
+        ChargingSpeedEngine.normalizeToMilliAmps(raw, activeCurrentFlow)
 
     fun calculate(
         isCharging: Boolean?,

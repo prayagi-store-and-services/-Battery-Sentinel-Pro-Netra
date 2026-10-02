@@ -287,7 +287,7 @@ fun MainAppContent(viewModel: NetraViewModel) {
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = canonical.temperatureCelsius?.let { "• ${String.format("%.1f", it)}°C" } ?: "• Temp unavailable",
+                                text = canonical.temperatureCelsius?.let { "• ${String.format(java.util.Locale.US, "%.1f", it)}°C" } ?: "• Temp unavailable",
                                 fontSize = 11.sp,
                                 color = if ((canonical.temperatureCelsius ?: 0f) >= 40f) StatusRed else MaterialTheme.colorScheme.onSurfaceVariant
                             )

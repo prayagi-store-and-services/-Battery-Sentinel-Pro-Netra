@@ -17,7 +17,7 @@ import androidx.compose.material.icons.filled.ElectricMeter
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PowerOff
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -296,7 +296,7 @@ fun LiveChargingMonitorSection(
         // G. Live Graph
         SentinelCard(
             title = "Live Charging Session Graph",
-            icon = Icons.Default.ShowChart,
+            icon = Icons.AutoMirrored.Filled.ShowChart,
             dotState = if (isCharging) DotState.CONNECTED else DotState.STANDBY,
             accentColor = NetraEmerald
         ) {

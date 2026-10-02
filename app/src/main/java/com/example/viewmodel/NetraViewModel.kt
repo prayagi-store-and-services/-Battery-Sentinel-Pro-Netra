@@ -103,6 +103,18 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
     // Central State
     val canonicalState = NetraApplication.instance.centralDataCenter.centralState
 
+    // Live Charging Session State (Charging-only 1s monitor)
+    val liveChargingSessionState: StateFlow<com.example.model.LiveChargingSessionState> =
+        NetraApplication.instance.liveChargingSessionEngine.sessionState
+
+    fun onChargingMonitorScreenResumed() {
+        NetraApplication.instance.liveChargingSessionEngine.onScreenResumed()
+    }
+
+    fun onChargingMonitorScreenPaused() {
+        NetraApplication.instance.liveChargingSessionEngine.onScreenPaused()
+    }
+
     /**
      * Refreshes a real Android battery snapshot. The caller controls cadence and should only
      * invoke this while the live telemetry screen is visible.
