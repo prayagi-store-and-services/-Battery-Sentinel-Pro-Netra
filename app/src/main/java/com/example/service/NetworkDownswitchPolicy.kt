@@ -7,8 +7,8 @@ enum class RadioClass { NR_5G, LTE_4G, THREE_G_OR_LOWER, UNKNOWN }
  * No Android calls here so it can be unit tested.
  */
 object NetworkDownswitchPolicy {
-    /** Heavy-use rule: this much mobile data inside the window means do not suggest a switch. */
-    const val HEAVY_DATA_THRESHOLD_BYTES = 200L * 1024L * 1024L
+    /** Heavy-use rule (user set 2 MB): this much mobile data inside the window means do not suggest a switch. */
+    const val HEAVY_DATA_THRESHOLD_BYTES = 2L * 1024L * 1024L
     const val HEAVY_DATA_WINDOW_MS = 10L * 60L * 1000L
 
     sealed class Decision {
