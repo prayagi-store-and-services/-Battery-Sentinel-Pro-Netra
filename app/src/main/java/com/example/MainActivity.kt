@@ -126,7 +126,7 @@ fun MainAppContent(viewModel: NetraViewModel) {
     val canonical by viewModel.canonicalState.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
-    val releaseUpdater = remember(context) { GitHubReleaseUpdater(context) }
+    val releaseUpdater = remember(context) { GitHubReleaseUpdater.shared(context) }
     val updateState by releaseUpdater.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(releaseUpdater) {
