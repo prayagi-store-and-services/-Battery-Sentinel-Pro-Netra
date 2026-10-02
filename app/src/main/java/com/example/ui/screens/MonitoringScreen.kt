@@ -597,7 +597,11 @@ private fun SystemTelemetryTabContent(
                                 com.example.model.CapabilityStatus.UNSUPPORTED -> StatusRed
                                 com.example.model.CapabilityStatus.UNKNOWN -> MaterialTheme.colorScheme.onSurfaceVariant
                             }
-                            val tapAction = capabilityTapAction(context, type, status)
+                            // The app declares no exact-alarm permission and schedules no exact alarms, so this is not a gap.
+                            val notNeeded = type == com.example.model.CapabilityType.EXACT_ALARM &&
+                                status == com.example.model.CapabilityStatus.PERMISSION_REQUIRED
+                            val shownColor = if (notNeeded) MaterialTheme.colorScheme.onSurfaceVariant else statusColor
+                            val tapAction = if (notNeeded) null else capabilityTapAction(context, type, status)
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -618,10 +622,10 @@ private fun SystemTelemetryTabContent(
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
-                                        text = status.name,
+                                        text = if (notNeeded) "NOT NEEDED" else status.name,
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = statusColor
+                                        color = shownColor
                                     )
                                 }
                             }
