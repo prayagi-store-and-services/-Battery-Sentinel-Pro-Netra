@@ -129,6 +129,7 @@ Some features call an AI service (Gemini) over the network. Do not enter secrets
 
 ## Dependencies
 - Dependabot alerts and updates are enabled. Security alerts are reviewed and fixed through pull requests that must pass the build and tests. Alerts are not dismissed without a reason.
+- Build-tool transitive dependencies with open alerts (Netty, Bouncy Castle, reached through Android Gradle Plugin test tooling) are forced to patched versions in `app/build.gradle.kts` and the root buildscript constraints. These are build-time only and are not shipped in the APK. Whether GitHub clears the matching alerts is checked after each change; alerts are never dismissed without the owner.
 - Some alerts come from build-tool dependencies (Android Gradle Plugin and Gradle plugins), not code shipped in the APK. They are still tracked and fixed.
 
 ## Security Principles
