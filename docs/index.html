@@ -73,7 +73,7 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 <div class="clockbar" id="liveclock" aria-live="off"></div>
 <nav><div class="wrap">
 <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2312203a'/%3E%3Crect x='18' y='14' width='28' height='38' rx='5' fill='none' stroke='%2334d399' stroke-width='4'/%3E%3Crect x='26' y='9' width='12' height='6' rx='2' fill='%2334d399'/%3E%3Cpath d='M34 22l-8 12h6l-2 10 8-12h-6z' fill='%2338bdf8'/%3E%3C/svg%3E" alt=""><b>Battery Sentinel Pro Netra</b>
-<a class="hide" href="#features">Features</a><a class="hide" href="#benefits">Benefits</a><a class="hide" href="#soon">Coming soon</a><a class="hide" href="#feedback">Feedback</a><a href="#old">Old versions</a><a href="#download">Download</a>
+<a class="hide" href="#features">Features</a><a class="hide" href="#benefits">Benefits</a><a class="hide" href="#soon">Roadmap</a><a class="hide" href="#feedback">Feedback</a><a href="#old">Old versions</a><a href="#download">Download</a>
 </div></nav>
 
 <header class="hero"><div class="wrap">
@@ -151,21 +151,31 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 </div></section>
 
 <section id="soon"><div class="wrap">
-<h2>Coming soon</h2>
-<p class="sub">Planned work first. Ideas are only ideas: nothing here is promised.</p>
-<h3>Planned</h3>
+<h2>Roadmap</h2>
+<p class="sub">What is built, and what is planned. No dates are promised. Ideas are only ideas.</p>
+<h3>Already released</h3>
 <div class="grid">
+<div class="card"><h3>Feedback and crash reports inside the app</h3><p>Send a suggestion, complaint or crash trace from Settings. Nothing is sent without your consent each time, and you see exactly what goes (v1.1.3).</p><span class="tag ok">Released</span></div>
+<div class="card"><h3>Charging + screen-off savings</h3><p>Optional, off by default: lowers brightness and pauses auto-sync while charging with the screen off, then restores them (v1.1.3).</p><span class="tag ok">Released</span></div>
+<div class="card"><h3>New-version notification</h3><p>A daily check tells you when a newer version exists. Nothing is downloaded or installed automatically (v1.1.4).</p><span class="tag ok">Released</span></div>
+</div>
+<h3 style="margin-top:28px">Planned</h3>
+<div class="grid">
+<div class="card"><h3>Permission pop-ups</h3><p>One short Hinglish explanation per missing permission, with Approve or Skip, and a gentle re-ask if you skipped. Tappable hardware rows that open the exact Android settings page.</p><span class="tag plan">Planned</span></div>
+<div class="card"><h3>Festival banner and theme in the app</h3><p>The same festival, Independence Day and condolence banner as this website, with matching colours, working offline.</p><span class="tag plan">Planned</span></div>
+<div class="card"><h3>Seasonal app icon</h3><p>An optional icon that changes with major festivals. Off by default.</p><span class="tag plan">Planned</span></div>
+<div class="card"><h3>Active users, anonymous</h3><p>An opt-in, anonymous count of active installs and app versions, shown here. No personal data. Uninstalls are not tracked.</p><span class="tag plan">Planned</span></div>
+<div class="card"><h3>Force update after 5 versions</h3><p>If an install falls 5 or more versions behind the latest release, the app asks for the update before it can be used again, for security.</p><span class="tag plan">Planned</span></div>
+<div class="card"><h3>Microphone privacy</h3><p>An optional switch that mutes the microphone when the screen is off, and never touches calls or your own manual mute. It tells you if the phone does not allow it.</p><span class="tag plan">Planned</span></div>
+<div class="card"><h3>Privacy monitor</h3><p>An alert when some app is using the microphone or camera. Android does not tell normal apps which app it is, so the app can only say that something is in use and point to Android's Privacy Dashboard.</p><span class="tag plan">Planned</span></div>
+<div class="card"><h3>Regional-language voice announcements</h3><p>English stays the default. Later, an option for Indian regional languages for the spoken battery announcements, chosen by region, with a little local flavour.</p><span class="tag plan">Planned</span></div>
 <div class="card"><h3>Solar monitoring</h3><p>Read-only view of solar systems from official provider accounts. A provider is added only after it passes a real account test. Nothing is enabled yet.</p><span class="tag plan">Planned</span></div>
 <div class="card"><h3>Complete battery protection</h3><p>The heat and low-battery rules exist. Automatically acting on them and restoring settings afterwards is still being finished.</p><span class="tag plan">Planned</span></div>
-<div class="card"><h3>Crash reporting</h3><p>Crashes are saved on the phone today. Sending them to the developer needs a secure server, which is not set up yet.</p><span class="tag plan">Planned</span></div>
-<div class="card"><h3>Feedback inside the app</h3><p>Send comments, ratings, suggestions and complaints from the app itself. They would go to the same place as the website, so you never need to visit the site.</p><span class="tag plan">Planned</span></div>
-<div class="card"><h3>Automatic problem reports and update notices</h3><p>The app would send problem reports on its own, so issues can be found and fixed per phone model. New fixes would be released here and the app would tell you an update is available. Privacy: only the app version, phone model, Android version and the error details would be sent. No passwords, contacts, files or location history.</p><span class="tag plan">Planned</span></div>
 </div>
 <h3 style="margin-top:28px">Ideas (not committed)</h3>
 <div class="grid">
 <div class="card"><h3>Home-screen widget</h3><p>Battery level and charging speed without opening the app.</p><span class="tag idea">Idea</span></div>
 <div class="card"><h3>Battery health trend</h3><p>A long-term chart built from the readings the phone really provides.</p><span class="tag idea">Idea</span></div>
-<div class="card"><h3>Hindi and more languages</h3><p>Voice alerts and screens in more languages.</p><span class="tag idea">Idea</span></div>
 <div class="card"><h3>Weekly summary</h3><p>A short weekly note: charging habits, hottest moments, slowest charger.</p><span class="tag idea">Idea</span></div>
 <div class="card"><h3>Charger and cable scoreboard</h3><p>Compare chargers you have used by the power they actually delivered.</p><span class="tag idea">Idea</span></div>
 </div></div></section>
