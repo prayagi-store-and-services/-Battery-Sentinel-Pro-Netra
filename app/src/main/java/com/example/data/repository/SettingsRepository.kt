@@ -33,7 +33,9 @@ data class SentinelSettings(
     val nightStartHour: Int = 23, // 11:00 PM
     val nightEndHour: Int = 6,    // 06:00 AM
     val mediaPlaybackHandlingEnabled: Boolean = true,
-    val audioRoutingPolicy: com.example.model.AudioRoutingPolicy = com.example.model.AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK
+    val audioRoutingPolicy: com.example.model.AudioRoutingPolicy = com.example.model.AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK,
+    val screenOffNetworkOptEnabled: Boolean = true,
+    val networkTrafficThresholdBytesPerSec: Long = 2_097_152L // 2 MB/s
 )
 
 class SettingsRepository(context: Context) {
@@ -76,7 +78,9 @@ class SettingsRepository(context: Context) {
             nightStartHour = prefs.getInt("night_start_hour", 23),
             nightEndHour = prefs.getInt("night_end_hour", 6),
             mediaPlaybackHandlingEnabled = prefs.getBoolean("media_playback_handling", true),
-            audioRoutingPolicy = policy
+            audioRoutingPolicy = policy,
+            screenOffNetworkOptEnabled = prefs.getBoolean("screen_off_network_opt_enabled", true),
+            networkTrafficThresholdBytesPerSec = prefs.getLong("network_traffic_threshold", 2_097_152L)
         )
     }
 
@@ -193,5 +197,15 @@ class SettingsRepository(context: Context) {
     fun setAudioRoutingPolicy(policy: com.example.model.AudioRoutingPolicy) {
         prefs.edit().putString("audio_routing_policy", policy.name).apply()
         _settings.value = _settings.value.copy(audioRoutingPolicy = policy)
+    }
+
+    fun setScreenOffNetworkOptEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("screen_off_network_opt_enabled", enabled).apply()
+        _settings.value = _settings.value.copy(screenOffNetworkOptEnabled = enabled)
+    }
+
+    fun setNetworkTrafficThresholdBytesPerSec(bytesPerSec: Long) {
+        prefs.edit().putLong("network_traffic_threshold", bytesPerSec).apply()
+        _settings.value = _settings.value.copy(networkTrafficThresholdBytesPerSec = bytesPerSec)
     }
 }

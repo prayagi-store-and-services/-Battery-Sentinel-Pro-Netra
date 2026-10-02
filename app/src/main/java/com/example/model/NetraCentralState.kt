@@ -102,7 +102,8 @@ enum class CapabilityType {
     WEATHER,
     ENVIRONMENTAL_CONTEXT,
     CLIMATE_BASELINE,
-    AUDIO_ROUTING_FALLBACK
+    AUDIO_ROUTING_FALLBACK,
+    SCREEN_OFF_NETWORK_OPTIMIZATION
 }
 
 enum class AudioRouteType {
@@ -318,6 +319,8 @@ data class NetraCentralState(
     val adaptiveThermalContext: AdaptiveThermalContext = AdaptiveThermalContext(),
     // AudioManager Audio Routing & Fallback Status
     val audioRoutingStatus: AudioRoutingStatus = AudioRoutingStatus(),
+    // Adaptive Screen-Off Network Optimization State
+    val networkOptimizationState: NetworkOptimizationState = NetworkOptimizationState(),
     // Real-Time Pipeline Latency Instrumentation (Target: <= 100ms)
     val pipelineLatency: PipelineLatencyMetrics? = null
 )

@@ -568,4 +568,12 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+    fun setScreenOffNetworkOptEnabled(enabled: Boolean) {
+        settingsRepository.setScreenOffNetworkOptEnabled(enabled)
+    }
+
+    fun setNetworkTrafficThreshold(bytesPerSec: Long) {
+        settingsRepository.setNetworkTrafficThresholdBytesPerSec(bytesPerSec)
+    }
 }

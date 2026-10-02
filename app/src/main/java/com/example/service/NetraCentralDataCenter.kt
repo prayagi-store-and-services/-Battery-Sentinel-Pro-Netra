@@ -46,6 +46,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
     private var locationResolver: LocationCountryResolver? = null
     private var weatherEngine: WeatherContextEngine? = null
     private var lastValidStatePrefs: android.content.SharedPreferences? = null
+    var networkOptimizationEngine: NetworkOptimizationEngine? = null
 
     fun initCapabilityRegistry(
         context: Context,
@@ -55,8 +56,26 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
         thermalInvestigator = ThermalCauseInvestigator(context)
         locationResolver = LocationCountryResolver(context)
         weatherEngine = WeatherContextEngine(context)
+        initNetworkOptimizationEngine(context = context)
         refreshCapabilities()
         refreshLocationAndWeather()
+    }
+
+    fun initNetworkOptimizationEngine(
+        engine: NetworkOptimizationEngine? = null,
+        context: Context? = null
+    ) {
+        networkOptimizationEngine = engine ?: context?.let { ctx ->
+            NetworkOptimizationEngine(
+                trafficMonitor = AndroidTrafficMonitor(ctx),
+                telephonyStatusProvider = AndroidTelephonyStatusProvider(ctx),
+                modeSwitcher = AndroidNetworkModeSwitcher(ctx),
+                scope = backgroundScope,
+                onStateUpdated = { newState ->
+                    updateNetworkOptimizationState(newState)
+                }
+            )
+        }
     }
 
     fun refreshLocationAndWeather(forceWeather: Boolean = false) {
@@ -264,11 +283,47 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
     }
 
     fun updateScreenState(isScreenOn: Boolean, isConfirmedOff: Boolean) {
+        val wasScreenOn = _centralState.value.isScreenOn
+        val wasConfirmedOff = _centralState.value.isScreenOffConfirmed
+
         _centralState.value = _centralState.value.copy(
             isScreenOn = isScreenOn,
             isScreenOffConfirmed = isConfirmedOff,
             isIdealStateActive = isConfirmedOff
         )
+
+        // Adaptive Screen-Off Network Optimization integration
+        val settings = try {
+            com.example.NetraApplication.instance.settingsRepository.settings.value
+        } catch (_: Exception) { null }
+
+        if (settings?.screenOffNetworkOptEnabled != false) {
+            val threshold = settings?.networkTrafficThresholdBytesPerSec ?: 2_097_152L
+            if (isConfirmedOff && !wasConfirmedOff) {
+                networkOptimizationEngine?.onScreenTurnedOff(
+                    thresholdBytesPerSec = threshold
+                )
+            } else if (isScreenOn && !wasScreenOn) {
+                networkOptimizationEngine?.onScreenTurnedOn()
+            }
+        }
+    }
+
+    fun updateNetworkOptimizationState(newState: com.example.model.NetworkOptimizationState) {
+        val oldState = _centralState.value
+        if (oldState.networkOptimizationState != newState) {
+            _centralState.value = oldState.copy(networkOptimizationState = newState)
+            _centralEvents.tryEmit(
+                NetraCentralEvent(
+                    eventId = "event_net_opt_${System.currentTimeMillis()}",
+                    eventType = NetraEventType.NETWORK_OPTIMIZATION_CHANGED,
+                    timestamp = System.currentTimeMillis(),
+                    previousValue = oldState.networkOptimizationState.status.name,
+                    newValue = newState.status.name,
+                    source = "NetworkOptimizationEngine"
+                )
+            )
+        }
     }
 
     fun refreshSystemMetrics(context: Context) {

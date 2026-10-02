@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DeviceThermostat
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Power
@@ -38,6 +39,7 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -83,8 +85,10 @@ fun SettingsScreen(
     val context = LocalContext.current
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val telemetry by viewModel.liveTelemetry.collectAsStateWithLifecycle()
+    val canonicalState by viewModel.canonicalState.collectAsStateWithLifecycle()
     val totalRecords by viewModel.totalRecordCount.collectAsStateWithLifecycle()
     val permissions by viewModel.systemPermissions.collectAsStateWithLifecycle()
+    val recentLogs by viewModel.activityLogs.collectAsStateWithLifecycle()
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -369,6 +373,133 @@ fun SettingsScreen(
             }
         }
 
+        // 5. Adaptive Screen-Off Network Optimization
+        item {
+            val netOptState = canonicalState.networkOptimizationState
+            SentinelCard(
+                title = "Screen-Off Network Optimization",
+                icon = Icons.Default.SignalCellularAlt,
+                dotState = if (settings.screenOffNetworkOptEnabled) DotState.CONNECTED else DotState.STANDBY,
+                accentColor = NetraCyan
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Adaptive Screen-Off Network",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Evaluates mobile traffic when screen turns off to save power.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = settings.screenOffNetworkOptEnabled,
+                        onCheckedChange = { viewModel.setScreenOffNetworkOptEnabled(it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = NetraCyan, checkedTrackColor = NetraCyan.copy(alpha = 0.3f)),
+                        modifier = Modifier.testTag("screen_off_network_opt_toggle")
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "Current Status", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = netOptState.status.name,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NetraCyan
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "Active Generation", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = netOptState.currentGeneration.label,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "High-Traffic Exception Threshold (minimum 2 MB/s ≈ 16 Mbps):",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(1_048_576L to "1 MB/s", 2_097_152L to "2 MB/s", 5_242_880L to "5 MB/s").forEach { (threshold, label) ->
+                        val isSelected = settings.networkTrafficThresholdBytesPerSec == threshold
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { viewModel.setNetworkTrafficThreshold(threshold) },
+                            label = { Text(label, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = NetraCyan.copy(alpha = 0.25f),
+                                selectedLabelColor = NetraCyan
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Android Limitation & Policy: Standard Android public APIs require privileged carrier or system permissions (MODIFY_PHONE_STATE) to change preferred network mode. Sentinel evaluates traffic and safety conditions truthfully without unauthorized workarounds.",
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = {
+                        try {
+                            val intent = Intent(android.provider.Settings.ACTION_NETWORK_OPERATOR_SETTINGS).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            context.startActivity(intent)
+                        } catch (_: Exception) {
+                            try {
+                                val intent = Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS).apply {
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+                                context.startActivity(intent)
+                            } catch (_: Exception) {
+                                Toast.makeText(context, "Unable to open network settings", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("open_network_settings_button")
+                ) {
+                    Text("Open Android Network Settings", fontSize = 12.sp)
+                }
+            }
+        }
+
         // 5. Automated Daily PDF Report Generator (Room Telemetry to Local PDF)
         item {
             var isGeneratingPdf by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
@@ -447,7 +578,30 @@ fun SettingsScreen(
             }
         }
 
-        // 6. Database & Telemetry Management
+        // 7. Activity History
+        item {
+            SentinelCard(
+                title = "Activity History",
+                icon = Icons.Default.History,
+                dotState = DotState.CONNECTED,
+                accentColor = NetraEmerald
+            ) {
+                if (recentLogs.isEmpty()) {
+                    Text("No recent events.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        recentLogs.take(5).forEach { log ->
+                            Column {
+                                Text(log.title, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                Text(log.message, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 8. Database & Telemetry Management
         item {
             SentinelCard(
                 title = "Local Room Database & Cache",

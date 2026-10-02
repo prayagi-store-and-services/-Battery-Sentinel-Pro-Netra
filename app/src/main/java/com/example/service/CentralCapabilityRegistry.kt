@@ -290,6 +290,19 @@ class CentralCapabilityRegistry(private val context: Context) {
         // 30. Audio Routing & Fallback Policy Capability
         map[CapabilityType.AUDIO_ROUTING_FALLBACK] = CapabilityStatus.AVAILABLE
 
+        // 31. Adaptive Screen-Off Network Optimization
+        val pm = context.packageManager
+        val hasTelephony = pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+        val hasModifyPhoneState = ContextCompat.checkSelfPermission(
+            context,
+            "android.Manifest.permission.MODIFY_PHONE_STATE"
+        ) == PackageManager.PERMISSION_GRANTED
+        map[CapabilityType.SCREEN_OFF_NETWORK_OPTIMIZATION] = when {
+            !hasTelephony -> CapabilityStatus.UNSUPPORTED
+            hasModifyPhoneState -> CapabilityStatus.SUPPORTED
+            else -> CapabilityStatus.PERMISSION_REQUIRED
+        }
+
         return map
     }
 
@@ -324,6 +337,7 @@ class CentralCapabilityRegistry(private val context: Context) {
         CapabilityType.ENVIRONMENTAL_CONTEXT -> "Environmental Context Attribution"
         CapabilityType.CLIMATE_BASELINE -> "Geo-Climate Adaptive Thermal Engine"
         CapabilityType.AUDIO_ROUTING_FALLBACK -> "Audio Routing & Fallback Engine"
+        CapabilityType.SCREEN_OFF_NETWORK_OPTIMIZATION -> "Screen-Off Network Optimization"
     }
 
     private fun checkBluetoothPermission(): Boolean {

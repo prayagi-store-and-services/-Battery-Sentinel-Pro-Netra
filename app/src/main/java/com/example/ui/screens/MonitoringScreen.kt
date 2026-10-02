@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.components.TelemetryRow
 import com.example.model.AppUsageItem
 import com.example.model.BluetoothDeviceItem
 import com.example.model.DotState
@@ -157,6 +158,8 @@ fun MonitoringScreen(
                     powerSaverEnabled = settings.powerSaverEnabled,
                     viewModel = viewModel
                 )
+                // Add Temperature Chart
+                TemperatureChart(records = viewModel.sparkline1HourRecords.collectAsStateWithLifecycle().value)
             }
             MonitoringSubTab.APPS -> {
                 AppsTabContent(
@@ -628,14 +631,19 @@ private fun SystemTelemetryTabContent(
     }
 }
 
+
 @Composable
-private fun TelemetryRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+fun TemperatureChart(records: List<com.example.data.local.BatteryRecord>) {
+    SentinelCard(
+        title = "1-Hour Temperature Trend", 
+        icon = Icons.Default.DeviceThermostat, 
+        dotState = DotState.CONNECTED, 
+        accentColor = NetraCyan
     ) {
-        Text(text = label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(text = value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        com.example.ui.components.InteractiveTelemetryGraph(
+            records = records,
+            metric = com.example.ui.components.GraphMetric.TEMP,
+            modifier = Modifier.height(200.dp)
+        )
     }
 }
