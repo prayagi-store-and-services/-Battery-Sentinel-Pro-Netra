@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.work.Constraints
@@ -42,7 +41,7 @@ internal object UpdateNotifyPolicy {
 /**
  * Once a day (network required, WorkManager decides the exact time, so it respects Doze and uses no exact alarms)
  * asks GitHub whether a newer stable release exists. If so, posts one status-bar notification per version.
- * Tapping it opens the release page in the browser. Nothing is downloaded or installed automatically.
+ * Tapping it opens the app (explicit intent), whose in-app updater offers the verified download. Nothing is downloaded or installed automatically.
  */
 class UpdateCheckWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
 
@@ -74,13 +73,13 @@ class UpdateCheckWorker(appContext: Context, params: WorkerParameters) : Corouti
         if (Build.VERSION.SDK_INT >= 33 &&
             c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) return
-        val page = UpdateNotifyPolicy.releasePageUrl(candidate.url) ?: return
+        if (UpdateNotifyPolicy.releasePageUrl(candidate.url) == null) return
         val nm = c.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "App updates", NotificationManager.IMPORTANCE_DEFAULT))
         }
         val open = PendingIntent.getActivity(
-            c, 0, Intent(Intent.ACTION_VIEW, Uri.parse(page)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            c, 0, Intent(c, com.example.MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val n = NotificationCompat.Builder(c, CHANNEL_ID)
