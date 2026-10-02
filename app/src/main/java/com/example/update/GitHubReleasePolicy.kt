@@ -9,6 +9,8 @@ internal object GitHubReleasePolicy {
     const val REPO = "-Battery-Sentinel-Pro-Netra"
     const val API_URL = "https://api.github.com/repos/$OWNER/$REPO/releases/latest"
     const val RELEASES_URL = "https://github.com/$OWNER/$REPO/releases"
+    /** No-API backup source (GitHub API allows only 60 anonymous requests/hour per IP). Published from docs/latest.json. */
+    const val FALLBACK_URL = "https://prayagideepak-collab.github.io/$REPO/latest.json"
     const val MAX_APK_BYTES = 200L * 1024 * 1024
     private val versionTag = Regex("v[0-9]+\\.[0-9]+\\.[0-9]+")
     private val digestPattern = Regex("sha256:([0-9a-fA-F]{64})")
@@ -40,6 +42,22 @@ internal object GitHubReleasePolicy {
                 matches.add(Candidate(version, url, digest.lowercase(), size))
             }
             matches.singleOrNull()
+        } catch (_: Exception) { null }
+    }
+
+    /** Parses docs/latest.json: {"tag","versionCode","sha256","size","notes"}. Same strict rules as [parse]. */
+    fun parseFallback(json: String, installedVersion: Long): Candidate? {
+        return try {
+            val o = JSONObject(json)
+            val tag = o.optString("tag")
+            if (!versionTag.matches(tag)) return null
+            val version = o.optLong("versionCode", -1)
+            if (version <= installedVersion || version > Int.MAX_VALUE) return null
+            val size = o.optLong("size", -1)
+            if (size !in 1..MAX_APK_BYTES) return null
+            val sha = o.optString("sha256")
+            if (!Regex("[0-9a-fA-F]{64}").matches(sha)) return null
+            Candidate(version, "https://github.com/$OWNER/$REPO/releases/download/$tag/app-release.apk", sha.lowercase(), size)
         } catch (_: Exception) { null }
     }
 
