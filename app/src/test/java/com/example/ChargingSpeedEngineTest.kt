@@ -37,6 +37,28 @@ class ChargingSpeedEngineTest {
     }
 
     @Test
+    fun dischargePowerIsLivePositiveMagnitudeRegardlessOfOemCurrentSign() {
+        val negativeCurrent = engine.calculate(
+            isCharging = false,
+            voltageMv = 4_000,
+            currentMa = -750,
+            isDischarging = true
+        )
+        assertEquals(3.0f, negativeCurrent.rawPowerWatts!!, 0.001f)
+        assertEquals(3.0f, negativeCurrent.consumptionPowerWatts!!, 0.001f)
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, negativeCurrent.speedCategory)
+
+        val positiveCurrent = engine.calculate(
+            isCharging = false,
+            voltageMv = 4_000,
+            currentMa = 750,
+            isDischarging = true
+        )
+        assertEquals(3.0f, positiveCurrent.rawPowerWatts!!, 0.001f)
+        assertEquals(3.0f, positiveCurrent.consumptionPowerWatts!!, 0.001f)
+    }
+
+    @Test
     fun milliampDevicesAreNotReadAsMicroamps() {
         assertEquals(3000, engine.normalizeToMilliAmps(3000, true))        // reported in mA
         assertEquals(3000, engine.normalizeToMilliAmps(3_000_000, true))   // reported in uA
