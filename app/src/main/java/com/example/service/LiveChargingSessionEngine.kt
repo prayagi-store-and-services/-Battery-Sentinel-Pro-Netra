@@ -144,6 +144,8 @@ class LiveChargingSessionEngine(
     private val speedEngine = ChargingSpeedEngine()
     private val rollingHistoryBuffer = ArrayDeque<LiveChargingSample>(300)
     private var sessionStartElapsedRealtime: Long = 0L
+    private val dischargeHistoryBuffer = ArrayDeque<LiveChargingSample>(300)
+    private var dischargeStartElapsedRealtime: Long = 0L
 
     private val _sessionState = MutableStateFlow(LiveChargingSessionState())
     val sessionState: StateFlow<LiveChargingSessionState> = _sessionState.asStateFlow()
@@ -163,17 +165,9 @@ class LiveChargingSessionEngine(
                     ensurePollingLoopRunningLocked()
                     sampleOnceLocked()
                 } else {
-                    stopPollingLoopLocked()
-                    _sessionState.value = _sessionState.value.copy(
-                        isChargingActive = false,
-                        isDischarging = true,
-                        currentBatteryPercent = hardwareProvider.getBatteryLevelPercent(),
-                        currentTemperatureCelsius = hardwareProvider.getTemperatureCelsius(),
-                        currentVoltageMv = null,
-                        currentCurrentMa = null,
-                        currentPowerWatts = null,
-                        etaDisplayStatus = "Unavailable"
-                    )
+                    beginDischargeTrackingLocked()
+                    ensurePollingLoopRunningLocked()
+                    sampleOnceLocked()
                 }
             }
         }
@@ -210,8 +204,8 @@ class LiveChargingSessionEngine(
                         sampleOnceLocked()
                     }
                 } else {
-                    // Charging stopped or disconnected -> stop immediately!
-                    stopPollingLoopLocked()
+                    // Charging stopped or disconnected -> switch to the discharge flow.
+                    beginDischargeTrackingLocked()
                     _sessionState.value = _sessionState.value.copy(
                         isChargingActive = false,
                         isDischarging = true,
@@ -226,12 +220,36 @@ class LiveChargingSessionEngine(
                         etaDisplayStatus = "Unavailable",
                         estimatedTimeToFullSeconds = null
                     )
+                    if (isScreenActive) {
+                        ensurePollingLoopRunningLocked()
+                        sampleOnceLocked()
+                    }
                 }
             }
         }
     }
 
+    /** Starts a fresh on-battery tracking window the first time the discharge flow begins. */
+    private fun beginDischargeTrackingLocked() {
+        if (dischargeStartElapsedRealtime == 0L) {
+            dischargeStartElapsedRealtime = elapsedRealtimeClock()
+            dischargeHistoryBuffer.clear()
+        }
+        _sessionState.value = _sessionState.value.copy(
+            isChargingActive = false,
+            isDischarging = true,
+            currentBatteryPercent = hardwareProvider.getBatteryLevelPercent(),
+            currentTemperatureCelsius = hardwareProvider.getTemperatureCelsius(),
+            currentVoltageMv = null,
+            currentCurrentMa = null,
+            currentPowerWatts = null,
+            etaDisplayStatus = "Unavailable"
+        )
+    }
+
     private fun startNewSessionLocked() {
+        dischargeStartElapsedRealtime = 0L
+        dischargeHistoryBuffer.clear()
         val now = clock()
         sessionStartElapsedRealtime = elapsedRealtimeClock()
         val currentLevel = hardwareProvider.getBatteryLevelPercent()
@@ -260,13 +278,8 @@ class LiveChargingSessionEngine(
             while (isActive) {
                 delay(pollingIntervalMs)
                 mutex.withLock {
-                    if (!isScreenActive || !hardwareProvider.isCharging()) {
+                    if (!isScreenActive) {
                         stopPollingLoopLocked()
-                        _sessionState.value = _sessionState.value.copy(
-                            isChargingActive = false,
-                            isDischarging = !hardwareProvider.isCharging(),
-                            etaDisplayStatus = "Unavailable"
-                        )
                         return@launch
                     }
                     sampleOnceLocked()
@@ -291,6 +304,74 @@ class LiveChargingSessionEngine(
         }
     }
 
+    /**
+     * One on-battery measurement. Values Android does not report stay null so the screen can hide them.
+     * Power is the observed battery-side draw (voltage x current magnitude), never a charger figure.
+     */
+    private fun sampleDischargeLocked(
+        now: Long,
+        plugged: String?,
+        levelPercent: Float?,
+        temperatureCelsius: Float?,
+        voltageMv: Int?,
+        rawCurrentMicroAmps: Int?
+    ) {
+        if (dischargeStartElapsedRealtime == 0L) {
+            dischargeStartElapsedRealtime = elapsedRealtimeClock()
+        }
+        val durationSeconds =
+            (elapsedRealtimeClock() - dischargeStartElapsedRealtime).coerceAtLeast(0L) / 1000L
+        val voltageMvFloat = voltageMv?.let { if (it in 2000..15000) it.toFloat() else null }
+        val currentMa = rawCurrentMicroAmps?.let { raw ->
+            if (raw == Int.MIN_VALUE) null else speedEngine.normalizeToMilliAmps(raw, activeCurrentFlow = false)
+        }
+        val currentMaFloat = currentMa?.let {
+            val ma = abs(it).toFloat()
+            if (ma in 0.0f..30000.0f) ma else null
+        }
+        val powerWatts = if (voltageMvFloat != null && currentMaFloat != null) {
+            (voltageMvFloat * currentMaFloat) / 1_000_000f
+        } else {
+            null
+        }
+        val sample = LiveChargingSample(
+            timestamp = now,
+            voltageV = voltageMvFloat?.let { it / 1000f },
+            currentA = currentMaFloat?.let { it / 1000f },
+            powerWatts = powerWatts,
+            batteryPercent = levelPercent,
+            pluggedSource = plugged,
+            isValid = voltageMvFloat != null || currentMaFloat != null || levelPercent != null,
+            voltageMv = voltageMvFloat,
+            currentMa = currentMaFloat,
+            temperatureCelsius = temperatureCelsius
+        )
+        if (dischargeHistoryBuffer.size >= 300) {
+            dischargeHistoryBuffer.removeFirst()
+        }
+        dischargeHistoryBuffer.addLast(sample)
+        _sessionState.value = _sessionState.value.copy(
+            isChargingActive = false,
+            isDischarging = true,
+            currentBatteryPercent = levelPercent,
+            currentTemperatureCelsius = temperatureCelsius,
+            pluggedSource = plugged,
+            currentPowerWatts = null,
+            currentCurrentA = null,
+            currentVoltageV = null,
+            currentVoltageMv = null,
+            currentCurrentMa = null,
+            dischargeVoltageMv = voltageMvFloat,
+            dischargeCurrentMa = currentMaFloat,
+            dischargePowerWatts = powerWatts,
+            dischargeHistory = dischargeHistoryBuffer.toList(),
+            dischargeDurationSeconds = durationSeconds,
+            lastUpdatedTimeMs = now,
+            etaDisplayStatus = "Unavailable",
+            estimatedTimeToFullSeconds = null
+        )
+    }
+
     private fun sampleOnceLocked() {
         val now = clock()
         val isCharging = hardwareProvider.isCharging()
@@ -309,21 +390,7 @@ class LiveChargingSessionEngine(
         }
 
         if (!isCharging) {
-            _sessionState.value = _sessionState.value.copy(
-                isChargingActive = false,
-                isDischarging = true,
-                currentBatteryPercent = levelPercent,
-                currentTemperatureCelsius = temperatureCelsius,
-                pluggedSource = plugged,
-                currentPowerWatts = null,
-                currentCurrentA = null,
-                currentVoltageV = null,
-                currentVoltageMv = null,
-                currentCurrentMa = null,
-                etaDisplayStatus = "Unavailable",
-                estimatedTimeToFullSeconds = null
-            )
-            stopPollingLoopLocked()
+            sampleDischargeLocked(now, plugged, levelPercent, temperatureCelsius, voltageMv, rawCurrentMicroAmps)
             return
         }
 
@@ -471,6 +538,8 @@ class LiveChargingSessionEngine(
     fun resetForTests() {
         stopPollingLoopLocked()
         rollingHistoryBuffer.clear()
+        dischargeHistoryBuffer.clear()
+        dischargeStartElapsedRealtime = 0L
         _sessionState.value = LiveChargingSessionState()
         isScreenActive = false
         sessionStartElapsedRealtime = 0L
