@@ -118,7 +118,7 @@ The app contains five primary navigation destinations:
 | **Field-Level Last-Valid Retention**| **Verified** | Telemetry and weather fields retain last valid values during partial sample drops. |
 | **Critical Thermal Protection (>40°C)** | **Verified** | Dims brightness to 10%, starts sensor investigation, recovers at <=35°C. |
 | **Low-Battery Protection (≤30%)** | **Verified** | Dims brightness to 10%, recovers at >=35%, unaffected by charger plug-in alone. |
-| **Raw Charging Power Model** | **Verified** | V x I raw power without phone consumption subtraction; verified in unit tests. Canonical tiers: <5W Slow, 5–<10W Normal, 10–<20W Fast, 20–<40W Super Fast, >=40W Ultra Fast. |
+| **Raw Charging Power Model** | **Implemented; device validation pending** | Battery-terminal V × I with direction-aware discharge wattage and canonical tier unit tests. Instantaneous current units and real-device fast-charge behavior still require physical-device verification. Canonical tiers: <5W Slow, 5–<10W Normal, 10–<20W Fast, 20–<40W Super Fast, >=40W Ultra Fast. |
 | **Progression-Based ETA** | **Verified** | Live progression calculation; returns null when samples are insufficient. |
 | **Voice Announcements & Deduplication** | **Verified** | Priority queue with state-level deduplication and single active TTS channel. |
 | **Night Protection (23:00–06:00)** | **Verified** | Suppresses routine notifications while allowing critical thermal safety alerts. |
