@@ -72,7 +72,7 @@ class LiveChargingSessionEngineTest {
             engine.onScreenResumed()
             testScheduler.runCurrent()
 
-            assertFalse("Polling loop must not run while discharging", engine.isPollingActive())
+            assertTrue("Live discharge sampling runs while the screen is open", engine.isPollingActive())
             assertFalse(engine.sessionState.value.isChargingActive)
 
             // Charger plugged in
@@ -158,13 +158,42 @@ class LiveChargingSessionEngineTest {
             testScheduler.runCurrent()
 
             val state = engine.sessionState.value
-            assertFalse("Polling loop must terminate immediately", engine.isPollingActive())
+            assertTrue("Loop keeps running and switches to discharge samples", engine.isPollingActive())
             assertFalse("Charging session must be inactive", state.isChargingActive)
             assertTrue("Discharging flag set", state.isDischarging)
             assertNull("Live charging power must be null", state.currentPowerWatts)
             assertNull("Charging current must be null", state.currentCurrentMa)
             assertNull("Voltage must be null", state.currentVoltageMv)
             assertEquals("Unavailable", state.etaDisplayStatus)
+        } finally {
+            engine.onScreenPaused()
+            testScheduler.runCurrent()
+        }
+    }
+
+    // Discharging keeps producing real live data, kept apart from the charging fields
+    @Test
+    fun discharging_producesLiveDischargeSamples() = runTest {
+        fakeHardware.isChargingState = false
+        fakeHardware.pluggedTypeState = "UNPLUGGED"
+        fakeHardware.voltageMvState = 4000
+        fakeHardware.currentMicroAmpsState = -500_000
+
+        val engine = createEngine(this)
+        try {
+            engine.onScreenResumed()
+            testScheduler.runCurrent()
+            testScheduler.advanceTimeBy(2500)
+            testScheduler.runCurrent()
+
+            val state = engine.sessionState.value
+            assertTrue(state.isDischarging)
+            assertTrue("Discharge history must fill while on battery", state.dischargeHistory.size >= 2)
+            assertEquals(4000f, state.dischargeVoltageMv ?: 0f, 0.01f)
+            assertEquals(500f, state.dischargeCurrentMa ?: 0f, 0.01f)
+            assertEquals(2.0f, state.dischargePowerWatts ?: 0f, 0.01f)
+            assertNull("Charging fields stay empty while on battery", state.currentPowerWatts)
+            assertTrue("Charging history is not mixed in", state.rollingHistory.isEmpty())
         } finally {
             engine.onScreenPaused()
             testScheduler.runCurrent()
@@ -184,7 +213,7 @@ class LiveChargingSessionEngineTest {
             testScheduler.runCurrent()
 
             val state = engine.sessionState.value
-            assertFalse("Loop must never start while discharging", engine.isPollingActive())
+            assertTrue("Loop samples live discharge data while the screen is open", engine.isPollingActive())
             assertFalse(state.isChargingActive)
             assertTrue(state.isDischarging)
             assertNull("No live charging power while discharging", state.currentPowerWatts)
