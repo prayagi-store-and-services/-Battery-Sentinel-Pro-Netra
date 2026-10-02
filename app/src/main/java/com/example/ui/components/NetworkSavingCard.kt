@@ -46,7 +46,7 @@ fun NetworkSavingCard() {
                 if (it && !com.example.util.PermissionHelper.isUsageAccessGranted(c)) com.example.util.PermissionHelper.openUsageAccessSettings(c)
             })
         }
-        Text("5G to 4G, 4G to 3G. Skipped if about 200 MB or more of mobile data was used in the last 10 minutes. Android does not let apps switch the network, so you get a notification to tap. Needs Phone State and Usage Access.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("5G to 4G, 4G to 3G. Skipped if about 2 MB or more of mobile data was used in the last 10 minutes. Android does not let apps switch the network, so you get a notification to tap. Needs Phone State and Usage Access.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Experimental: auto-switch via ADB grant", fontSize = 13.sp)
             Switch(checked = experiment, onCheckedChange = { experiment = it; prefs.edit().putBoolean(N.KEY_EXPERIMENT_ENABLED, it).apply() })
