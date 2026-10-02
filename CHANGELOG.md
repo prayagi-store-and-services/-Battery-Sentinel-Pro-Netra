@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+## [1.1.6]
+
 - Fix crash: tapping SESSIONS & GRAPH on the Battery screen closed the app. The graph list was placed inside another scrolling list, which Android does not allow. It is now one list, and the Recent Charging Sessions card appears below the graph.
 - Fix: the "Allow modifying system settings" switch on Android's Modify system settings screen was greyed out and could not be turned on. The app now declares the permission, so the switch works and you can allow it for the optional "Charging + screen off savings". You still allow it yourself in Android; the app never allows it.
 
