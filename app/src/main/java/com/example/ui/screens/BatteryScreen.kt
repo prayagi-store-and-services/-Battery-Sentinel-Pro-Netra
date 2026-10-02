@@ -247,28 +247,37 @@ fun BatteryScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            ElectricBadge(
-                                label = "VOLTAGE",
-                                value = canonical.voltageMv?.let { "$it mV" } ?: "Unavailable",
-                                accent = NetraCyan,
-                                modifier = Modifier.weight(1f)
-                            )
-                            ElectricBadge(
-                                label = "CURRENT",
-                                value = canonical.currentMa?.let { "$it mA" } ?: "Unavailable",
-                                accent = if ((canonical.currentMa ?: 0) >= 0) NetraEmerald else StatusAmber,
-                                modifier = Modifier.weight(1f)
-                            )
-                            ElectricBadge(
-                                label = "PHONE DRAIN",
-                                value = canonical.consumptionPowerWatts?.let { "${String.format(Locale.US, "%.2f", it)} W" } ?: "Unavailable",
-                                accent = StatusAmber,
-                                modifier = Modifier.weight(1f)
-                            )
+                        // Hide a reading entirely when Android does not report it (no "Unavailable" filler).
+                        if (canonical.voltageMv != null || canonical.currentMa != null || canonical.consumptionPowerWatts != null) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                canonical.voltageMv?.let { mv ->
+                                    ElectricBadge(
+                                        label = "VOLTAGE",
+                                        value = "$mv mV",
+                                        accent = NetraCyan,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                                canonical.currentMa?.let { ma ->
+                                    ElectricBadge(
+                                        label = "CURRENT",
+                                        value = "$ma mA",
+                                        accent = if (ma >= 0) NetraEmerald else StatusAmber,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                                canonical.consumptionPowerWatts?.let { w ->
+                                    ElectricBadge(
+                                        label = "PHONE DRAIN",
+                                        value = "${String.format(Locale.US, "%.2f", w)} W",
+                                        accent = StatusAmber,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
