@@ -1,6 +1,8 @@
 package com.example.service
 
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.BatteryManager
 import com.example.model.CanonicalChargingSpeed
 import com.example.model.CanonicalPluggedType
@@ -379,6 +381,37 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
     // ETA evidence is separate from retained display values and never survives a session boundary.
     private val sessionEtaEstimator = SessionEtaEstimator()
 
+    /**
+     * Takes a fresh Android battery snapshot on demand. The UI may call this while visible
+     * to refresh voltage/current/power even when ACTION_BATTERY_CHANGED is not emitted.
+     * All values still pass through the canonical Central Unit validation and normalization.
+     */
+    suspend fun refreshBatteryTelemetry(context: Context, source: String = "ForegroundBatteryScreen") {
+        val snapshot = try {
+            context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        } catch (_: Exception) {
+            null
+        } ?: return
+        val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+        val rawCurrent = try {
+            batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) ?: Int.MIN_VALUE
+        } catch (_: Exception) {
+            Int.MIN_VALUE
+        }
+        processRawInput(
+            level = snapshot.getIntExtra(BatteryManager.EXTRA_LEVEL, -1),
+            scale = snapshot.getIntExtra(BatteryManager.EXTRA_SCALE, -1),
+            status = snapshot.getIntExtra(BatteryManager.EXTRA_STATUS, -1),
+            plugged = snapshot.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1),
+            temperatureRaw = snapshot.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0),
+            voltage = snapshot.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0),
+            currentMicroAmps = rawCurrent,
+            bluetoothConnected = null,
+            bluetoothBattery = null,
+            source = source
+        )
+    }
+
     suspend fun processRawInput(
         level: Int,
         scale: Int,
@@ -438,7 +471,8 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             val currentMa = if (currentMicroAmps != Int.MIN_VALUE) {
                 chargingSpeedEngine.normalizeToMilliAmps(
                     currentMicroAmps,
-                    status == BatteryManager.BATTERY_STATUS_CHARGING
+                    status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                        status == BatteryManager.BATTERY_STATUS_DISCHARGING
                 )
             } else null
 
@@ -453,11 +487,33 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             val mergedTempCelsius = tempCelsius ?: oldState.temperatureCelsius
             val mergedVoltageMv = voltageMv ?: oldState.voltageMv
             val mergedCurrentMa = currentMa ?: oldState.currentMa
+            val isDischargingNow = status == BatteryManager.BATTERY_STATUS_DISCHARGING ||
+                (isCharging == false && plugged == 0)
 
-            // Central ChargingSpeedEngine calculation using raw incoming power exclusively
-            val speedResult = chargingSpeedEngine.calculate(isCharging, voltageMv, currentMa)
-            val mergedRawPower = speedResult.rawPowerWatts ?: oldState.powerWatts
-            val mergedConsumption = speedResult.consumptionPowerWatts ?: oldState.consumptionPowerWatts
+            // Central ChargingSpeedEngine: classify charging input or discharge draw from the
+            // same fresh sample; never carry a charging wattage into a discharge session.
+            val speedResult = chargingSpeedEngine.calculate(
+                isCharging = isCharging,
+                voltageMv = voltageMv,
+                currentMa = currentMa,
+                isDischarging = isDischargingNow
+            )
+            val currentPowerReading = when {
+                isCharging == true -> speedResult.rawPowerWatts
+                isDischargingNow -> speedResult.consumptionPowerWatts
+                else -> null
+            }
+            val mergedRawPower = currentPowerReading ?: when {
+                isCharging == true && oldState.isCharging == true -> oldState.powerWatts
+                isDischargingNow && oldState.isCharging == false && oldState.isChargerConnected == false -> oldState.powerWatts
+                else -> null
+            }
+            val mergedConsumption = if (isDischargingNow) {
+                speedResult.consumptionPowerWatts
+                    ?: oldState.consumptionPowerWatts.takeIf {
+                        oldState.isCharging == false && oldState.isChargerConnected == false
+                    }
+            } else null
             val mergedSpeed = if (mergedIsCharging == true) {
                 if (speedResult.speedCategory != CanonicalChargingSpeed.UNAVAILABLE) speedResult.speedCategory else oldState.chargingSpeed
             } else {
@@ -488,15 +544,15 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                     else -> FieldStatus.UNAVAILABLE
                 },
                 powerStatus = when {
-                    speedResult.rawPowerWatts != null -> FieldStatus.LIVE
-                    oldState.powerWatts != null -> FieldStatus.LAST_VALID
+                    currentPowerReading != null -> FieldStatus.LIVE
+                    mergedRawPower != null -> FieldStatus.LAST_VALID
                     else -> FieldStatus.UNAVAILABLE
                 },
                 levelObservedAt = if (validatedLevel != null) now else oldState.fieldStates.levelObservedAt,
                 tempObservedAt = if (tempCelsius != null) now else oldState.fieldStates.tempObservedAt,
                 voltageObservedAt = if (voltageMv != null) now else oldState.fieldStates.voltageObservedAt,
                 currentObservedAt = if (currentMa != null) now else oldState.fieldStates.currentObservedAt,
-                powerObservedAt = if (speedResult.rawPowerWatts != null) now else oldState.fieldStates.powerObservedAt
+                powerObservedAt = if (currentPowerReading != null) now else oldState.fieldStates.powerObservedAt
             )
 
             // Fast in-memory capability update (no blocking Binder IPC calls in critical path)
