@@ -227,7 +227,7 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 <script>
 (function(){
 var repo="prayagideepak-collab/-Battery-Sentinel-Pro-Netra";
-function fmt(d){try{return new Date(d).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"})}catch(e){return ""}}
+function fmt(d){try{return new Date(d).toLocaleString(undefined,{year:"numeric",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"})}catch(e){return ""}}
 function mb(n){return (n/1048576).toFixed(1)+" MB"}
 fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(rel){
  rel=rel.filter(function(x){return !x.draft});
