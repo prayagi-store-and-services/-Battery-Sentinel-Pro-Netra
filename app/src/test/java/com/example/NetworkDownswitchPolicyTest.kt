@@ -10,13 +10,13 @@ class NetworkDownswitchPolicyTest {
     private val mb = 1024L * 1024L
 
     @Test fun fiveGGoesToFourGAndFourGToThreeG() {
-        assertEquals(Decision.Suggest(RadioClass.NR_5G, RadioClass.LTE_4G), NetworkDownswitchPolicy.decide(RadioClass.NR_5G, 10 * mb))
+        assertEquals(Decision.Suggest(RadioClass.NR_5G, RadioClass.LTE_4G), NetworkDownswitchPolicy.decide(RadioClass.NR_5G, mb / 2))
         assertEquals(Decision.Suggest(RadioClass.LTE_4G, RadioClass.THREE_G_OR_LOWER), NetworkDownswitchPolicy.decide(RadioClass.LTE_4G, 0L))
     }
 
     @Test fun heavyDataSkipsAtThreshold() {
-        assertTrue(NetworkDownswitchPolicy.decide(RadioClass.NR_5G, 200 * mb) is Decision.Skip)
-        assertTrue(NetworkDownswitchPolicy.decide(RadioClass.NR_5G, 199 * mb) is Decision.Suggest)
+        assertTrue(NetworkDownswitchPolicy.decide(RadioClass.NR_5G, 2 * mb) is Decision.Skip)
+        assertTrue(NetworkDownswitchPolicy.decide(RadioClass.NR_5G, mb) is Decision.Suggest)
     }
 
     @Test fun unreadableUsageOrNetworkNeverSuggests() {
