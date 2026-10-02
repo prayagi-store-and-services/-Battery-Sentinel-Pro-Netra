@@ -56,6 +56,15 @@ input,textarea,select{width:100%;background:var(--card2);color:var(--text);borde
 textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 .stars button{background:none;border:0;font-size:32px;cursor:pointer;color:#4a5b7f;padding:0 2px}.stars button.on{color:var(--warn)}
 .msg{font-size:14px;color:var(--accent);min-height:20px}
+
+.pick{display:grid;gap:8px}.pick .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pick label,.fileb label,.mode label{font-size:13px;color:var(--mute)}
+.fileb{display:grid;gap:4px}.fileb small{color:var(--mute);font-size:12px}
+.mode{display:grid;gap:6px;font-size:14px}.mode .opt{display:flex;gap:8px;align-items:center;color:var(--text)}.mode .opt input{width:auto}
+.gbtn{background:#fff;color:#1f1f1f;border:0;border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer}
+.rl{margin-top:30px}.rl h3{margin:0 0 4px}
+.rv{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 14px;margin:10px 0}
+.rv .top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:14px}.rv .st{color:var(--warn);letter-spacing:2px}.rv .dv{color:var(--mute);font-size:13px}.rv p{margin:6px 0 0;color:var(--text);font-size:15px;word-break:break-word}.rv button.rp{margin-left:auto;background:none;border:0;color:var(--mute);font-size:12px;cursor:pointer;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -154,15 +163,33 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 
 <section id="feedback"><div class="wrap">
 <h2>Rate, suggest, report a problem</h2>
-<p class="sub">Messages are private and go to the developer. Ratings are not shown publicly. Add an email if you want a reply. Public comments may come later.</p>
+<p class="sub">Suggestions and complaints are private and go to the developer. Ratings are public: the stars, your device, your comment and the name you choose (or "Anonymous") are shown below. Attached files are never shown publicly. Add an email only if you want a reply; it is never shown. Images and videos up to 2 MB.</p>
 <div class="grid">
-<div class="card"><h3>Rate the app</h3><form class="fb" data-kind="Rating"><select name="rating" required><option value="">Choose 1 to 5 stars</option><option>5 - Great</option><option>4 - Good</option><option>3 - Okay</option><option>2 - Poor</option><option>1 - Bad</option></select><textarea name="message" placeholder="Anything to add? (optional)"></textarea><input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send rating</button><div class="msg"></div></form></div>
+<div class="card"><h3>Rate the app</h3><form class="fb" data-kind="Rating" id="rateform">
+<div class="pick" data-pick data-required="1"><label>Your phone (required, Android 7.0 or newer)</label><input type="search" class="dsearch" list="devlist" placeholder="Type to search, e.g. Realme 9 Pro" autocomplete="off"><div class="two"><select class="dbrand"><option value="">Brand</option></select><select class="dmodel" disabled><option value="">Model</option></select></div><input type="text" class="dother" placeholder="Type your phone brand and model" style="display:none" maxlength="60"></div>
+<select name="rating" required><option value="">Choose 1 to 5 stars</option><option value="5">5 - Great</option><option value="4">4 - Good</option><option value="3">3 - Okay</option><option value="2">2 - Poor</option><option value="1">1 - Bad</option></select>
+<textarea name="message" maxlength="500" placeholder="Anything to add? (optional, shown publicly)"></textarea>
+<div class="mode"><label>How should your rating be shown?</label>
+<label class="opt"><input type="radio" name="mode" value="anonymous" checked> Anonymous</label>
+<label class="opt"><input type="radio" name="mode" value="google"> Sign in with Google (shows your Google name)</label>
+<label class="opt"><input type="radio" name="mode" value="name"> Type a name</label>
+<input type="text" id="rname" maxlength="40" placeholder="Your name" style="display:none">
+<div id="gline" style="display:none"><button type="button" class="gbtn" id="gbtn">Sign in with Google</button> <span id="gwho" class="dv"></span></div></div>
+<div class="fileb"><label>Optional image or video (max 2 MB)</label><input type="file" name="attachment" accept="image/*,video/*"><small>Sent privately to the developer only, never published. Maximum 2 MB.</small></div>
+<input type="email" name="contact_email" placeholder="Email for a reply (optional, private)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send rating</button><div class="msg"></div></form></div>
 <div class="card"><h3>Suggestion box</h3><form class="fb" data-kind="Suggestion"><textarea name="message" required placeholder="What should we add or improve?"></textarea><input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send suggestion</button><div class="msg"></div></form></div>
-<div class="card"><h3>Complaint / problem report</h3><form class="fb" data-kind="Complaint"><input name="device" placeholder="Phone model and Android version (optional)"><textarea name="message" required placeholder="What went wrong?"></textarea><input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send report</button><div class="msg"></div></form></div>
-</div></div></section>
+<div class="card"><h3>Complaint / problem report</h3><form class="fb" data-kind="Complaint">
+<div class="pick" data-pick><label>Your phone (Android 7.0 or newer)</label><input type="search" class="dsearch" list="devlist" placeholder="Type to search, e.g. Realme 9 Pro" autocomplete="off"><div class="two"><select class="dbrand"><option value="">Brand</option></select><select class="dmodel" disabled><option value="">Model</option></select></div><input type="text" class="dother" placeholder="Type your phone brand and model" style="display:none" maxlength="60"></div>
+<input name="android_version" placeholder="Android version (optional)" maxlength="30"><textarea name="message" required placeholder="What went wrong?"></textarea>
+<div class="fileb"><label>Optional screenshot or video (max 2 MB)</label><input type="file" name="attachment" accept="image/*,video/*"><small>Maximum 2 MB. Sent privately to the developer.</small></div>
+<input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send report</button><div class="msg"></div></form></div>
+</div>
+<datalist id="devlist"></datalist>
+<div class="rl" id="ratings"><h3>What people say</h3><div id="rsum" class="sub">Loading ratings...</div><div id="rlist"></div></div>
+</div></section>
 <footer><div class="wrap">
 <p><b>Honesty note.</b> Charging figures are battery-side readings from Android and may differ from a charger's rating. Phone makers report current differently, so instant numbers can vary. Android offers no way for any app to limit a charger's output.</p>
-<p>Visits: <b id="visits">...</b>. Counted with a free third-party counter; this site stores no personal data.</p>
+<p>Visits: <b id="visits">...</b>. Counted with a free third-party counter. Public ratings are stored in Google Firebase and contain only what you enter in the rating form (stars, device, comment, chosen name). Email addresses are never stored there.</p>
 <p>Battery Sentinel Pro Netra &middot; <a href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra">GitHub</a> &middot; <a href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/blob/main/SECURITY.md">Security</a></p>
 </div></footer>
 
@@ -189,10 +216,78 @@ var AB="https://abacus.jasoncameron.dev/";
 function setv(v){["visits","visits2"].forEach(function(i){var e=document.getElementById(i);if(e)e.textContent=v})}
 fetch(AB+(sessionStorage.getItem("netra_counted")?"get":"hit")+"/netra-pages/visits").then(function(r){return r.json()}).then(function(d){sessionStorage.setItem("netra_counted","1");setv(d.value!=null?Number(d.value).toLocaleString():"unavailable")}).catch(function(){setv("unavailable")});
 fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(function(r){return r.json()}).then(function(rel){var t=0;rel.forEach(function(x){(x.assets||[]).forEach(function(a){t+=a.download_count||0})});document.getElementById("dls").textContent=t.toLocaleString()}).catch(function(){document.getElementById("dls").textContent="unavailable"});
-document.querySelectorAll("form.fb").forEach(function(f){f.addEventListener("submit",function(e){e.preventDefault();var m=f.querySelector(".msg"),kind=f.getAttribute("data-kind"),o={};
- new FormData(f).forEach(function(v,k){o[k]=v});o._subject="[Netra] "+kind;o._template="table";o._captcha="false";
+var DEV={
+"Samsung":["Galaxy S24 Ultra","Galaxy S24","Galaxy S23","Galaxy S22","Galaxy S21","Galaxy S20","Galaxy A55","Galaxy A54","Galaxy A35","Galaxy A34","Galaxy A25","Galaxy A15","Galaxy A14","Galaxy A13","Galaxy A12","Galaxy A52","Galaxy A51","Galaxy M34","Galaxy M14","Galaxy F14","Galaxy Z Flip5","Galaxy Z Fold5","Galaxy Note 20","Galaxy Note 10"],
+"Xiaomi":["14","13T","13","12","11T","Mi 11X","Mi 10","Mi A3","Mi A2"],
+"Redmi":["Note 13 Pro+","Note 13 Pro","Note 13","Note 12 Pro","Note 12","Note 11","Note 10","Note 9","Note 8","13C","12C","12","10","9","9A","A3","A2"],
+"POCO":["X6 Pro","X6","X5 Pro","X5","X4 Pro","X3","F6","F5","F4","F3","M6","M5","M4","C65","C55"],
+"Realme":["12 Pro+","12 Pro","12","11 Pro","11x","10 Pro","9 Pro 5G","9 Pro+","9i","8 Pro","8","7","6","GT Neo 5","GT 6","Narzo 70","Narzo 60","Narzo 50","C67","C55","C53","C35","C33","C21Y","C11"],
+"OnePlus":["12","12R","11","11R","10 Pro","10T","9 Pro","9","8T","8","Nord 4","Nord 3","Nord CE 4","Nord CE 3","Nord 2T","Nord 2","Nord CE 2","6T","7T","7 Pro"],
+"Oppo":["Reno 11","Reno 10","Reno 8","Reno 7","Reno 6","Find X6 Pro","Find X5","A78","A58","A57","A38","A18","A17","A16","A15","F21 Pro","F19 Pro","K10"],
+"Vivo":["V30","V29","V27","V25","V23","V21","T3","T2","Y200","Y100","Y56","Y36","Y28","Y27","Y22","Y21","Y17","X100","X90","X80","V20","V19"],
+"iQOO":["12","11","Neo 9 Pro","Neo 7","Neo 6","Z9","Z7","Z6","Z7s","9T","3"],
+"Motorola":["Edge 50","Edge 40","Edge 30","Moto G84","Moto G73","Moto G54","Moto G34","Moto G24","Moto G14","Moto G82","Moto G62","Moto G32","Moto G31","Moto G9 Power","Moto E32","Razr 40"],
+"Nokia":["G42","G21","G11","G20","C32","C22","C12","5.4","7.2","6.1"],
+"Google Pixel":["8 Pro","8","7 Pro","7","7a","6 Pro","6","6a","5","4a","4","3a","3","2","1"],
+"Nothing":["Phone (1)","Phone (2)","Phone (2a)","CMF Phone 1"],
+"Infinix":["Note 40","Note 30","Note 12","Hot 40","Hot 30","Hot 20","Hot 12","Zero 30","Smart 8","Smart 7"],
+"Tecno":["Camon 30","Camon 20","Spark 20","Spark 10","Spark 9","Pova 6","Pova 5","Pova 4","Phantom X2"],
+"Itel":["P55","A60","A49","Vision 5","S23"],
+"Lava":["Blaze 3","Agni 2","Agni 5G"],
+"Honor":["90","X9b","X8","200","Magic 5"],
+"Sony":["Xperia 1 V","Xperia 5 V","Xperia 10 V","Xperia 1 IV","Xperia XZ2"],
+"Asus":["ROG Phone 8","ROG Phone 7","ROG Phone 6","Zenfone 10","Zenfone 9","Zenfone 8","Zenfone Max Pro M1"]
+};
+function esc(t){var d=document.createElement("div");d.textContent=t;return d.innerHTML}
+var picks=[];
+function initPick(p){var br=p.querySelector(".dbrand"),md=p.querySelector(".dmodel"),oth=p.querySelector(".dother"),se=p.querySelector(".dsearch");
+ Object.keys(DEV).forEach(function(b){var o=document.createElement("option");o.value=b;o.textContent=b;br.appendChild(o)});
+ var ob=document.createElement("option");ob.value="__other";ob.textContent="Other brand (type it)";br.appendChild(ob);
+ function fill(b){md.innerHTML="<option value=''>Model</option>";if(b&&b!=="__other"){DEV[b].forEach(function(x){var o=document.createElement("option");o.value=x;o.textContent=x;md.appendChild(o)});var oo=document.createElement("option");oo.value="__other";oo.textContent="Other model (type it)";md.appendChild(oo)}md.disabled=!b||b==="__other";oth.style.display=(b==="__other")?"":"none"}
+ br.addEventListener("change",function(){fill(br.value);se.value=""});
+ md.addEventListener("change",function(){oth.style.display=(md.value==="__other")?"":"none"});
+ se.addEventListener("input",function(){var v=se.value.trim(),hit=null;Object.keys(DEV).forEach(function(b){DEV[b].forEach(function(x){if((b+" "+x).toLowerCase()===v.toLowerCase())hit=[b,x]})});if(hit){br.value=hit[0];fill(hit[0]);md.value=hit[1];oth.style.display="none"}});
+ p._reset=function(){br.value="";fill("");se.value=""};picks.push(p)}
+function readPick(p){var b=p.querySelector(".dbrand").value,m=p.querySelector(".dmodel").value,o=p.querySelector(".dother").value.trim();
+ if(b==="__other"||m==="__other"){return o.length>=2?(b!=="__other"&&b?b+" "+o:o):""}
+ return b&&m?b+" "+m:""}
+function resetPicks(){picks.forEach(function(p){p._reset()})}
+var dl=document.getElementById("devlist");Object.keys(DEV).forEach(function(b){DEV[b].forEach(function(x){var o=document.createElement("option");o.value=b+" "+x;dl.appendChild(o)})});
+document.querySelectorAll("[data-pick]").forEach(initPick);
+var rf=document.getElementById("rateform");
+function syncMode(){var v=rf.querySelector("input[name=mode]:checked").value;document.getElementById("rname").style.display=(v==="name")?"":"none";document.getElementById("gline").style.display=(v==="google")?"":"none"}
+rf.querySelectorAll("input[name=mode]").forEach(function(r){r.addEventListener("change",syncMode)});
+window.netraUser=null;var fb=null;
+var FBC={apiKey:"AIzaSyDSy5-7lkEwsHMXy4VkaslblHlvTfFCmn0",authDomain:"netra-ai-jan.firebaseapp.com",projectId:"netra-ai-jan",storageBucket:"netra-ai-jan.firebasestorage.app",messagingSenderId:"101636656822",appId:"1:101636656822:web:01ce80ead0469509d86017"};
+function loadFb(){if(fb)return fb;var V="https://www.gstatic.com/firebasejs/10.14.1/";fb=Promise.all([import(V+"firebase-app.js"),import(V+"firebase-auth.js"),import(V+"firebase-firestore.js")]).then(function(a){var app=a[0].initializeApp(FBC);return{app:app,auth:a[1],fs:a[2],a:a[1].getAuth(app),db:a[2].getFirestore(app)}});return fb}
+document.getElementById("gbtn").addEventListener("click",function(){var w=document.getElementById("gwho");w.textContent="Opening Google sign-in...";loadFb().then(function(F){return F.auth.signInWithPopup(F.a,new F.auth.GoogleAuthProvider())}).then(function(r){window.netraUser=r.user;w.textContent="Signed in as "+(r.user.displayName||"Google user")}).catch(function(){w.textContent="Sign-in did not complete."})});
+function cid(){var c=localStorage.getItem("netra_cid");if(!c){c=(self.crypto&&crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now()).replace(/[^a-z0-9-]/gi,"").slice(0,40);localStorage.setItem("netra_cid",c)}return c}
+function publishRating(f,dev){var mode=f.querySelector("input[name=mode]:checked").value,stars=parseInt(f.querySelector("[name=rating]").value,10),msg=f.querySelector("[name=message]").value.trim();
+ return loadFb().then(function(F){var d={stars:stars,device:dev.slice(0,80),mode:mode,clientId:cid(),createdAt:F.fs.serverTimestamp(),reported:false};
+  if(msg)d.comment=msg.slice(0,500);
+  if(mode==="name")d.name=f.querySelector("#rname").value.trim().slice(0,60);
+  if(mode==="google"){d.name=(window.netraUser.displayName||"Google user").slice(0,60);d.uid=window.netraUser.uid}
+  return F.fs.addDoc(F.fs.collection(F.db,"netra_site_ratings"),d)}).then(function(){loadRatings()})}
+function loadRatings(){var base="https://firestore.googleapis.com/v1/projects/netra-ai-jan/databases/(default)/documents:runQuery?key="+FBC.apiKey;
+ fetch(base,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({structuredQuery:{from:[{collectionId:"netra_site_ratings"}],orderBy:[{field:{fieldPath:"createdAt"},direction:"DESCENDING"}],limit:100}})}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(rows){
+  var items=rows.filter(function(x){return x.document}).map(function(x){var f=x.document.fields||{};function g(k){var v=f[k];return v?(v.stringValue!==undefined?v.stringValue:v.integerValue!==undefined?Number(v.integerValue):v.timestampValue):""}return{id:x.document.name.split("/").pop(),stars:g("stars"),device:g("device"),comment:g("comment"),name:g("name"),mode:g("mode"),at:g("createdAt")}});
+  var sum=document.getElementById("rsum"),box=document.getElementById("rlist");
+  if(!items.length){sum.textContent="Be the first to rate.";box.innerHTML="";return}
+  var t=0;items.forEach(function(i){t+=i.stars});sum.textContent=(t/items.length).toFixed(1)+" out of 5 from "+items.length+(items.length>=100?"+ ":" ")+"rating"+(items.length===1?"":"s")+" (latest 100 shown).";
+  box.innerHTML=items.map(function(i){var who=i.name||"Anonymous";return "<div class='rv'><div class='top'><span class='st'>"+"\u2605".repeat(i.stars)+"\u2606".repeat(5-i.stars)+"</span><b>"+esc(who)+"</b><span class='dv'>"+esc(i.device)+" &middot; "+fmt(i.at)+"</span><button class='rp' data-id='"+esc(i.id)+"'>Report</button></div>"+(i.comment?"<p>"+esc(i.comment)+"</p>":"")+"</div>"}).join("");
+  box.querySelectorAll(".rp").forEach(function(b){b.addEventListener("click",function(){b.disabled=true;b.textContent="Reported";fetch("https://formsubmit.co/ajax/prayagideepak@gmail.com",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({_subject:"[Netra] Report a rating",_captcha:"false",rating_id:b.getAttribute("data-id")})}).catch(function(){})})})
+ }).catch(function(){document.getElementById("rsum").textContent="Ratings are unavailable right now."})}
+loadRatings();
+document.querySelectorAll("form.fb").forEach(function(f){f.addEventListener("submit",function(e){e.preventDefault();var m=f.querySelector(".msg"),kind=f.getAttribute("data-kind");
+ var pick=f.querySelector("[data-pick]"),dev=pick?readPick(pick):"";
+ if(pick&&pick.getAttribute("data-required")&&!dev){m.textContent="Please choose your phone first.";return}
+ var fi=f.querySelector("input[type=file]");if(fi&&fi.files[0]&&fi.files[0].size>2*1048576){m.textContent="That file is over 2 MB. Please pick a smaller one.";return}
+ if(kind==="Rating"){var md=f.querySelector("input[name=mode]:checked").value;if(md==="name"&&!f.querySelector("#rname").value.trim()){m.textContent="Please type a name, or choose Anonymous.";return}if(md==="google"&&!window.netraUser){m.textContent="Please sign in with Google first, or choose Anonymous.";return}if(localStorage.getItem("netra_rated")){m.textContent="This browser has already sent a rating. Thank you!";return}}
+ var fd=new FormData(f);fd.delete("mode");fd.set("_subject","[Netra] "+kind);fd.set("_template","table");fd.set("_captcha","false");if(dev)fd.set("device",dev);
  m.textContent="Sending...";
- fetch("https://formsubmit.co/ajax/prayagideepak@gmail.com",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify(o)}).then(function(r){return r.json()}).then(function(d){if(d.success==="true"||d.success===true){m.textContent="Sent. Thank you!";f.reset()}else{m.textContent="Could not send right now. Please try again later."}}).catch(function(){m.textContent="Could not send right now. Please try again later."})})});
+ var pub=Promise.resolve();
+ if(kind==="Rating"){pub=publishRating(f,dev).catch(function(){return "fail"})}
+ pub.then(function(pr){return fetch("https://formsubmit.co/ajax/prayagideepak@gmail.com",{method:"POST",headers:{Accept:"application/json"},body:fd}).then(function(r){return r.json()}).then(function(d){if(d.success==="true"||d.success===true){m.textContent=(pr==="fail"?"Sent to the developer. Your rating could not be shown publicly right now.":"Sent. Thank you!");if(kind==="Rating"&&pr!=="fail")localStorage.setItem("netra_rated","1");f.reset();resetPicks()}else{m.textContent="Could not send right now. Please try again later."}})}).catch(function(){m.textContent="Could not send right now. Please try again later."})})});
 })();
 </script>
 </body>
