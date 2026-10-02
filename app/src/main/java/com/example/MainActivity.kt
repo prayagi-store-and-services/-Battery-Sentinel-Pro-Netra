@@ -340,6 +340,8 @@ fun MainAppContent(viewModel: NetraViewModel) {
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
             )
 
+            com.example.ui.components.FestivalBannerCard(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+
             Crossfade(
                 targetState = showWidgetCatalogue to currentTab,
                 label = "tab_transition",
