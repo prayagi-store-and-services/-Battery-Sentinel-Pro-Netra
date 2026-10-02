@@ -38,4 +38,8 @@ class FestivalBannerTest {
         val bad = Regex("martyr|ashura|muharram|death|anniversary", RegexOption.IGNORE_CASE)
         assertTrue(com.example.festival.FestivalData.FEST.none { bad.containsMatchIn(it.name) })
     }
+
+    @Test fun pakistanIsNeverIncluded() {
+        assertTrue(com.example.festival.FestivalData.INDEP.none { it.country.contains("Pakistan", ignoreCase = true) })
+    }
 }
