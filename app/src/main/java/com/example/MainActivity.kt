@@ -150,26 +150,8 @@ fun MainAppContent(viewModel: NetraViewModel) {
         }
     }
 
-    // Request permissions on startup gracefully
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) {
-        viewModel.refreshHardwareState()
-    }
-
-    LaunchedEffect(Unit) {
-        val permissionsToRequest = mutableListOf<String>()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permissionsToRequest.add(Manifest.permission.BLUETOOTH_CONNECT)
-        }
-        permissionsToRequest.add(Manifest.permission.ACCESS_COARSE_LOCATION)
-        if (permissionsToRequest.isNotEmpty()) {
-            permissionLauncher.launch(permissionsToRequest.toTypedArray())
-        }
-    }
+    // Permissions are now explained one at a time (Approve / Skip) instead of firing system dialogs blindly.
+    com.example.permissions.PermissionOnboardingHost(onChanged = { viewModel.refreshHardwareState() })
 
     val availableUpdate = (updateState as? UpdateUiState.Available)?.release
     if (availableUpdate != null) {
