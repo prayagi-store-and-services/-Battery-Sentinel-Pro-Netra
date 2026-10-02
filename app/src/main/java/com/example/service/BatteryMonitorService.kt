@@ -59,6 +59,7 @@ class BatteryMonitorService : Service() {
                 Intent.ACTION_POWER_CONNECTED -> lastNotified80PercentSession = false
                 Intent.ACTION_POWER_DISCONNECTED -> {
                     lastNotified80PercentSession = false
+                    ScreenOffSaver.restore(applicationContext)
                     val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     notificationManager.cancel(NOTIFICATION_ALARM_ID)
                 }
@@ -125,6 +126,8 @@ class BatteryMonitorService : Service() {
                         try {
                             if (isScreenOn) NetworkSwitchCoordinator.onScreenOn(applicationContext)
                             else if (isConfirmedOff) NetworkSwitchCoordinator.onScreenOff(applicationContext)
+                            if (isScreenOn) ScreenOffSaver.restore(applicationContext)
+                            else if (isConfirmedOff) ScreenOffSaver.onScreenOff(applicationContext)
                         } catch (e: Exception) {
                             Log.e("BatteryMonitorService", "Network switch hook failed", e)
                         }
