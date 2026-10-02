@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +57,8 @@ import com.example.viewmodel.NetraViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
+import kotlinx.coroutines.delay
 
 enum class BatteryScreenSubTab {
     LIVE_TELEMETRY,
@@ -70,6 +73,15 @@ fun BatteryScreen(
     val canonical by viewModel.canonicalState.collectAsStateWithLifecycle()
     val sessions by viewModel.recentChargingSessions.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+
+    // Refresh hardware voltage/current/power at 1 Hz only while this screen is visible.
+    // Battery broadcasts remain the primary event-driven source outside this screen.
+    LaunchedEffect(viewModel) {
+        while (true) {
+            viewModel.refreshElectricalTelemetry()
+            delay(1_000L)
+        }
+    }
 
     var selectedSubTab by remember { mutableStateOf(BatteryScreenSubTab.LIVE_TELEMETRY) }
 
@@ -148,6 +160,12 @@ fun BatteryScreen(
                         accentColor = NetraCyan
                     ) {
                         val rawPowerStr = canonical.powerWatts?.let { "${String.format(Locale.US, "%.2f", it)} W" } ?: "Unavailable"
+                        val powerLabel = when {
+                            canonical.isCharging == true -> "LIVE CHARGING POWER"
+                            canonical.isCharging == false && canonical.isChargerConnected == false -> "LIVE DISCHARGE POWER"
+                            canonical.isChargerConnected == true -> "CONNECTED • NOT CHARGING"
+                            else -> "BATTERY POWER"
+                        }
                         val speedCategoryStr = when (canonical.chargingSpeed) {
                             CanonicalChargingSpeed.SLOW -> "Slow (<5W)"
                             CanonicalChargingSpeed.NORMAL -> "Normal (5W–10W)"
@@ -164,7 +182,7 @@ fun BatteryScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = if (canonical.isCharging == true) "Raw Incoming Charging Power" else "Active Power Draw",
+                                    text = powerLabel,
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -199,23 +217,44 @@ fun BatteryScreen(
                         ) {
                             ElectricBadge(
                                 label = "VOLTAGE",
-                                value = canonical.voltageMv?.let { "$it mV" } ?: "Unavailable",
+                                value = canonical.voltageMv?.let {
+                                    "${String.format(Locale.US, "%.2f", it / 1000f)} V"
+                                } ?: "Unavailable",
                                 accent = NetraCyan,
                                 modifier = Modifier.weight(1f)
                             )
                             ElectricBadge(
                                 label = "CURRENT",
-                                value = canonical.currentMa?.let { "$it mA" } ?: "Unavailable",
-                                accent = if ((canonical.currentMa ?: 0) >= 0) NetraEmerald else StatusAmber,
+                                value = canonical.currentMa?.let { currentMa ->
+                                    val direction = when {
+                                        canonical.isCharging == true -> "+"
+                                        canonical.isCharging == false && canonical.isChargerConnected == false -> "−"
+                                        else -> ""
+                                    }
+                                    "$direction${String.format(Locale.US, "%.2f", abs(currentMa) / 1000f)} A"
+                                } ?: "Unavailable",
+                                accent = if (canonical.isCharging == true) NetraEmerald else StatusAmber,
                                 modifier = Modifier.weight(1f)
                             )
                             ElectricBadge(
-                                label = "PHONE DRAIN",
-                                value = canonical.consumptionPowerWatts?.let { "${String.format(Locale.US, "%.2f", it)} W" } ?: "Unavailable",
+                                label = "POWER FLOW",
+                                value = when {
+                                    canonical.isCharging == true -> "IN → BATTERY"
+                                    canonical.isCharging == false && canonical.isChargerConnected == false -> "OUT → PHONE"
+                                    canonical.isChargerConnected == true -> "IDLE"
+                                    else -> "UNKNOWN"
+                                },
                                 accent = StatusAmber,
                                 modifier = Modifier.weight(1f)
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Live voltage, current and watts refresh every 1 second while this screen is open. Values are battery-terminal measurements; unsupported hardware readings show Unavailable.",
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
 
