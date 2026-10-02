@@ -26,29 +26,26 @@ class ChargingSpeedEngine {
     fun calculate(
         isCharging: Boolean?,
         voltageMv: Int?,
-        currentMa: Int?
+        currentMa: Int?,
+        isDischarging: Boolean = false
     ): SpeedEngineResult {
         val batteryPowerWatts = if (voltageMv != null && currentMa != null) {
             (voltageMv.toFloat() * currentMa.toFloat()) / 1_000_000f
         } else null
 
-        // Raw incoming charging power: strictly positive power delivered to battery while charging
-        val rawPowerWatts = if (isCharging == true) {
-            // CURRENT_NOW sign conventions vary across device fuel-gauge implementations.
-            // Charging state is authoritative for direction; classify by current magnitude.
-            batteryPowerWatts?.let { abs(it) }
-        } else if (batteryPowerWatts != null && batteryPowerWatts < 0) {
-            0f
-        } else {
-            null
+        // Current sign conventions vary by OEM. The canonical battery status determines
+        // direction; voltage × current magnitude determines the observed battery-side power.
+        // This is battery-terminal power, not a claim about the charger's advertised wattage.
+        val observedPowerWatts = batteryPowerWatts?.let { abs(it) }
+        val rawPowerWatts = when {
+            isCharging == true -> observedPowerWatts
+            isDischarging -> observedPowerWatts
+            else -> null
         }
 
-        // Monitored strictly for independent phone discharge telemetry; never modifies charging speed
-        val consumptionWatts = if (isCharging != true && currentMa != null && currentMa < 0 && voltageMv != null) {
-            abs(voltageMv.toFloat() * currentMa.toFloat()) / 1_000_000f
-        } else {
-            null
-        }
+        // On discharge, expose the same observed battery-side draw as consumption power.
+        // Never derive a discharge value from a stale charging sample.
+        val consumptionWatts = if (isDischarging) observedPowerWatts else null
 
         // Canonical raw-power tiers: <5W Slow, 5W-<10W Normal, 10W-<20W Fast, 20W-<40W Super Fast, >=40W Ultra Fast
         // Rely exclusively on raw battery input power. No 'effective' or 'net' charging power calculations.
