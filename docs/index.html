@@ -50,12 +50,18 @@ details{background:var(--card);border:1px solid var(--line);border-radius:12px;p
 summary{cursor:pointer;font-weight:600}
 ol,ul{padding-left:20px;color:var(--mute)}
 footer{padding:36px 0;border-top:1px solid var(--line);color:var(--mute);font-size:14px}
+.stats{display:flex;gap:28px;flex-wrap:wrap;margin-top:16px;color:var(--mute);font-size:14px}.stats b{color:var(--text);font-size:20px;display:block}
+form.fb{display:grid;gap:10px;max-width:560px}
+input,textarea,select{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit}
+textarea{min-height:110px}button.btn{border:0;cursor:pointer}
+.stars button{background:none;border:0;font-size:32px;cursor:pointer;color:#4a5b7f;padding:0 2px}.stars button.on{color:var(--warn)}
+.msg{font-size:14px;color:var(--accent);min-height:20px}
 </style>
 </head>
 <body>
 <nav><div class="wrap">
 <img src="assets/icon.webp" alt=""><b>Battery Sentinel Pro Netra</b>
-<a class="hide" href="#features">Features</a><a class="hide" href="#benefits">Benefits</a><a class="hide" href="#soon">Coming soon</a><a href="#old">Old versions</a><a href="#download">Download</a>
+<a class="hide" href="#features">Features</a><a class="hide" href="#benefits">Benefits</a><a class="hide" href="#soon">Coming soon</a><a class="hide" href="#feedback">Feedback</a><a href="#old">Old versions</a><a href="#download">Download</a>
 </div></nav>
 
 <header class="hero"><div class="wrap">
@@ -64,6 +70,7 @@ footer{padding:36px 0;border-top:1px solid var(--line);color:var(--mute);font-si
 <p class="lead">Battery Sentinel Pro Netra watches your phone's battery, charging and temperature using only what Android actually reports. If a reading is not available, it says so. No made-up numbers.</p>
 <a class="btn" id="dl-main" href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/releases/latest/download/app-release.apk">Download latest APK</a>
 <a class="btn alt" href="#features">See what it does</a>
+<div class="stats"><div><b id="visits2">...</b>visits</div><div><b id="dls">...</b>downloads (all releases, from GitHub)</div><div><b id="avg">-</b><span id="avgn">no ratings yet</span></div></div>
 <div class="meta" id="latest-meta">Always the newest release. Free. Android only.</div>
 <div class="note"><b>Install tip:</b> sometimes the app will not install over an older build. If the install fails, uninstall the old version first, then install the new one.</div>
 </div>
@@ -143,9 +150,18 @@ footer{padding:36px 0;border-top:1px solid var(--line);color:var(--mute);font-si
 <div class="card"><h3>Charger and cable scoreboard</h3><p>Compare chargers you have used by the power they actually delivered.</p><span class="tag idea">Idea</span></div>
 </div></div></section>
 
+<section id="feedback"><div class="wrap">
+<h2>Rate, comment, suggest, report a problem</h2>
+<p class="sub">Messages go straight to the developer's inbox. Add an email if you want a reply.</p>
+<div class="card" style="margin-bottom:16px"><h3>Rate the app</h3><div class="stars" id="stars"></div><div class="msg" id="ratemsg"></div></div>
+<div class="grid">
+<div class="card"><h3>Comment</h3><form class="fb" data-kind="Comment"><input name="name" placeholder="Your name (optional)"><textarea name="message" required placeholder="Your comment"></textarea><input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send comment</button><div class="msg"></div></form></div>
+<div class="card"><h3>Suggestion box</h3><form class="fb" data-kind="Suggestion"><textarea name="message" required placeholder="What should we add or improve?"></textarea><input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send suggestion</button><div class="msg"></div></form></div>
+<div class="card"><h3>Complaint / problem report</h3><form class="fb" data-kind="Complaint"><input name="device" placeholder="Phone model and Android version (optional)"><textarea name="message" required placeholder="What went wrong?"></textarea><input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send report</button><div class="msg"></div></form></div>
+</div></div></section>
 <footer><div class="wrap">
 <p><b>Honesty note.</b> Charging figures are battery-side readings from Android and may differ from a charger's rating. Phone makers report current differently, so instant numbers can vary. Android offers no way for any app to limit a charger's output.</p>
-<p>Visitors: <b id="visits">...</b> (counted with a free third-party counter; no personal data is stored by this site)</p>
+<p>Visits: <b id="visits">...</b>. Counted with a free third-party counter; this site stores no personal data.</p>
 <p>Battery Sentinel Pro Netra &middot; <a href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra">GitHub</a> &middot; <a href="https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/blob/main/SECURITY.md">Security</a></p>
 </div></footer>
 
@@ -167,8 +183,21 @@ fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(functi
  });
  box.innerHTML=html+"</tbody></table>";
 }).catch(function(){var b=document.getElementById("old-list");if(b)b.innerHTML="<p class='sub'>Could not load the list right now.</p>"});
-var key="visits";if(sessionStorage.getItem("netra_counted")){var path="get"}else{var path="hit"}
-fetch("https://abacus.jasoncameron.dev/"+path+"/netra-pages/"+key).then(function(r){return r.json()}).then(function(d){sessionStorage.setItem("netra_counted","1");var e=document.getElementById("visits");if(e&&d.value!=null)e.textContent=Number(d.value).toLocaleString()}).catch(function(){var e=document.getElementById("visits");if(e)e.textContent="unavailable"});
+
+var AB="https://abacus.jasoncameron.dev/";
+function setv(v){["visits","visits2"].forEach(function(i){var e=document.getElementById(i);if(e)e.textContent=v})}
+fetch(AB+(sessionStorage.getItem("netra_counted")?"get":"hit")+"/netra-pages/visits").then(function(r){return r.json()}).then(function(d){sessionStorage.setItem("netra_counted","1");setv(d.value!=null?Number(d.value).toLocaleString():"unavailable")}).catch(function(){setv("unavailable")});
+fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(function(r){return r.json()}).then(function(rel){var t=0;rel.forEach(function(x){(x.assets||[]).forEach(function(a){t+=a.download_count||0})});document.getElementById("dls").textContent=t.toLocaleString()}).catch(function(){document.getElementById("dls").textContent="unavailable"});
+function loadRating(){Promise.all([1,2,3,4,5].map(function(n){return fetch(AB+"get/netra-pages/rating-"+n).then(function(r){return r.ok?r.json():{value:0}}).catch(function(){return {value:0}})})).then(function(a){var c=0,sum=0;a.forEach(function(d,i){c+=d.value||0;sum+=(d.value||0)*(i+1)});if(c){document.getElementById("avg").textContent=(sum/c).toFixed(1)+" / 5";document.getElementById("avgn").textContent=c+" rating"+(c>1?"s":"")}})}
+loadRating();
+var st=document.getElementById("stars");
+for(var i=1;i<=5;i++){(function(n){var b=document.createElement("button");b.type="button";b.textContent="\u2605";b.title=n+" star"+(n>1?"s":"");b.onclick=function(){
+ if(localStorage.getItem("netra_rated")){document.getElementById("ratemsg").textContent="You already rated from this browser. Thanks!";return}
+ fetch(AB+"hit/netra-pages/rating-"+n).then(function(){localStorage.setItem("netra_rated",n);document.getElementById("ratemsg").textContent="Thanks for rating "+n+" / 5!";Array.prototype.forEach.call(st.children,function(x,k){x.className=k<n?"on":""});loadRating()}).catch(function(){document.getElementById("ratemsg").textContent="Could not save the rating right now."})};st.appendChild(b)})(i)}
+document.querySelectorAll("form.fb").forEach(function(f){f.addEventListener("submit",function(e){e.preventDefault();var m=f.querySelector(".msg"),kind=f.getAttribute("data-kind"),o={};
+ new FormData(f).forEach(function(v,k){o[k]=v});o._subject="[Netra] "+kind;o._template="table";o._captcha="false";
+ m.textContent="Sending...";
+ fetch("https://formsubmit.co/ajax/prayagideepak@gmail.com",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify(o)}).then(function(r){return r.json()}).then(function(d){if(d.success==="true"||d.success===true){m.textContent="Sent. Thank you!";f.reset()}else{m.textContent="Could not send right now. Please try again later."}}).catch(function(){m.textContent="Could not send right now. Please try again later."})})});
 })();
 </script>
 </body>
