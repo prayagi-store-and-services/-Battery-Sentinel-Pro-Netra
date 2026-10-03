@@ -141,6 +141,9 @@ Some features call an AI service (Gemini) over the network. Do not enter secrets
 - Never closed: Netra apps, the default phone, SMS, launcher and keyboard apps, common messaging apps and the clock. System apps are skipped. At most one run per 30 minutes.
 - No network use, no data leaves the device, no new library.
 
+## Installer file cleanup
+- After an in-app update installs, the app restarts and deletes every downloaded installer file from its cache folder (`cache/updates/`) on start. A new download also replaces older files. If the user cancels the install, the file is removed the next time the app starts.
+
 ## Releases and Signing
 - Release APKs are built by the repository's guarded release workflow from a reviewed commit on `main` and published on the GitHub Releases page.
 - The workflow signs the APK with the project release key and checks that the signing certificate matches the earlier one before publishing. The key is stored as a repository secret and is never committed.
