@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Patch: the project moved to the Prayagi Store and Services GitHub organization. Update links, the backup update source and the privacy page link now point to the new address.
+
 ## [1.1.13]
 
 - Patch: crash reports are now sent automatically. If the app crashed, the next time it opens it sends the report by itself (phone model, Android version, app version and code locations only). The "Send last crash report" button is gone.
