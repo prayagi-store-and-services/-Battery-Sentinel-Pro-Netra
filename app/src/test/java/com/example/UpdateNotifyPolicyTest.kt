@@ -20,8 +20,8 @@ class UpdateNotifyPolicyTest {
 
     @Test fun buildsTheReleasePageFromTheApkUrl() {
         assertEquals(
-            "https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/releases/tag/v1.1.3",
-            UpdateNotifyPolicy.releasePageUrl("https://github.com/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/releases/download/v1.1.3/app-release.apk")
+            "https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/tag/v1.1.3",
+            UpdateNotifyPolicy.releasePageUrl("https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/download/v1.1.3/app-release.apk")
         )
         assertNull(UpdateNotifyPolicy.releasePageUrl("https://example.com/x/app-release.apk"))
     }
