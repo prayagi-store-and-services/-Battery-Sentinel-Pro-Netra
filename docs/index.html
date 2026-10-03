@@ -232,12 +232,16 @@ function mb(n){return (n/1048576).toFixed(1)+" MB"}
 fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(rel){
  rel=rel.filter(function(x){return !x.draft});
  var meta=document.getElementById("latest-meta");
+ if(rel.length){var la=(rel[0].assets||[]).filter(function(a){return /\.apk$/i.test(a.name)});var named=la.filter(function(a){return a.name!=="app-release.apk"})[0];
+  if(named){document.querySelectorAll("a[href$='/releases/latest/download/app-release.apk']").forEach(function(a){a.href=named.browser_download_url})}}
  if(rel.length&&meta){meta.textContent="Latest: "+rel[0].tag_name+" - released "+fmt(rel[0].published_at)+". Free. Android only."}
  var box=document.getElementById("old-list");
  if(!rel.length){box.innerHTML="<p class='sub'>No releases yet.</p>";return}
  var html="<table><thead><tr><th>Version</th><th>Released</th><th>Download</th><th>Downloads</th></tr></thead><tbody>";
  rel.forEach(function(x,i){
-  var apk=(x.assets||[]).filter(function(a){return /\.apk$/i.test(a.name)})[0];
+  var apks=(x.assets||[]).filter(function(a){return /\.apk$/i.test(a.name)});
+  var apk=apks.filter(function(a){return a.name!=="app-release.apk"})[0]||apks[0];
+  if(apk){apk=Object.assign({},apk,{download_count:apks.reduce(function(t,a){return t+(a.download_count||0)},0)})}
   html+="<tr><td><a href='"+x.html_url+"'>"+x.tag_name+"</a>"+(i===0?" <span class='tag ok'>latest</span>":"")+"</td><td>"+fmt(x.published_at)+"</td><td>"+(apk?"<a href='"+apk.browser_download_url+"'>APK ("+mb(apk.size)+")</a>":"<span class='sub'>no APK attached</span>")+"</td><td>"+(apk&&typeof apk.download_count==="number"?apk.download_count.toLocaleString():"<span class='sub'>unavailable</span>")+"</td></tr>";
  });
  box.innerHTML=html+"</tbody></table>";
