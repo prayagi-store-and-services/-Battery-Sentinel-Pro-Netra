@@ -160,7 +160,7 @@ Key test coverage:
 - In-app update: GitHubReleaseUpdater checks the repository GitHub Releases API on launch and every 6 hours while the app is active. It compares integer versionCode, displays release notes, caches the last-known release metadata, downloads the APK, verifies the GitHub asset SHA-256 digest when supplied, and stages the APK through Android PackageInstaller.
 - User approval: the app never performs a silent install. Android install-source approval and user confirmation remain authoritative; if approval is missing, the updater opens the system setting for this app install-source permission.
 - Failure handling: network failures, API errors/rate limits, missing assets, download errors, and checksum mismatches return an update error state rather than crashing the app. Cached release metadata remains available for offline comparison.
-- Direct repository: prayagideepak-collab/-Battery-Sentinel-Pro-Netra.
+- Direct repository: prayagi-store-and-services/-Battery-Sentinel-Pro-Netra.
 
 
 ## Crash & Stability Sentinel
