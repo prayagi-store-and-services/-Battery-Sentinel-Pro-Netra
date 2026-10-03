@@ -347,6 +347,10 @@ class BatteryMonitorService : Service() {
             } catch (_: Exception) {}
 
             try {
+                SaverEngine.onReading(applicationContext, batteryPct, tempCelsius, isCharging)
+            } catch (_: Exception) {}
+
+            try {
                 NetraApplication.instance.storageCacheManager.autoCleanIfAppropriate(isCharging)
             } catch (_: Exception) {}
 
