@@ -4,7 +4,12 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Journey mode for long trips: a manual switch in the Saver card that lasts up to 12 hours. While it is on and the phone is not charging, the Saver actions (lower brightness, shortest screen timeout, close background apps, clear notifications, each with its own switch) run right away instead of waiting for the battery level limit, and everything is put back when you plug in or it ends. It never starts by itself and adds no background work or new permission. Honest limit: Android only lets an app end background processes of other apps, so the saving can be small.
+
+## [1.1.17]
+
 - Charging temperature control, early warnings: while charging, the app now watches how fast the battery temperature is rising and speaks BEFORE the 40 and 45 degree warnings, with steps to take (close background apps, take off the case, unplug the charger). If charging is slow for 5 minutes while the phone heats up it also says the charger or cable may be faulty. Honest limit: an Android app cannot cool the phone or fix a charger, it can only warn and suggest. Nothing is said when the phone does not report temperature or power. Uses the existing thermal warning switch. No new permission or library.
+
 
 ## [1.1.16]
 
