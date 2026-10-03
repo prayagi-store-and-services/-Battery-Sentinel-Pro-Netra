@@ -5,12 +5,12 @@ import org.json.JSONObject
 
 /** Fail closed: only stable releases and a digest-bearing APK from this repository. */
 internal object GitHubReleasePolicy {
-    const val OWNER = "prayagideepak-collab"
+    const val OWNER = "prayagi-store-and-services"
     const val REPO = "-Battery-Sentinel-Pro-Netra"
     const val API_URL = "https://api.github.com/repos/$OWNER/$REPO/releases/latest"
     const val RELEASES_URL = "https://github.com/$OWNER/$REPO/releases"
     /** No-API backup source (GitHub API allows only 60 anonymous requests/hour per IP). Published from docs/latest.json. */
-    const val FALLBACK_URL = "https://prayagideepak-collab.github.io/$REPO/latest.json"
+    const val FALLBACK_URL = "https://prayagi-store-and-services.github.io/$REPO/latest.json"
     const val MAX_APK_BYTES = 200L * 1024 * 1024
     private val versionTag = Regex("v[0-9]+\\.[0-9]+\\.[0-9]+")
     private val digestPattern = Regex("sha256:([0-9a-fA-F]{64})")
