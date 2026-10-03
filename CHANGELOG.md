@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Live Power card and Health Insights: values Android does not report (voltage, current, temperature, session estimate, heat time, deep drops, failure risk, capacity health) are now hidden instead of showing "Unavailable". Removed the always-empty "Habit score" badge.
+
 ## [1.1.10]
 
 - App updates: the update dialog now has a "Later" button, and if the download or install check fails you now see the exact reason (for example "Allow installs from this source" or a signature mismatch) instead of the dialog silently disappearing. The update stays offered so you can retry.
