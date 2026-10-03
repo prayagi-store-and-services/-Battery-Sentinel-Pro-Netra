@@ -135,6 +135,12 @@ The app must not invent telemetry. A reading the phone or provider does not give
 ### AI features
 Some features call an AI service (Gemini) over the network. Do not enter secrets in AI prompts. Report any case where private data is sent that you did not expect.
 
+## Saver (new in 1.1.15)
+- Off by default. When on, and the battery temperature or level reaches the limits the user set, it can lower brightness to 10% and the screen timeout, ask Android to close background apps and clear notifications. It puts brightness and timeout back when the battery is normal again.
+- Permissions: `KILL_BACKGROUND_PROCESSES` (normal permission; only ends background processes, it cannot Force stop and cannot touch foreground-service apps), "Modify system settings" (already used by the charging saver), and "Notification access" (granted by the user in Android settings; the listener only calls "clear all" and never reads or stores notification content). A `<queries>` entry for launchable apps lets the app see which apps could be closed; the list stays on the device.
+- Never closed: Netra apps, the default phone, SMS, launcher and keyboard apps, common messaging apps and the clock. System apps are skipped. At most one run per 30 minutes.
+- No network use, no data leaves the device, no new library.
+
 ## Releases and Signing
 - Release APKs are built by the repository's guarded release workflow from a reviewed commit on `main` and published on the GitHub Releases page.
 - The workflow signs the APK with the project release key and checks that the signing certificate matches the earlier one before publishing. The key is stored as a repository secret and is never committed.
