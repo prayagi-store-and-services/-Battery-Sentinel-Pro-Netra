@@ -82,6 +82,7 @@ fun LivePowerCard() {
             } + u.power,
             fontSize = 28.sp, fontWeight = FontWeight.Bold
         )
+        // Fields Android does not report are hidden instead of showing "Unavailable".
         PowerRow("Voltage", u.voltage, "Current", u.current)
         PowerRow("Temperature", u.temperature, "Battery", u.percentage)
         PowerRow("Session Duration", u.sessionDuration, u.estimateLabel ?: "Estimate", u.estimate ?: "Unavailable")
@@ -95,8 +96,11 @@ fun LivePowerCard() {
 
 @Composable
 private fun PowerRow(a: String, av: String, b: String, bv: String) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text("$a: $av", fontSize = 14.sp)
-        Text("$b: $bv", fontSize = 14.sp)
+    val showA = av != "Unavailable"
+    val showB = bv != "Unavailable"
+    if (!showA && !showB) return
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (showA && showB) Arrangement.SpaceBetween else Arrangement.Start) {
+        if (showA) Text("$a: $av", fontSize = 14.sp)
+        if (showB) Text("$b: $bv", fontSize = 14.sp)
     }
 }
