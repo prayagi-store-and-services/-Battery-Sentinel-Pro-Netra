@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+## [1.1.12]
+
 - Settings now really shows the "Check for updates" button (status line plus button). It was described in 1.1.10 but the Settings entry was missing from that build.
 - New Settings switch "Share anonymous usage count" (on by default): once a day the app adds 1 to a public counter so the Netra Eco site can show approximate active users. Nothing else is sent: no ID, no location, no battery data. You can turn it off.
 
