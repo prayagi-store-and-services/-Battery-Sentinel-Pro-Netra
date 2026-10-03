@@ -43,7 +43,7 @@ data class FeedbackPayload(
 object FeedbackBuilder {
     const val MAX_MESSAGE = 1000
     const val MAX_TRACE = 3000
-    const val PRIVACY_URL = "https://prayagideepak-collab.github.io/-Battery-Sentinel-Pro-Netra/privacy.html"
+    const val PRIVACY_URL = "https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/privacy.html"
 
     /** Exception class names and code locations only. Exception messages are dropped on purpose. */
     fun sanitizeStackTrace(t: Throwable): String {
