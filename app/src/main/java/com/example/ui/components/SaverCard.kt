@@ -39,6 +39,7 @@ fun SaverCard() {
     var actDisplay by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_ACT_DISPLAY, true)) }
     var actKill by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_ACT_KILL, true)) }
     var actNotif by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_ACT_NOTIF, true)) }
+    var journey by remember { mutableStateOf(SaverEngine.isJourneyOn(c)) }
     val canWrite = Settings.System.canWrite(c)
     val notifAccess = SaverEngine.hasNotificationAccess(c)
 
@@ -52,6 +53,11 @@ fun SaverCard() {
             })
         }
         Text("Starts when the battery gets hot or low, and puts your settings back when it is normal again. Off by default.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("Journey mode (up to 12 hours)", fontSize = 13.sp)
+            Switch(checked = journey, onCheckedChange = { journey = it; SaverEngine.setJourney(c, it) })
+        }
+        Text("For a long trip. You turn it on yourself; it never starts alone and ends by itself after 12 hours. While it is on and the phone is not charging, the Saver actions below run at the next battery reading without waiting for the level limit, and they are put back when you plug in, turn it off or it ends. It uses only the battery readings the app already takes and adds no background work. It cannot stop other apps from using data or battery; it can only close background processes (see the limits below).", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Battery temperature: ${temp.toInt()} °C or more", fontSize = 13.sp)
             Row {
