@@ -46,7 +46,7 @@ data class GitHubReleaseInfo(
 
 class GitHubReleaseUpdater(context: Context) {
     companion object {
-        const val API_URL = "https://api.github.com/repos/prayagideepak-collab/-Battery-Sentinel-Pro-Netra/releases/latest"
+        const val API_URL = "https://api.github.com/repos/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/latest"
         @Volatile private var instance: GitHubReleaseUpdater? = null
         fun shared(context: Context): GitHubReleaseUpdater =
             instance ?: synchronized(this) { instance ?: GitHubReleaseUpdater(context).also { instance = it } }
