@@ -30,6 +30,20 @@ class SaverPolicyTest {
         assertEquals(5, SaverPolicy.clampLevel(0))
         assertEquals(60, SaverPolicy.clampLevel(90))
     }
+    private fun j(active: Boolean = false, l: Int = 80, ch: Boolean = false, enabled: Boolean = false) =
+        SaverPolicy.decide(enabled, active, 25f, l, ch, 30f, 35, true)
+
+    @Test fun journeyStartsEvenWhenSaverIsOff() = assertEquals(SaverDecision.APPLY, j())
+    @Test fun journeyDoesNotStartWhileCharging() = assertEquals(SaverDecision.NONE, j(ch = true))
+    @Test fun journeyStaysActiveAtHighLevel() = assertEquals(SaverDecision.NONE, j(active = true, l = 90))
+    @Test fun journeyRestoresWhenPluggedIn() = assertEquals(SaverDecision.RESTORE, j(active = true, ch = true))
+    @Test fun endedJourneyRestoresWhenSaverIsOff() =
+        assertEquals(SaverDecision.RESTORE, SaverPolicy.decide(false, true, 25f, 90, false, 30f, 35, false))
+    @Test fun journeyExpires() {
+        assertTrue(SaverPolicy.journeyActive(2000L, 1000L))
+        assertFalse(SaverPolicy.journeyActive(1000L, 1000L))
+        assertFalse(SaverPolicy.journeyActive(0L, 1000L))
+    }
     @Test fun netraAppsAreProtected() {
         assertTrue(SaverPolicy.isNetraPackage("com.aistudio.kbc.x"))
         assertTrue(SaverPolicy.isNetraPackage("com.prayagi.netraeco"))
