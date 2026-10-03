@@ -32,7 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** Optional, consent-based feedback and crash report sender. Nothing is sent without the user pressing Send. */
+/** Optional feedback sender (sent only when the user presses Send). Crash reports are sent automatically by CrashAutoSender. */
 @Composable
 fun FeedbackCard() {
     val context = LocalContext.current
@@ -59,19 +59,16 @@ fun FeedbackCard() {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Feedback and crash reports", style = MaterialTheme.typography.titleMedium)
             Text(
-                "Optional. Nothing is sent unless you press Send. You will see exactly what is sent first: phone model, Android version, app version, and your message or the crash stack trace. Nothing else.",
+                "Feedback is optional: nothing is sent unless you press Send, and you see exactly what is sent first (phone model, Android version, app version and your message).",
                 style = MaterialTheme.typography.bodySmall
             )
             Button(onClick = { status = null; failedPayload = null; dialogKind = "Feedback" }, modifier = Modifier.fillMaxWidth()) {
                 Text("Send feedback")
             }
-            if (hasCrash) {
-                Button(onClick = { status = null; failedPayload = null; dialogKind = "Crash" }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Send last crash report")
-                }
-            } else {
-                Text("No crash recorded since the last report.", style = MaterialTheme.typography.bodySmall)
-            }
+            Text(
+                "Crash reports are sent automatically the next time the app opens after a crash. They contain only the phone model, Android version, app version and the code locations of the crash. Nothing personal.",
+                style = MaterialTheme.typography.bodySmall
+            )
             TextButton(onClick = {
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(FeedbackBuilder.PRIVACY_URL)))
             }) { Text("Privacy policy") }
