@@ -141,6 +141,12 @@ Some features call an AI service (Gemini) over the network. Do not enter secrets
 - Never closed: Netra apps, the default phone, SMS, launcher and keyboard apps, common messaging apps and the clock. System apps are skipped. At most one run per 30 minutes.
 - No network use, no data leaves the device, no new library.
 
+## Charging temperature advice and charger hint (new in 1.1.17)
+
+- While the phone is charging, the app watches the battery temperature trend and speaks early advice before the existing 40 and 45 degree warnings: close background apps and take off the case when the temperature is rising from 35 degrees, and unplug the charger when it is rising toward the danger zone at 38 degrees. If charging stays slow (under 5 W) for 5 minutes while the phone heats up, it says the charger or cable MAY be faulty.
+- Honest limits: an Android app cannot cool the phone or change the charger. This only gives warnings and steps. The charger hint is a hint, not proof. If the temperature or power is not reported by the phone, nothing is said and nothing is guessed.
+- Uses the existing announcement switch "thermal warning" (on by default). Permissions: none added. No new library.
+
 ## Installer file cleanup
 - After an in-app update installs, the app restarts and deletes every downloaded installer file from its cache folder (`cache/updates/`) on start. A new download also replaces older files. If the user cancels the install, the file is removed the next time the app starts.
 
