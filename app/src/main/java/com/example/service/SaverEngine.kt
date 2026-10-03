@@ -32,6 +32,7 @@ object SaverEngine {
     const val KEY_ACT_KILL = "saver_act_kill"
     const val KEY_ACT_NOTIF = "saver_act_notif"
     const val KEY_RESULT = "saver_last_result"
+    const val KEY_JOURNEY_UNTIL = "saver_journey_until_ms"
     private const val KEY_ACTIVE = "saver_active"
     private const val KEY_PREV_BRIGHTNESS = "saver_prev_brightness"
     private const val KEY_PREV_MODE = "saver_prev_mode"
@@ -45,6 +46,16 @@ object SaverEngine {
     private fun prefs(c: Context) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private val scope = CoroutineScope(Dispatchers.Default)
 
+    fun isJourneyOn(c: Context): Boolean =
+        SaverPolicy.journeyActive(prefs(c).getLong(KEY_JOURNEY_UNTIL, 0L), System.currentTimeMillis())
+
+    /** Manual only. Starts or ends Journey mode; it ends by itself after 12 hours. */
+    fun setJourney(c: Context, on: Boolean) {
+        val p = prefs(c)
+        p.edit().putLong(KEY_JOURNEY_UNTIL, if (on) System.currentTimeMillis() + SaverPolicy.JOURNEY_MAX_MS else 0L).apply()
+        if (!on && !p.getBoolean(KEY_ENABLED, false)) restore(c.applicationContext)
+    }
+
     fun isActive(c: Context): Boolean = prefs(c).getBoolean(KEY_ACTIVE, false)
 
     fun hasNotificationAccess(c: Context): Boolean =
@@ -56,11 +67,12 @@ object SaverEngine {
         val p = prefs(app)
         val enabled = p.getBoolean(KEY_ENABLED, false)
         val active = p.getBoolean(KEY_ACTIVE, false)
-        if (!enabled && !active) return
+        val journeyOn = SaverPolicy.journeyActive(p.getLong(KEY_JOURNEY_UNTIL, 0L), System.currentTimeMillis())
+        if (!enabled && !active && !journeyOn) return
         val temp = tempC?.takeIf { it > 0f }
         val decision = SaverPolicy.decide(
             enabled, active, temp, level, charging,
-            p.getFloat(KEY_TEMP, SaverPolicy.DEFAULT_TEMP_C), p.getInt(KEY_LEVEL, SaverPolicy.DEFAULT_LEVEL)
+            p.getFloat(KEY_TEMP, SaverPolicy.DEFAULT_TEMP_C), p.getInt(KEY_LEVEL, SaverPolicy.DEFAULT_LEVEL), journeyOn
         )
         when (decision) {
             SaverDecision.APPLY -> apply(app)
