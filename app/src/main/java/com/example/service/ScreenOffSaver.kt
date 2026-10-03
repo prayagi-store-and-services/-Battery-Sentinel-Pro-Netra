@@ -31,6 +31,8 @@ object ScreenOffSaver {
 
     private fun prefs(c: Context) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
+    fun isApplied(c: Context): Boolean = prefs(c).getBoolean(KEY_APPLIED, false)
+
     fun canWriteSettings(c: Context): Boolean = Settings.System.canWrite(c)
 
     fun isCharging(c: Context): Boolean {
