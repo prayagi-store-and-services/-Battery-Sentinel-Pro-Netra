@@ -21,18 +21,24 @@ object SaverPolicy {
         level: Int,
         charging: Boolean,
         tempLimitC: Float,
-        levelLimit: Int
+        levelLimit: Int,
+        journeyOn: Boolean = false
     ): SaverDecision {
-        if (!enabled) return if (active) SaverDecision.RESTORE else SaverDecision.NONE
+        if (!enabled && !journeyOn) return if (active) SaverDecision.RESTORE else SaverDecision.NONE
         val hot = tempC != null && tempC >= tempLimitC
-        val low = !charging && level <= levelLimit
-        val calm = (tempC == null || tempC <= tempLimitC - TEMP_MARGIN_C) && (charging || level >= levelLimit + LEVEL_MARGIN)
+        val low = !charging && (journeyOn || level <= levelLimit)
+        val calm = (tempC == null || tempC <= tempLimitC - TEMP_MARGIN_C) && (charging || (!journeyOn && level >= levelLimit + LEVEL_MARGIN))
         return when {
             !active && (hot || low) -> SaverDecision.APPLY
             active && calm -> SaverDecision.RESTORE
             else -> SaverDecision.NONE
         }
     }
+
+    /** Journey mode lasts at most this long, then ends by itself. */
+    const val JOURNEY_MAX_MS = 12L * 60 * 60 * 1000
+
+    fun journeyActive(untilMs: Long, nowMs: Long): Boolean = untilMs > nowMs
 
     fun clampTemp(v: Float): Float = v.coerceIn(25f, 45f)
     fun clampLevel(v: Int): Int = v.coerceIn(5, 60)
