@@ -73,6 +73,9 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         announcementEngine = com.example.service.AnnouncementEngine(this)
         telemetrySentinel = com.example.service.TelemetrySentinel(this)
         stabilitySentinel = com.example.service.StabilitySentinel.installCrashHandler(this)
+        // A crash report saved by the last crash is sent now, in the background, with no user action.
+        val crashCtx = applicationContext
+        Thread { com.example.util.CrashAutoSender.sendPending(crashCtx) }.start()
         idealStateEngine = com.example.service.IdealStateEngine(this)
         chargingOptimizationEngine = com.example.service.ChargingOptimizationEngine(this)
         liveChargingSessionEngine = com.example.service.LiveChargingSessionEngine(
