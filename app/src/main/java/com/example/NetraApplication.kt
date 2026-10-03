@@ -63,6 +63,8 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        // Remove any installer file left from an in-app update (background thread).
+        Thread { com.example.update.UpdateFileCleanup.cleanLeftovers(applicationContext) }.start()
         database = NetraDatabase.getDatabase(this)
         settingsRepository = SettingsRepository(this)
         centralDataCenter = NetraCentralDataCenter()
