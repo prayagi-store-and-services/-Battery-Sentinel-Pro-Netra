@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Charging temperature control, early warnings: while charging, the app now watches how fast the battery temperature is rising and speaks BEFORE the 40 and 45 degree warnings, with steps to take (close background apps, take off the case, unplug the charger). If charging is slow for 5 minutes while the phone heats up it also says the charger or cable may be faulty. Honest limit: an Android app cannot cool the phone or fix a charger, it can only warn and suggest. Nothing is said when the phone does not report temperature or power. Uses the existing thermal warning switch. No new permission or library.
+
 ## [1.1.16]
 
 - Patch: after an in-app update installs, the downloaded installer file is now deleted automatically when the app starts, so nothing is left in storage.
