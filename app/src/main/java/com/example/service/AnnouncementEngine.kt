@@ -87,6 +87,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
     private var lastAnnouncementSpeed: CanonicalChargingSpeed? = null
     private var lastThermalWarningState: Boolean = false
     private var lastCriticalOverheatState: Boolean = false
+    private val chargerThermalGuard = ChargerThermalGuard()
 
     // Bluetooth Per-Device State Tracking (Internal for compatibility)
     private val lastBtConnectionMap = mutableMapOf<String, Boolean>()
@@ -217,6 +218,21 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
     private fun checkSpeedAndThermalStateChanges(state: NetraCentralState) {
         val settings = getSettings()
         val now = System.currentTimeMillis()
+
+        // Early temperature advice while charging (trend based) and the "charger or cable may be faulty" hint.
+        val advice = chargerThermalGuard.onSample(now, state.isCharging, state.temperatureCelsius, state.powerWatts)
+        if (advice != null && settings.announceThermalWarning) {
+            val danger = advice == ChargerThermalGuard.Advice.PRE_DANGER
+            enqueue(
+                AnnouncementItem(
+                    id = "charger_thermal_${advice.name}_$now",
+                    text = chargerThermalGuard.text(advice, state.temperatureCelsius ?: 0f),
+                    priority = if (danger) AnnouncementPriority.CRITICAL_THERMAL else AnnouncementPriority.CHARGER_STATE,
+                    category = "CHARGER_THERMAL",
+                    isNightException = danger
+                )
+            )
+        }
 
         if (state.isCharging == true && state.announcementSpeed != CanonicalChargingSpeed.UNAVAILABLE) {
             val currentSpeed = state.announcementSpeed
