@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+## [1.1.15]
+
 - New "Saver" (Settings, off by default). When the battery temperature reaches your limit (default 30 °C) or the level falls to your limit while not charging (default 35%), it sets brightness to 10% and the shortest screen timeout, asks Android to close background apps and clears notifications. When the battery is normal again it puts brightness and timeout back. Both limits and each action have their own switch. Music, navigation, calls, messaging, keyboard, launcher and Netra apps are never closed, and it runs at most once per 30 minutes. It shows the real free RAM before and after. Android only allows ending background processes (not Force stop), so the saving can be small. Needs "Modify system settings" for brightness/timeout and "Notification access" for clearing notifications; no new library.
 
 ## [1.1.14]
