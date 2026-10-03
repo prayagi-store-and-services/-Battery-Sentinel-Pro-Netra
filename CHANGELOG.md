@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Patch: crash reports are now sent automatically. If the app crashed, the next time it opens it sends the report by itself (phone model, Android version, app version and code locations only). The "Send last crash report" button is gone.
+
 ## [1.1.12]
 
 - Settings now really shows the "Check for updates" button (status line plus button). It was described in 1.1.10 but the Settings entry was missing from that build.
