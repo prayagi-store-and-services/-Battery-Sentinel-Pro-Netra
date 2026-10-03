@@ -1,0 +1,28 @@
+name: Add named APK to releases
+'on':
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  add-named-apk:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      APP: BSPN
+    steps:
+    - name: Upload a properly named copy of app-release.apk to every release
+      shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p /tmp/dl
+        for TAG in $(gh release list --limit 100 --json tagName --jq '.[].tagName'); do
+          NAME="$APP-$TAG.apk"
+          ASSETS="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
+          if echo "$ASSETS" | grep -qx "$NAME"; then echo "$TAG: already has $NAME"; continue; fi
+          if ! echo "$ASSETS" | grep -qx "app-release.apk"; then echo "$TAG: no app-release.apk, skipped"; continue; fi
+          gh release download "$TAG" -p app-release.apk -D /tmp/dl --clobber
+          cp /tmp/dl/app-release.apk "/tmp/dl/$NAME"
+          gh release upload "$TAG" "/tmp/dl/$NAME"
+          echo "$TAG: uploaded $NAME"
+        done
