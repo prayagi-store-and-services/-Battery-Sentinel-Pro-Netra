@@ -201,10 +201,9 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 <textarea name="message" maxlength="500" placeholder="Anything to add? (optional, shown publicly)"></textarea>
 <div class="mode"><label>How should your rating be shown?</label>
 <label class="opt"><input type="radio" name="mode" value="anonymous" checked> Anonymous</label>
-<label class="opt"><input type="radio" name="mode" value="google"> Sign in with Google (shows your Google name)</label>
 <label class="opt"><input type="radio" name="mode" value="name"> Type a name</label>
 <input type="text" id="rname" maxlength="40" placeholder="Your name" style="display:none">
-<div id="gline" style="display:none"><button type="button" class="gbtn" id="gbtn">Sign in with Google</button> <span id="gwho" class="dv"></span></div></div>
+</div>
 <div class="fileb"><label>Optional image or video (max 2 MB)</label><input type="file" name="attachment" accept="image/*,video/*"><small>Sent privately to the developer only, never published. Maximum 2 MB.</small></div>
 <input type="email" name="contact_email" placeholder="Email for a reply (optional, private)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send rating</button><div class="msg"></div></form></div>
 <div class="card"><h3>Suggestion box</h3><form class="fb" data-kind="Suggestion"><textarea name="message" required placeholder="What should we add or improve? (shown publicly, do not include personal details)" maxlength="1000"></textarea><input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send suggestion</button><div class="msg"></div></form></div>
@@ -290,22 +289,22 @@ function resetPicks(){picks.forEach(function(p){p._reset()})}
 var dl=document.getElementById("devlist");Object.keys(DEV).forEach(function(b){DEV[b].forEach(function(x){var o=document.createElement("option");o.value=b+" "+x;dl.appendChild(o)})});
 document.querySelectorAll("[data-pick]").forEach(initPick);
 var rf=document.getElementById("rateform");
-function syncMode(){var v=rf.querySelector("input[name=mode]:checked").value;document.getElementById("rname").style.display=(v==="name")?"":"none";document.getElementById("gline").style.display=(v==="google")?"":"none"}
+function syncMode(){var v=rf.querySelector("input[name=mode]:checked").value;document.getElementById("rname").style.display=(v==="name")?"":"none"}
 rf.querySelectorAll("input[name=mode]").forEach(function(r){r.addEventListener("change",syncMode)});
-window.netraUser=null;var fb=null;
-var FBC={apiKey:"AIzaSyDNL57VMweccQ03REldP4TGr2R6l_U_vf4",authDomain:"netra-ai-jan.firebaseapp.com",projectId:"netra-ai-jan",storageBucket:"netra-ai-jan.firebasestorage.app",messagingSenderId:"101636656822",appId:"1:101636656822:web:01ce80ead0469509d86017"};
-function loadFb(){if(fb)return fb;var V="https://www.gstatic.com/firebasejs/10.14.1/";fb=Promise.all([import(V+"firebase-app.js"),import(V+"firebase-auth.js"),import(V+"firebase-firestore.js")]).then(function(a){var app=a[0].initializeApp(FBC);return{app:app,auth:a[1],fs:a[2],a:a[1].getAuth(app),db:a[2].getFirestore(app)}});return fb}
-document.getElementById("gbtn").addEventListener("click",function(){var w=document.getElementById("gwho");w.textContent="Opening Google sign-in...";loadFb().then(function(F){return F.auth.signInWithPopup(F.a,new F.auth.GoogleAuthProvider())}).then(function(r){window.netraUser=r.user;w.textContent="Signed in as "+(r.user.displayName||"Google user")}).catch(function(){w.textContent="Sign-in did not complete."})});
+var FS="https://firestore.googleapis.com/v1/projects/netra-ai-jan/databases/(default)/documents";
+function fval(x){return typeof x==="number"?{integerValue:String(x)}:typeof x==="boolean"?{booleanValue:x}:{stringValue:String(x)}}
+function put(col,d){var id=(self.crypto&&crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now()).replace(/[^a-z0-9]/gi,"").slice(0,20),fields={};Object.keys(d).forEach(function(k){fields[k]=fval(d[k])});
+ return fetch(FS+":commit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({writes:[{update:{name:"projects/netra-ai-jan/databases/(default)/documents/"+col+"/"+id,fields:fields},updateTransforms:[{fieldPath:"createdAt",setToServerValue:"REQUEST_TIME"}]}]})}).then(function(r){if(!r.ok)throw 0;return "ok"})}
 function cid(){var c=localStorage.getItem("netra_cid");if(!c){c=(self.crypto&&crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now()).replace(/[^a-z0-9-]/gi,"").slice(0,40);localStorage.setItem("netra_cid",c)}return c}
 function publishRating(f,dev){var mode=f.querySelector("input[name=mode]:checked").value,stars=parseInt(f.querySelector("[name=rating]").value,10),msg=f.querySelector("[name=message]").value.trim();
- return loadFb().then(function(F){var d={stars:stars,device:dev.slice(0,80),mode:mode,clientId:cid(),createdAt:F.fs.serverTimestamp(),reported:false};
-  if(msg)d.comment=msg.slice(0,500);
-  if(mode==="name")d.name=f.querySelector("#rname").value.trim().slice(0,60);
-  if(mode==="google"){d.name=(window.netraUser.displayName||"Google user").slice(0,60);d.uid=window.netraUser.uid}
-  return F.fs.addDoc(F.fs.collection(F.db,"netra_site_ratings"),d)}).then(function(){loadRatings()})}
+ var d={stars:stars,device:dev.slice(0,80),mode:mode,clientId:cid(),reported:false};
+ if(msg)d.comment=msg.slice(0,500);
+ if(mode==="name")d.name=f.querySelector("#rname").value.trim().slice(0,60);
+ return put("netra_site_ratings",d).then(function(){loadRatings()})}
 function publishFeedback(f,kind,dev){var msg=f.querySelector("[name=message]").value.trim(),av=(f.querySelector("[name=android_version]")||{value:""}).value.trim();
- return loadFb().then(function(F){var d={kind:kind,message:msg.slice(0,1000),clientId:cid(),createdAt:F.fs.serverTimestamp()};if(dev)d.device=dev.slice(0,80);if(av)d.androidVersion=av.slice(0,30);return F.fs.addDoc(F.fs.collection(F.db,"netra_site_feedback"),d)}).then(function(){loadFeedback()})}
-function loadRatings(){var base="https://firestore.googleapis.com/v1/projects/netra-ai-jan/databases/(default)/documents:runQuery?key="+FBC.apiKey;
+ var d={kind:kind,message:msg.slice(0,1000),clientId:cid()};if(dev)d.device=dev.slice(0,80);if(av)d.androidVersion=av.slice(0,30);
+ return put("netra_site_feedback",d).then(function(){loadFeedback()})}
+function loadRatings(){var base="https://firestore.googleapis.com/v1/projects/netra-ai-jan/databases/(default)/documents:runQuery";
  fetch(base,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({structuredQuery:{from:[{collectionId:"netra_site_ratings"}],orderBy:[{field:{fieldPath:"createdAt"},direction:"DESCENDING"}],limit:100}})}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(rows){
   var items=rows.filter(function(x){return x.document}).map(function(x){var f=x.document.fields||{};function g(k){var v=f[k];return v?(v.stringValue!==undefined?v.stringValue:v.integerValue!==undefined?Number(v.integerValue):v.timestampValue):""}return{id:x.document.name.split("/").pop(),stars:g("stars"),device:g("device"),comment:g("comment"),name:g("name"),mode:g("mode"),at:g("createdAt")}});
   var sum=document.getElementById("rsum"),box=document.getElementById("rlist");
@@ -314,7 +313,7 @@ function loadRatings(){var base="https://firestore.googleapis.com/v1/projects/ne
   loadReplies().then(function(reps){box.innerHTML=items.map(function(i){var who=i.name||"Anonymous";return "<div class='rv'><div class='top'><span class='st'>"+"\u2605".repeat(i.stars)+"\u2606".repeat(5-i.stars)+"</span><b>"+esc(who)+"</b><span class='dv'>"+esc(i.device)+" &middot; "+fmt(i.at)+"</span><button class='rp' data-id='"+esc(i.id)+"'>Report</button></div>"+(i.comment?"<p>"+esc(i.comment)+"</p>":"")+"</div>"+replyHtml(reps.filter(function(p){return p.itemId===i.id}))}).join("");
   box.querySelectorAll(".rp").forEach(function(b){b.addEventListener("click",function(){b.disabled=true;b.textContent="Reported";fetch("https://formsubmit.co/ajax/prayagideepak@gmail.com",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({_subject:"[Netra] Report a rating",_captcha:"false",rating_id:b.getAttribute("data-id")})}).catch(function(){})})})})
  }).catch(function(){document.getElementById("rsum").textContent="Ratings are unavailable right now."})}
-function fsq(col,limit,order){var q={from:[{collectionId:col}],limit:limit};if(order)q.orderBy=[{field:{fieldPath:"createdAt"},direction:"DESCENDING"}];return fetch("https://firestore.googleapis.com/v1/projects/netra-ai-jan/databases/(default)/documents:runQuery?key="+FBC.apiKey,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({structuredQuery:q})}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(rows){return rows.filter(function(x){return x.document}).map(function(x){var f=x.document.fields||{},o={id:x.document.name.split("/").pop()};Object.keys(f).forEach(function(k){var v=f[k];o[k]=v.stringValue!==undefined?v.stringValue:v.integerValue!==undefined?Number(v.integerValue):v.timestampValue});return o})})}
+function fsq(col,limit,order){var q={from:[{collectionId:col}],limit:limit};if(order)q.orderBy=[{field:{fieldPath:"createdAt"},direction:"DESCENDING"}];return fetch("https://firestore.googleapis.com/v1/projects/netra-ai-jan/databases/(default)/documents:runQuery",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({structuredQuery:q})}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(rows){return rows.filter(function(x){return x.document}).map(function(x){var f=x.document.fields||{},o={id:x.document.name.split("/").pop()};Object.keys(f).forEach(function(k){var v=f[k];o[k]=v.stringValue!==undefined?v.stringValue:v.integerValue!==undefined?Number(v.integerValue):v.timestampValue});return o})})}
 function replyHtml(rs){return rs.map(function(p){var link=(p.releaseUrl&&/^https:\/\/github\.com\/(prayagi-store-and-services|prayagideepak-collab)\//.test(p.releaseUrl))?" <a href='"+esc(p.releaseUrl)+"'>"+esc(p.fixedInVersion||"release")+"</a>":(p.fixedInVersion?" "+esc(p.fixedInVersion):"");return "<div class='rv' style='margin:6px 0 0 18px;border-left:3px solid #3ddc84'><div class='top'><b>Netra by Prayagi Team</b><span class='dv'>"+(p.createdAt?"replied "+fmt(p.createdAt):"")+"</span></div><p>"+esc(p.text||"")+(link?" Fixed in:"+link:"")+"</p></div>"}).join("")}
 function loadReplies(){return fsq("netra_site_replies",200,false).catch(function(){return []})}
 function loadFeedback(){var box=document.getElementById("flist");Promise.all([fsq("netra_site_feedback",100,true),loadReplies()]).then(function(a){var items=a[0],reps=a[1];
@@ -326,7 +325,7 @@ document.querySelectorAll("form.fb").forEach(function(f){f.addEventListener("sub
  var pick=f.querySelector("[data-pick]"),dev=pick?readPick(pick):"";
  if(pick&&pick.getAttribute("data-required")&&!dev){m.textContent="Please choose your phone first.";return}
  var fi=f.querySelector("input[type=file]");if(fi&&fi.files[0]&&fi.files[0].size>2*1048576){m.textContent="That file is over 2 MB. Please pick a smaller one.";return}
- if(kind==="Rating"){var md=f.querySelector("input[name=mode]:checked").value;if(md==="name"&&!f.querySelector("#rname").value.trim()){m.textContent="Please type a name, or choose Anonymous.";return}if(md==="google"&&!window.netraUser){m.textContent="Please sign in with Google first, or choose Anonymous.";return}if(localStorage.getItem("netra_rated")){m.textContent="This browser has already sent a rating. Thank you!";return}}
+ if(kind==="Rating"){var md=f.querySelector("input[name=mode]:checked").value;if(md==="name"&&!f.querySelector("#rname").value.trim()){m.textContent="Please type a name, or choose Anonymous.";return}if(localStorage.getItem("netra_rated")){m.textContent="This browser has already sent a rating. Thank you!";return}}
  var fd=new FormData(f);fd.delete("mode");fd.set("_subject","[Netra] "+kind);fd.set("_template","table");fd.set("_captcha","false");if(dev)fd.set("device",dev);
  m.textContent="Sending...";
  var pub=Promise.resolve();
