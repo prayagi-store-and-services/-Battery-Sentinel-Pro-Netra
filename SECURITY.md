@@ -124,6 +124,11 @@ No solar provider is enabled in the app today. Before any provider ships, these 
 ### Update check
 - The app checks GitHub (the public release API, with a backup file on the project website) for a newer version. It sends no user data. Settings has a "Check for updates" button that shows the real status or error.
 
+### Automatic crash reports
+- When the app crashes, it saves a short report on the device. The next time the app opens, it sends that report by itself, with no button and no question. After a successful send the file is deleted; after a failed send it is kept and retried at the next start.
+- The report contains only: phone model, Android version, app version, and the crash stack trace (exception class names and code locations; exception messages are dropped on purpose). It contains no name, email, location, files, device IDs or battery history.
+- It goes through the same form pipeline as the website forms (FormSubmit) to the developer's email. The optional "Send feedback" form still sends only when the user presses Send.
+
 ### Honest data: no fake values
 The app must not invent telemetry. A reading the phone or provider does not give is shown as `Unavailable`, never as a fake zero, a sample value or a guess. Readings differ between phones, and the app does not claim every reading works on every device.
 
