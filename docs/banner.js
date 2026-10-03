@@ -75,7 +75,7 @@ function clock(){
 }
 function whatsNew(){
  var box=document.getElementById("whatsnew-list");if(!box)return;
- var repo="prayagideepak-collab/-Battery-Sentinel-Pro-Netra";
+ var repo="prayagi-store-and-services/-Battery-Sentinel-Pro-Netra";
  fetch("https://api.github.com/repos/"+repo+"/releases?per_page=5").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(rel){
   rel=rel.filter(function(x){return !x.draft&&!x.prerelease});box.innerHTML="";
   if(!rel.length){box.textContent="No releases yet.";return}
