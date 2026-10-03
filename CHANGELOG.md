@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+## [1.1.14]
+
 - Patch: the project moved to the Prayagi Store and Services GitHub organization. Update links, the backup update source and the privacy page link now point to the new address.
 
 ## [1.1.13]
