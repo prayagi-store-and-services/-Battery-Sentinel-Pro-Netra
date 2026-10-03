@@ -81,6 +81,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Anonymous daily usage count (+1 on a public counter, nothing else). The user can turn it off in Settings.
+        val appCtx = applicationContext
+        Thread { com.example.stats.UsagePing.pingIfDue(appCtx) }.start()
+
         try {
             com.example.service.BatteryMonitorService.startService(this)
             com.example.service.BatteryForegroundService.startService(this)
