@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+## [1.1.16]
+
 - Patch: after an in-app update installs, the downloaded installer file is now deleted automatically when the app starts, so nothing is left in storage.
 
 ## [1.1.15]
