@@ -115,6 +115,15 @@ No solar provider is enabled in the app today. Before any provider ships, these 
 - Official OAuth or token flows are preferred over collecting passwords. No scraping of private dashboards. Read-only in the first release.
 - A provider is listed as supported only after a real, authorized account test returns real data.
 
+### Anonymous usage count (active users)
+- Once per UTC day (and once per month) the app adds 1 to a public counter in Firestore (`netra_active/battery-sentinel_<yyyyMMdd>` and `_<yyyyMM>`), so the Netra Eco website can show approximate active users.
+- The request contains only the counter document name and "increment by 1". No device ID, install ID, account, location, battery data or app data is sent, and the app keeps no ID for this.
+- A local flag stops repeats on the same day. A failed send is retried at the next open. It is on by default and can be turned off in Settings ("Share anonymous usage count").
+- Firestore rules allow only creating a counter with value 1 or raising it by exactly 1; the counters are public to read. Anyone could in theory add extra +1s, so the figure is approximate, not exact people. Reinstalling or clearing data can count one person twice.
+
+### Update check
+- The app checks GitHub (the public release API, with a backup file on the project website) for a newer version. It sends no user data. Settings has a "Check for updates" button that shows the real status or error.
+
 ### Honest data: no fake values
 The app must not invent telemetry. A reading the phone or provider does not give is shown as `Unavailable`, never as a fake zero, a sample value or a guess. Readings differ between phones, and the app does not claim every reading works on every device.
 
