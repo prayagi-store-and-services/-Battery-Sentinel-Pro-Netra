@@ -137,7 +137,7 @@ fun GeminiHealthInsightsContent(
         ) {
             Column {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (report.riskPercent != null) Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = if (report.riskLevel == FailureRiskLevel.CRITICAL || report.riskLevel == FailureRiskLevel.ELEVATED) Icons.Default.Warning else Icons.Default.HealthAndSafety,
                             contentDescription = null,
@@ -153,12 +153,14 @@ fun GeminiHealthInsightsContent(
                         )
                     }
 
-                    Text(
-                        text = report.estimatedCapacityHealthPercent?.let { "Capacity health: $it%" } ?: "Capacity health: Unavailable",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    report.estimatedCapacityHealthPercent?.let {
+                        Text(
+                            text = "Capacity health: $it%",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -182,9 +184,9 @@ fun GeminiHealthInsightsContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    MiniFactorBox("HV DWELL", report.highVoltageDwellMinutes?.let { "${it}m" } ?: "Unavailable", NetraCyan, Modifier.weight(1f))
-                    MiniFactorBox("HEAT TIME", report.thermalStressHours?.let { "${String.format("%.1f", it)}h" } ?: "Unavailable", StatusAmber, Modifier.weight(1f))
-                    MiniFactorBox("DEEP DROPS", report.deepDischargeCount?.let { "${it}x" } ?: "Unavailable", StatusRed, Modifier.weight(1f))
+                    report.highVoltageDwellMinutes?.let { MiniFactorBox("HV DWELL", "${it}m", NetraCyan, Modifier.weight(1f)) }
+                    report.thermalStressHours?.let { MiniFactorBox("HEAT TIME", "${String.format("%.1f", it)}h", StatusAmber, Modifier.weight(1f)) }
+                    report.deepDischargeCount?.let { MiniFactorBox("DEEP DROPS", "${it}x", StatusRed, Modifier.weight(1f)) }
                 }
             }
         }
@@ -229,19 +231,6 @@ fun GeminiHealthInsightsContent(
                             fontWeight = FontWeight.Bold,
                             color = NetraCyan
                         )
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(NetraEmerald.copy(alpha = 0.2f))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "Habit score: Unavailable",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = NetraEmerald
-                            )
-                        }
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
