@@ -147,6 +147,12 @@ Some features call an AI service (Gemini) over the network. Do not enter secrets
 - Honest limits: an Android app cannot cool the phone or change the charger. This only gives warnings and steps. The charger hint is a hint, not proof. If the temperature or power is not reported by the phone, nothing is said and nothing is guessed.
 - Uses the existing announcement switch "thermal warning" (on by default). Permissions: none added. No new library.
 
+## Journey mode (new in 1.1.18)
+
+- A manual switch in the Saver card for long trips. It never starts by itself and ends by itself after 12 hours.
+- While it is on and the phone is not charging, the existing Saver actions (brightness and screen timeout, closing background processes, clearing notifications; each still has its own switch) run at the next battery reading instead of waiting for the level limit. They are put back when you plug in, turn Journey mode off or it ends.
+- Honest limits: it adds no background service, no new permission and no new library; it uses only the battery readings the app already takes. Android does not let an app restrict other apps' data or battery. The only thing possible is to end background processes, and apps may restart, so the saving can be small. Closed apps and cleared notifications cannot be brought back.
+
 ## Installer file cleanup
 - After an in-app update installs, the app restarts and deletes every downloaded installer file from its cache folder (`cache/updates/`) on start. A new download also replaces older files. If the user cancels the install, the file is removed the next time the app starts.
 
