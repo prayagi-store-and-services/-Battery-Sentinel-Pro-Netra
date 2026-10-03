@@ -1,7 +1,7 @@
 {
-  "tag": "v1.1.12",
-  "versionCode": 14,
-  "sha256": "ef2673bd697554392f9f7a60c76c4a3c7ecf9589a7db907441461bda4bffad56",
+  "tag": "v1.1.13",
+  "versionCode": 15,
+  "sha256": "280bf78a3d77c2313e159f39a5af6603f7f50f44906f3936957f78a0e2ee1380",
   "size": 17543122,
   "notes": "Backup update source. The app prefers the GitHub API and uses this file only when the API fails."
 }
