@@ -208,7 +208,10 @@ jobs:
         fi
         LATEST_CODE="$(gh release view --json body --jq '.body' 2>/dev/null | sed -n 's/^versionCode:[[:space:]]*//p' | head -1 || true)"
         if [ -n "$LATEST_CODE" ]; then [[ "$LATEST_CODE" =~ ^[0-9]+$ ]]; test "$VERSION_CODE" -gt "$LATEST_CODE"; fi
-        gh release create "v$VERSION_NAME" app/build/outputs/apk/release/app-release.apk --target "$RELEASE_SHA" --title "Battery Sentinel Pro Netra v$VERSION_NAME" --notes-file /tmp/body.md
+        # Named copy for people (BSPN-vX.Y.Z.apk). app-release.apk stays because installed apps look for that exact name.
+        NAMED="app/build/outputs/apk/release/BSPN-v$VERSION_NAME.apk"
+        cp app/build/outputs/apk/release/app-release.apk "$NAMED"
+        gh release create "v$VERSION_NAME" app/build/outputs/apk/release/app-release.apk "$NAMED" --target "$RELEASE_SHA" --title "Battery Sentinel Pro Netra v$VERSION_NAME" --notes-file /tmp/body.md
 'on':
   workflow_dispatch: {}
 concurrency:
