@@ -13,6 +13,7 @@ import java.io.File
  */
 object CrashAutoSender {
     const val PENDING_FILE = "pending_crash_report.txt"
+    const val LAST_FILE = "last_crash_report.txt"
 
     fun sendPending(context: Context): Boolean {
         val file = File(context.filesDir, PENDING_FILE)
@@ -21,7 +22,7 @@ object CrashAutoSender {
         if (trace.isBlank()) { runCatching { file.delete() }; return false }
         val payload = FeedbackBuilder.crash(Build.MODEL ?: "Unknown", Build.VERSION.RELEASE ?: "Unknown", BuildConfig.VERSION_NAME, trace)
         val ok = FeedbackSender.send(payload)
-        if (ok) runCatching { file.delete() }
+        if (ok) runCatching { File(context.filesDir, LAST_FILE).writeText(trace); file.delete() }
         return ok
     }
 }
