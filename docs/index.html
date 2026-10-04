@@ -145,7 +145,6 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 <li>Open it and allow installing from this source when Android asks.</li>
 <li>If it will not install, download the APK again and check the download completed. Android blocks an update only when the signing key differs from the installed copy. Only then, as a last resort, uninstall the old version. Warning (Hinglish): uninstall karne se app ka local data (history, settings) delete ho jata hai - pehle soch lein.</li>
 </ol>
-<p class="sub">Source and release notes: <a href="https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra">GitHub repository</a>.</p>
 </div></section>
 
 <section id="whatsnew"><div class="wrap">
@@ -158,7 +157,7 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 <h2>Old versions</h2>
 <p class="sub">Every release ever published. New releases appear here on their own.</p>
 <div id="old-list"><p class="sub">Loading releases...</p></div>
-<p class="sub">If the list does not load, open <a href="https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases">all releases on GitHub</a>.</p>
+<p class="sub">Shows the latest release and the 4 before it.</p>
 </div></section>
 
 <section id="soon"><div class="wrap">
@@ -229,7 +228,7 @@ var repo="prayagi-store-and-services/-Battery-Sentinel-Pro-Netra";
 function fmt(d){try{return new Date(d).toLocaleString(undefined,{year:"numeric",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"})}catch(e){return ""}}
 function mb(n){return (n/1048576).toFixed(1)+" MB"}
 fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(rel){
- rel=rel.filter(function(x){return !x.draft});
+ rel=rel.filter(function(x){return !x.draft}).slice(0,5);
  var meta=document.getElementById("latest-meta");
  if(rel.length){var la=(rel[0].assets||[]).filter(function(a){return /\.apk$/i.test(a.name)});var named=la.filter(function(a){return a.name!=="app-release.apk"})[0];
   if(named){document.querySelectorAll("a[href$='/releases/latest/download/app-release.apk']").forEach(function(a){a.href=named.browser_download_url})}}
@@ -241,7 +240,7 @@ fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(functi
   var apks=(x.assets||[]).filter(function(a){return /\.apk$/i.test(a.name)});
   var apk=apks.filter(function(a){return a.name!=="app-release.apk"})[0]||apks[0];
   if(apk){apk=Object.assign({},apk,{download_count:apks.reduce(function(t,a){return t+(a.download_count||0)},0)})}
-  html+="<tr><td><a href='"+x.html_url+"'>"+x.tag_name+"</a>"+(i===0?" <span class='tag ok'>latest</span>":"")+"</td><td>"+fmt(x.published_at)+"</td><td>"+(apk?"<a href='"+apk.browser_download_url+"'>APK ("+mb(apk.size)+")</a>":"<span class='sub'>no APK attached</span>")+"</td><td>"+(apk&&typeof apk.download_count==="number"?apk.download_count.toLocaleString():"<span class='sub'>unavailable</span>")+"</td></tr>";
+  html+="<tr><td><b>"+x.tag_name+"</b>"+(i===0?" <span class='tag ok'>latest</span>":"")+"</td><td>"+fmt(x.published_at)+"</td><td>"+(apk?"<a href='"+apk.browser_download_url+"'>APK ("+mb(apk.size)+")</a>":"<span class='sub'>no APK attached</span>")+"</td><td>"+(apk&&typeof apk.download_count==="number"?apk.download_count.toLocaleString():"<span class='sub'>unavailable</span>")+"</td></tr>";
  });
  box.innerHTML=html+"</tbody></table>";
 }).catch(function(){var b=document.getElementById("old-list");if(b)b.innerHTML="<p class='sub'>Could not load the list right now.</p>"});
