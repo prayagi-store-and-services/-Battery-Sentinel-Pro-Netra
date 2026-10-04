@@ -34,6 +34,8 @@ object SaverEngine {
     const val KEY_RESULT = "saver_last_result"
     const val KEY_JOURNEY_UNTIL = "saver_journey_until_ms"
     private const val KEY_ACTIVE = "saver_active"
+    private const val KEY_REASON_HEAT = "saver_reason_heat"
+    private const val KEY_REASON_LOW = "saver_reason_low"
     private const val KEY_PREV_BRIGHTNESS = "saver_prev_brightness"
     private const val KEY_PREV_MODE = "saver_prev_mode"
     private const val KEY_PREV_TIMEOUT = "saver_prev_timeout"
@@ -72,10 +74,18 @@ object SaverEngine {
         val temp = tempC?.takeIf { it > 0f }
         val decision = SaverPolicy.decide(
             enabled, active, temp, level, charging,
-            p.getFloat(KEY_TEMP, SaverPolicy.DEFAULT_TEMP_C), p.getInt(KEY_LEVEL, SaverPolicy.DEFAULT_LEVEL), journeyOn
+            p.getFloat(KEY_TEMP, SaverPolicy.DEFAULT_TEMP_C), p.getInt(KEY_LEVEL, SaverPolicy.DEFAULT_LEVEL), journeyOn,
+            p.getBoolean(KEY_REASON_HEAT, true), p.getBoolean(KEY_REASON_LOW, true)
         )
         when (decision) {
-            SaverDecision.APPLY -> apply(app)
+            SaverDecision.APPLY -> {
+                val tl = p.getFloat(KEY_TEMP, SaverPolicy.DEFAULT_TEMP_C)
+                val ll = p.getInt(KEY_LEVEL, SaverPolicy.DEFAULT_LEVEL)
+                val hot = temp != null && temp >= tl
+                val low = !charging && (journeyOn || level <= ll)
+                p.edit().putBoolean(KEY_REASON_HEAT, hot).putBoolean(KEY_REASON_LOW, low).apply()
+                apply(app)
+            }
             SaverDecision.RESTORE -> restore(app)
             SaverDecision.NONE -> {}
         }
