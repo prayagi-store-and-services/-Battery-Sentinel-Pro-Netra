@@ -37,7 +37,11 @@ import kotlinx.coroutines.withContext
 fun FeedbackCard() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val crashFile = remember { File(context.filesDir, "pending_crash_report.txt") }
+    fun crashSource(): File {
+        val pending = File(context.filesDir, com.example.util.CrashAutoSender.PENDING_FILE)
+        return if (pending.exists()) pending else File(context.filesDir, com.example.util.CrashAutoSender.LAST_FILE)
+    }
+    val crashFile = remember { crashSource() }
     var hasCrash by remember { mutableStateOf(crashFile.exists()) }
     var dialogKind by remember { mutableStateOf<String?>(null) }
     var message by remember { mutableStateOf("") }
@@ -49,7 +53,7 @@ fun FeedbackCard() {
         val model = Build.MODEL ?: "Unknown"
         val android = Build.VERSION.RELEASE ?: "Unknown"
         return if (kind == "Crash") {
-            FeedbackBuilder.crash(model, android, BuildConfig.VERSION_NAME, runCatching { crashFile.readText() }.getOrDefault(""))
+            FeedbackBuilder.crash(model, android, BuildConfig.VERSION_NAME, runCatching { crashSource().readText() }.getOrDefault(""))
         } else {
             FeedbackBuilder.feedback(model, android, BuildConfig.VERSION_NAME, message)
         }
@@ -65,6 +69,10 @@ fun FeedbackCard() {
             Button(onClick = { status = null; failedPayload = null; dialogKind = "Feedback" }, modifier = Modifier.fillMaxWidth()) {
                 Text("Send feedback")
             }
+            Button(onClick = {
+                if (crashSource().exists()) { status = null; failedPayload = null; dialogKind = "Crash" }
+                else status = "Unavailable: no crash is saved on this device, so there is nothing to send."
+            }, modifier = Modifier.fillMaxWidth()) { Text("Send crash report") }
             Text(
                 "Crash reports are sent automatically the next time the app opens after a crash. They contain only the phone model, Android version, app version and the code locations of the crash. Nothing personal.",
                 style = MaterialTheme.typography.bodySmall
@@ -116,7 +124,7 @@ fun FeedbackCard() {
                             dialogKind = null
                             if (ok) {
                                 status = "Sent. Thank you!"
-                                if (kind == "Crash") { runCatching { crashFile.delete() }; hasCrash = false } else message = ""
+                                if (kind == "Crash") { runCatching { crashSource().delete() }; hasCrash = false } else message = ""
                             } else {
                                 status = "Could not send right now (check your internet)."
                                 failedPayload = payload
