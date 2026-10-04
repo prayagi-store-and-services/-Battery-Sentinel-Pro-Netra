@@ -212,11 +212,12 @@ internal fun QuickPowerSettingsBody(
                 icon = Icons.Default.BatterySaver,
                 iconTint = DangerRed,
                 title = "Ultra Battery Saver",
-                subtitle = "Preference only; no device-wide controls applied",
+                subtitle = "Unavailable: Android gives apps no control over this",
                 trailing = {
                     Switch(
-                        checked = settings.ultraBatterySaverActive,
-                        onCheckedChange = { onToggleSaver() },
+                        checked = false,
+                        enabled = false,
+                        onCheckedChange = null,
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = DangerRed,
                             checkedTrackColor = DangerRed.copy(alpha = 0.3f)
