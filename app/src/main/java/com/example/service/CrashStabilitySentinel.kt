@@ -52,7 +52,7 @@ class CrashStabilitySentinel(private val context: Context) : Thread.UncaughtExce
         // Stack trace only (class names and code locations, no exception messages), kept so the user can
         // choose to send it from Settings. Nothing is sent automatically.
         runCatching {
-            File(context.filesDir, "pending_crash_report.txt").writeText(com.example.util.FeedbackBuilder.sanitizeStackTrace(e))
+            com.example.util.FeedbackBuilder.sanitizeStackTrace(e).let { t -> File(context.filesDir, "pending_crash_report.txt").writeText(t); File(context.filesDir, "last_crash_report.txt").writeText(t) }
         }
 
         val file = File(context.filesDir, "crash_${report.reportId}.json")
