@@ -190,3 +190,6 @@ Battery Sentinel Pro Nethra follows these principles:
 ## Development Status
 
 Battery Sentinel Pro Nethra is in active development. v1.0.0 is the first published release. Features marked experimental or planned above have not been verified on real devices or are not implemented yet, and should not be assumed to provide production-level guarantees.
+
+## Truth rule for controls (v1.2.2)
+A switch or button must change something real on the phone. Three Settings switches (Ultra Battery Saver, Power-saving, Brightness) only stored a flag; they are now locked off and show "Unavailable" with the reason. The Export Summary button that exported nothing is removed. The Saver remembers whether it started because of heat or low battery and restores brightness and screen timeout when that reason is gone. Every shown value needs a real evidence source or shows "Unavailable".
