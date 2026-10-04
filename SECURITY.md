@@ -1,5 +1,8 @@
 # Security Policy
 
+## Restricted-settings help (1.2.4)
+The Saver card shows a drawn step guide only when Android may block Notification access (app not installed from a store or by this app's updater). It is an illustration, labelled as such. It changes no setting, requests no permission, makes no network call and runs no background work; the "Open app info" button only opens Android's own App info screen.
+
 ## Supported Versions
 
 Battery Sentinel Pro Nethra is under active development. The first public release is v1.0.0. Only the latest published release receives security fixes.
