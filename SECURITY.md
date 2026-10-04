@@ -148,7 +148,7 @@ Some features call an AI service (Gemini) over the network. Do not enter secrets
 - Uses the existing announcement switch "thermal warning" (on by default). Permissions: none added. No new library.
 
 ## Saver notification access help (changed in 1.2.1)
-- On Android 13 and newer a phone can block "Allow notification access" for an app installed from a file (APK); the switch is then grey. The Saver card shows steps for this (App info, three dots, "Allow restricted settings", then notification access) and an "Open app info" button. Android gives apps no way to unlock the block or to tell for sure that it is on, so the steps show whenever notification access is off on Android 13+ and the app was not installed from Google Play. Permissions: none added. No new library. Notification content is never read.
+- On Android 13 and newer a phone can block "Allow notification access" for an app installed from a file (APK); the switch is then grey. The Saver card shows steps for this (App info, three dots, "Allow restricted settings", then notification access) and an "Open app info" button. Android gives apps no way to unlock the block or to tell for sure that it is on, so the steps show whenever notification access is off on Android 13+ and the app was not installed from Google Play or by this app's own updater (which installs through Android's session installer, not blocked per published descriptions). Permissions: none added. No new library. Notification content is never read.
 
 ## Announcements and charger advice (changed in 1.1.19)
 - All spoken announcements go through one queue. The same words are not spoken twice within 20 seconds. Nothing is replayed on Bluetooth any more. Nothing is uploaded; the text is spoken by the phone's own text-to-speech.
