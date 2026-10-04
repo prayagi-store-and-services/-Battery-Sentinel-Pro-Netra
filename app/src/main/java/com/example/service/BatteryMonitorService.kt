@@ -328,6 +328,11 @@ class BatteryMonitorService : Service() {
 
         // Offload ALL secondary background work (widgets, calibration, power profile, sentinel, cache, Room DB)
         serviceScope.launch(Dispatchers.IO) {
+            // Saver must always see the reading, also in Ideal State, or it can never restore.
+            try {
+                SaverEngine.onReading(applicationContext, batteryPct, tempCelsius, isCharging)
+            } catch (_: Exception) {}
+
             if (canonical.isIdealStateActive) return@launch // Skip non-essential work when in Ideal State
 
             try {
@@ -344,10 +349,6 @@ class BatteryMonitorService : Service() {
 
             try {
                 NetraApplication.instance.telemetrySentinel.onTelemetryReceived(canonical)
-            } catch (_: Exception) {}
-
-            try {
-                SaverEngine.onReading(applicationContext, batteryPct, tempCelsius, isCharging)
             } catch (_: Exception) {}
 
             try {
