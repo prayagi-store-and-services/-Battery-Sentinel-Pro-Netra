@@ -296,11 +296,12 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(text = "Saver profile preference", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (settings.ultraBatterySaverActive) DangerRed else MaterialTheme.colorScheme.onSurface)
-                        Text(text = "Preference only; network and animation restrictions are not applied.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = "Unavailable: Android gives apps no control over this, so the switch is off and locked.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(
-                        checked = settings.ultraBatterySaverActive,
-                        onCheckedChange = { viewModel.toggleUltraBatterySaver() },
+                        checked = false,
+                        enabled = false,
+                        onCheckedChange = null,
                         colors = SwitchDefaults.colors(checkedThumbColor = DangerRed, checkedTrackColor = DangerRed.copy(alpha = 0.3f)),
                         modifier = Modifier.testTag("ultra_battery_saver_toggle")
                     )
@@ -315,11 +316,12 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(text = "Power-saving preference", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Text(text = "Preference only; this switch does not change polling.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = "Unavailable: this switch changed nothing, so it is locked off.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(
-                        checked = settings.powerSaverEnabled,
-                        onCheckedChange = { viewModel.setPowerSaverEnabled(it) },
+                        checked = false,
+                        enabled = false,
+                        onCheckedChange = null,
                         colors = SwitchDefaults.colors(checkedThumbColor = NetraEmerald, checkedTrackColor = NetraEmerald.copy(alpha = 0.3f))
                     )
                 }
@@ -333,11 +335,12 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(text = "Brightness preference", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Text(text = "Preference only; this app does not change brightness.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = "Unavailable: this app does not change brightness, so the switch is locked off.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Switch(
-                        checked = settings.brightnessOptimization,
-                        onCheckedChange = { viewModel.setBrightnessOptimization(it) },
+                        checked = false,
+                        enabled = false,
+                        onCheckedChange = null,
                         colors = SwitchDefaults.colors(checkedThumbColor = NetraEmerald, checkedTrackColor = NetraEmerald.copy(alpha = 0.3f))
                     )
                 }
@@ -547,15 +550,6 @@ fun SettingsScreen(
                         Text("Clear History", fontSize = 11.sp)
                     }
 
-                    Button(
-                        onClick = {
-                            Toast.makeText(context, "Telemetry summary exported to clipboard", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = NetraCyan.copy(alpha = 0.2f), contentColor = NetraCyan)
-                    ) {
-                        Text("Export Summary", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
                 }
             }
         }
