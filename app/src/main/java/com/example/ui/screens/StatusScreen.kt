@@ -393,14 +393,15 @@ fun StatusScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Preference only; this switch does not change polling.",
+                        text = "Unavailable: this switch changed nothing, so it is locked off.",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Switch(
-                    checked = settings.powerSaverEnabled,
-                    onCheckedChange = { viewModel.setPowerSaverEnabled(it) },
+                    checked = false,
+                    enabled = false,
+                    onCheckedChange = null,
                     colors = SwitchDefaults.colors(checkedThumbColor = NetraEmerald, checkedTrackColor = NetraEmerald.copy(alpha = 0.3f)),
                     modifier = Modifier.testTag("power_saver_toggle")
                 )
@@ -421,14 +422,15 @@ fun StatusScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Preference only; this app does not change display brightness.",
+                        text = "Unavailable: this app does not change brightness, so the switch is locked off.",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Switch(
-                    checked = settings.brightnessOptimization,
-                    onCheckedChange = { viewModel.setBrightnessOptimization(it) },
+                    checked = false,
+                    enabled = false,
+                    onCheckedChange = null,
                     colors = SwitchDefaults.colors(checkedThumbColor = NetraEmerald, checkedTrackColor = NetraEmerald.copy(alpha = 0.3f)),
                     modifier = Modifier.testTag("brightness_opt_toggle")
                 )
