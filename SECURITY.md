@@ -202,3 +202,10 @@ A switch or button must change something real on the phone. Three Settings switc
 
 ## Standard header (v1.2.3)
 The header is the Netra standard: 56 dp, only the app name, the installed version and the device date/time. Everything else scrolls; the bottom bar stays fixed. The header lightning button and the Ultra Battery Saver banner are removed because they only stored a flag. Every shown value needs a real evidence source, otherwise "Unavailable".
+
+## Charging screen and backup (version 1.2.6)
+
+- New optional Charging screen (Battery tab). It shows only real battery readings from Android, on a black screen, and keeps the display on while it is open. It stores one local on/off flag (auto-open when the charger is plugged in, off by default). While the app is on screen it listens for Android's power-connected event, which is event-driven and does not poll. Nothing is sent anywhere.
+- Opening it from the background (overlay permission) is planned, not built.
+- Android app backup is now off (allowBackup=false). Before, the app's saved data could be copied to Google backup with sample rules that limited nothing.
+- No new permission, network call or library.
