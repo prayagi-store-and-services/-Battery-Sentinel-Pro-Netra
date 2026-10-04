@@ -37,8 +37,7 @@ internal object FestivalBanner {
             if (indep.isNotEmpty()) parts.add("Independence Day: " + indep.joinToString(", "))
             val (a, b) = when {
                 "India" in indep -> 0xFFFF9933L to 0xFF22C55EL
-                fests.isNotEmpty() -> themeFor(fests[0].name)
-                else -> 0xFF60A5FAL to 0xFFE8EEFCL
+                else -> themeFor(fests[0].name)
             }
             return Banner(BannerKind.FEST, "Shubhkamnayein", parts.joinToString(" - "), a, b)
         }
