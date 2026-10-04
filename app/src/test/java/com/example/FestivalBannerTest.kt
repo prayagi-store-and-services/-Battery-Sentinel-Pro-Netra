@@ -39,7 +39,17 @@ class FestivalBannerTest {
         assertTrue(com.example.festival.FestivalData.FEST.none { bad.containsMatchIn(it.name) })
     }
 
-    @Test fun pakistanIsNeverIncluded() {
-        assertTrue(com.example.festival.FestivalData.INDEP.none { it.country.contains("Pakistan", ignoreCase = true) })
+    @Test fun onlyIndiasIndependenceDayIsInTheData() {
+        val list = com.example.festival.FestivalData.INDEP
+        assertEquals(1, list.size)
+        assertEquals("India", list[0].country)
+    }
+
+    @Test fun otherCountriesIndependenceDaysShowNothing() {
+        // 4 Jul (USA), 14 Aug (Pakistan), 26 Mar (Bangladesh), 12 Dec (Kenya): no independence banner, no festival that day.
+        for ((m, d) in listOf(7 to 4, 8 to 14, 3 to 26, 12 to 12)) {
+            val b = FestivalBanner.pick(day(2028, m, d))
+            assertNull("2028-$m-$d", b)
+        }
     }
 }
