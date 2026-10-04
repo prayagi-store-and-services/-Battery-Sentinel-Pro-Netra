@@ -22,12 +22,19 @@ object SaverPolicy {
         charging: Boolean,
         tempLimitC: Float,
         levelLimit: Int,
-        journeyOn: Boolean = false
+        journeyOn: Boolean = false,
+        reasonHeat: Boolean = true,
+        reasonLow: Boolean = true
     ): SaverDecision {
         if (!enabled && !journeyOn) return if (active) SaverDecision.RESTORE else SaverDecision.NONE
         val hot = tempC != null && tempC >= tempLimitC
         val low = !charging && (journeyOn || level <= levelLimit)
-        val calm = (tempC == null || tempC <= tempLimitC - TEMP_MARGIN_C) && (charging || (!journeyOn && level >= levelLimit + LEVEL_MARGIN))
+        // Restore as soon as the reason it started is gone: a heat start ends when the phone cooled down,
+        // a low-battery start ends when the level recovered or charging began. A heat start must not stay
+        // stuck just because the battery level is low.
+        val tempOk = tempC == null || tempC <= tempLimitC - TEMP_MARGIN_C
+        val levelOk = charging || (!journeyOn && level >= levelLimit + LEVEL_MARGIN)
+        val calm = (!reasonHeat || tempOk) && (!reasonLow || levelOk)
         return when {
             !active && (hot || low) -> SaverDecision.APPLY
             active && calm -> SaverDecision.RESTORE
