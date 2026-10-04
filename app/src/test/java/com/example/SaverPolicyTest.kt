@@ -22,6 +22,12 @@ class SaverPolicyTest {
     }
     @Test fun restoresWhenBackToNormal() = assertEquals(SaverDecision.RESTORE, d(active = true, t = 27f, l = 40))
     @Test fun restoresWhenChargingAndCool() = assertEquals(SaverDecision.RESTORE, d(active = true, t = 25f, l = 20, ch = true))
+    @Test fun heatStartRestoresWhenCoolEvenIfBatteryLow() =
+        assertEquals(SaverDecision.RESTORE, SaverPolicy.decide(true, true, 27f, 20, false, 30f, 35, false, reasonHeat = true, reasonLow = false))
+    @Test fun heatStartStaysWhileStillHot() =
+        assertEquals(SaverDecision.NONE, SaverPolicy.decide(true, true, 29f, 80, false, 30f, 35, false, reasonHeat = true, reasonLow = false))
+    @Test fun lowStartIgnoresTemperatureWhenRestoring() =
+        assertEquals(SaverDecision.RESTORE, SaverPolicy.decide(true, true, 35f, 80, false, 30f, 35, false, reasonHeat = false, reasonLow = true))
     @Test fun turningOffWhileActiveRestores() = assertEquals(SaverDecision.RESTORE, d(enabled = false, active = true))
     @Test fun disabledAndIdleDoesNothing() = assertEquals(SaverDecision.NONE, d(enabled = false, t = 40f))
     @Test fun limitsAreClamped() {
