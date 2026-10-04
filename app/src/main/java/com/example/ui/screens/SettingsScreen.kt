@@ -289,61 +289,7 @@ fun SettingsScreen(
                 dotState = DotState.CONNECTED,
                 accentColor = NetraEmerald
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Saver profile preference", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (settings.ultraBatterySaverActive) DangerRed else MaterialTheme.colorScheme.onSurface)
-                        Text(text = "Unavailable: Android gives apps no control over this, so the switch is off and locked.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(
-                        checked = false,
-                        enabled = false,
-                        onCheckedChange = null,
-                        colors = SwitchDefaults.colors(checkedThumbColor = DangerRed, checkedTrackColor = DangerRed.copy(alpha = 0.3f)),
-                        modifier = Modifier.testTag("ultra_battery_saver_toggle")
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Power-saving preference", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Text(text = "Unavailable: this switch changed nothing, so it is locked off.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(
-                        checked = false,
-                        enabled = false,
-                        onCheckedChange = null,
-                        colors = SwitchDefaults.colors(checkedThumbColor = NetraEmerald, checkedTrackColor = NetraEmerald.copy(alpha = 0.3f))
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Brightness preference", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Text(text = "Unavailable: this app does not change brightness, so the switch is locked off.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Switch(
-                        checked = false,
-                        enabled = false,
-                        onCheckedChange = null,
-                        colors = SwitchDefaults.colors(checkedThumbColor = NetraEmerald, checkedTrackColor = NetraEmerald.copy(alpha = 0.3f))
-                    )
-                }
+                com.example.ui.components.PowerPreferencesBody()
             }
         }
 
