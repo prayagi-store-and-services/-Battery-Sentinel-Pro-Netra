@@ -204,6 +204,19 @@ class PerformanceLatencyTest {
 
     @Test
     fun testMediaOperationsDoNotBlockTelemetryPipeline() = runBlocking {
+        // Warm-up (not timed): the first call pays one-time class loading and JIT cost, which says nothing about blocking.
+        // The timed call below keeps the same 100 ms limit and still runs while a media update runs at the same time.
+        dataCenter.processRawInput(
+            level = 50,
+            scale = 100,
+            status = android.os.BatteryManager.BATTERY_STATUS_DISCHARGING,
+            plugged = 0,
+            temperatureRaw = 300,
+            voltage = 3900,
+            currentMicroAmps = -500000,
+            bluetoothConnected = false,
+            bluetoothBattery = null
+        )
         // Run concurrent media state update while sending telemetry
         val mediaJob = async(Dispatchers.Default) {
             dataCenter.updateMediaState(com.example.model.CanonicalMediaState.PAUSED)
