@@ -34,9 +34,9 @@ import com.example.ui.theme.NetraCyan
 import kotlinx.coroutines.delay
 
 /** One process-wide telemetry state, so rotation does not restart the session timer. */
-private val sharedTelemetry = LivePowerTelemetry()
+internal val sharedTelemetry = LivePowerTelemetry()
 
-private fun readSnapshot(c: Context): BatterySnapshot {
+internal fun readSnapshot(c: Context): BatterySnapshot {
     val i: Intent? = c.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
     fun extra(name: String, absent: Int = Int.MIN_VALUE): Int? = i?.getIntExtra(name, absent)?.takeIf { it != absent }
     val bm = c.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
