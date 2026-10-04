@@ -98,7 +98,7 @@ fun SaverCard() {
             }) { Text("Open notification access") }
             if (restrictedSettingsLikely(c)) {
                 Text("If the switch \"Allow notification access\" is grey or will not turn on: Android 13 and newer block this for apps installed from a file (APK) instead of a store. This app cannot unlock it for you. Easiest fix: install the next update with \"Check for update\" inside this app, because that install is not blocked. Or do this once:", fontSize = 12.sp)
-                Text("1. Tap \"Open app info\" below.\n2. Tap the three dots at the top right and choose \"Allow restricted settings\". On some phones (Realme, Oppo, OnePlus) this item shows only after you have tried to switch notification access on once, so try the switch first, then come back here.\n3. Confirm with your PIN or fingerprint if asked.\n4. Tap \"Open notification access\" above and switch it on for this app.\nMenu names can differ a little on your phone.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                RestrictedSettingsGuide()
                 TextButton(onClick = {
                     c.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + c.packageName)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 }) { Text("Open app info") }
