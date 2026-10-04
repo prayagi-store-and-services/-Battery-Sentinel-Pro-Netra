@@ -4,6 +4,11 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: optional Charging screen (Battery tab, under Live Power). A plain black screen with the clock and the live battery values from this phone: percentage, charging state, power, voltage, current, temperature and the time estimate, each shown only when Android reports it. It keeps the screen on while open; tap to close. A switch, off by default, opens it when you plug in the charger while the app is open. Opening it while the app is in the background is not included yet because it needs a permission; that is the next part.
+- What's new: Android app backup is turned off. The old setting copied the app's saved data to Google backup with sample rules that limited nothing. No new permission or library.
+
+## [1.2.5]
+
 - What's new: Power Preferences now really work. Brightness preference lowers the screen to a saving level and puts your old brightness back when you turn it off; the first time it opens Android's "Modify system settings" screen so you can allow it. Saver profile does brightness and, only if allowed, the phone's Battery Saver. Power-saving preference switches the phone's own Battery Saver, but Android only allows that after a one-time command from a computer, so without it the switch stays locked and shows the command.
 - What's new: new "Send crash report" button in Feedback. You see exactly what is sent (phone model, Android version, app version, crash code locations) before you tap Send. If no crash is saved it says Unavailable.
 - What's new: fixed automatic crash reports. A report counted as sent on any reply and was deleted even when the email service had not accepted it. Now it counts as sent only when the service confirms, otherwise it is kept.
