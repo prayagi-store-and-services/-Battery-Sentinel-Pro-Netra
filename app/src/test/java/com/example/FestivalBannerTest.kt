@@ -28,10 +28,10 @@ class FestivalBannerTest {
     @Test fun quietDayAfterTheDataEndsShowsNothing() = assertNull(FestivalBanner.pick(day(2028, 3, 3)))
 
     @Test fun condolenceOverridesEverythingWhileActive() {
-        val c = listOf(Condolence(20260815, 20260816, "X", "Y", "t"))
-        val b = FestivalBanner.pick(day(2026, 8, 15), c)
+        val c = listOf(Condolence(20261107, 20261107, "X", "Y", "t"))
+        val b = FestivalBanner.pick(day(2026, 11, 7), c)
         assertEquals(BannerKind.SORROW, b!!.kind)
-        assertEquals(BannerKind.FEST, FestivalBanner.pick(day(2026, 8, 17), c)!!.kind)
+        assertEquals(BannerKind.FEST, FestivalBanner.pick(day(2026, 11, 8), c)!!.kind)
     }
 
     @Test fun noDeathAnniversariesOrMourningObservancesInTheData() {
