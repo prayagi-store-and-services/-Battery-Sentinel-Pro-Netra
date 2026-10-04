@@ -13,7 +13,10 @@ import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -201,135 +204,24 @@ fun MainAppContent(viewModel: NetraViewModel) {
         }
     }
 
+    val ctx = androidx.compose.ui.platform.LocalContext.current
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(NetraCyan.copy(alpha = 0.15f))
-                                .border(1.dp, NetraCyan.copy(alpha = 0.4f), RoundedCornerShape(8.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Shield,
-                                contentDescription = "Netra",
-                                tint = NetraCyan,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "NETRA",
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = 1.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(NetraEmerald.copy(alpha = 0.2f))
-                                        .padding(horizontal = 4.dp, vertical = 1.dp)
-                                ) {
-                                    Text(
-                                        text = "PRO SENTINEL",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = NetraEmerald
-                                    )
-                                }
-                            }
-                            Text(
-                                text = "Ultra-Low Power 24/7 Engine",
-                                fontSize = 10.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    // Live Level & Temp Capsule
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                if (telemetry.temperature >= 40f) StatusRed.copy(alpha = 0.2f)
-                                else NetraSurface
-                            )
-                            .border(
-                                1.dp,
-                                if (telemetry.temperature >= 40f) StatusRed
-                                else NetraCyan.copy(alpha = 0.3f),
-                                RoundedCornerShape(20.dp)
-                            )
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            StatusDot(state = telemetry.serviceDotState, size = 6.dp)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = canonical.batteryLevel?.let { "$it%" } ?: "Unavailable",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (canonical.isCharging == true) NetraCyan else NetraEmerald
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = canonical.temperatureCelsius?.let { "• ${String.format(java.util.Locale.US, "%.1f", it)}°C" } ?: "• Temp unavailable",
-                                fontSize = 11.sp,
-                                color = if ((canonical.temperatureCelsius ?: 0f) >= 40f) StatusRed else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    IconButton(
-                        onClick = { showWidgetCatalogue = true },
-                        modifier = Modifier.testTag(WIDGET_CATALOGUE_BUTTON_TAG)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Widgets,
-                            contentDescription = "Widgets Catalogue",
-                            tint = NetraCyan,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    IconButton(
-                        onClick = { viewModel.toggleUltraBatterySaver() },
-                        modifier = Modifier.testTag("top_bar_ultra_saver_button")
-                    ) {
-                        val isUltraActive = settings.ultraBatterySaverActive
-                        Icon(
-                            imageVector = Icons.Default.Bolt,
-                            contentDescription = "Toggle Ultra Battery Saver",
-                            tint = if (isUltraActive) StatusRed else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    IconButton(
-                        onClick = { viewModel.refreshHardwareState() },
-                        modifier = Modifier.testTag("top_bar_refresh_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh Telemetry",
-                            tint = NetraCyan,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                modifier = Modifier.statusBarsPadding()
-            )
+            // Standard Netra header: 56 dp, only app name, version and date/time. Everything else scrolls.
+            var clockNow by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(java.util.Date()) }
+            androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { clockNow = java.util.Date(); kotlinx.coroutines.delay(30_000) } }
+            val ownVersion = androidx.compose.runtime.remember { try { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName } catch (e: Exception) { null } ?: "Unavailable" }
+            Row(
+                modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).statusBarsPadding().height(56.dp).padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(text = "Battery Sentinel Pro Netra", fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = "v" + ownVersion, fontSize = 12.sp, maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Text(text = java.text.SimpleDateFormat("EEE d MMM, HH:mm", java.util.Locale.getDefault()).format(clockNow), fontSize = 12.sp, maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         },
         bottomBar = {
             NetraBottomNav(
@@ -347,15 +239,6 @@ fun MainAppContent(viewModel: NetraViewModel) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            val settings by viewModel.settings.collectAsStateWithLifecycle()
-            com.example.ui.components.UltraBatterySaverBanner(
-                isActive = settings.ultraBatterySaverActive,
-                onToggle = { viewModel.toggleUltraBatterySaver() },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
-            )
-
-            com.example.ui.components.FestivalBannerCard(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
-
             Crossfade(
                 targetState = showWidgetCatalogue to currentTab,
                 label = "tab_transition",
@@ -367,6 +250,13 @@ fun MainAppContent(viewModel: NetraViewModel) {
                     when (tab) {
                         NetraTab.HOME -> HomeScreen(
                             viewModel = viewModel,
+                            topContent = {
+                                com.example.ui.components.FestivalBannerCard(modifier = Modifier.fillMaxWidth())
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    androidx.compose.material3.TextButton(onClick = { showWidgetCatalogue = true }, modifier = Modifier.testTag(WIDGET_CATALOGUE_BUTTON_TAG)) { Text("Widgets", fontSize = 12.sp, color = NetraCyan) }
+                                    androidx.compose.material3.TextButton(onClick = { viewModel.refreshHardwareState() }, modifier = Modifier.testTag("top_bar_refresh_button")) { Text("Refresh", fontSize = 12.sp, color = NetraCyan) }
+                                }
+                            },
                             onNavigateTab = { target ->
                                 showWidgetCatalogue = false
                                 currentTab = target
