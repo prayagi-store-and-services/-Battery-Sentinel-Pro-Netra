@@ -4,6 +4,12 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: Power Preferences now really work. Brightness preference lowers the screen to a saving level and puts your old brightness back when you turn it off; the first time it opens Android's "Modify system settings" screen so you can allow it. Saver profile does brightness and, only if allowed, the phone's Battery Saver. Power-saving preference switches the phone's own Battery Saver, but Android only allows that after a one-time command from a computer, so without it the switch stays locked and shows the command.
+- What's new: new "Send crash report" button in Feedback. You see exactly what is sent (phone model, Android version, app version, crash code locations) before you tap Send. If no crash is saved it says Unavailable.
+- What's new: fixed automatic crash reports. A report counted as sent on any reply and was deleted even when the email service had not accepted it. Now it counts as sent only when the service confirms, otherwise it is kept.
+
+## [1.2.4]
+
 - What's new: help where the "Restricted setting" block appears. When Android greys out Notification access for this app (it does this for apps installed from a file), the Saver card now shows a step by step guide: press and hold the app icon, tap App info, tap the three dots, tap Allow restricted settings, then switch notification access on. It also explains that the menu item disappears after you tap it, which means it worked. The guide is a drawn illustration, not a real screenshot, and the app says so. Android gives no way for an app to unlock this itself.
 
 ## [1.2.3]
