@@ -4,6 +4,11 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: other countries' independence-day banners are removed. The festival banner now shows only India's festivals and India's Independence Day (15 August). Nothing else was changed in what the banner decides to show.
+- What's new: the festival banner no longer draws its own coloured box or border. It is plain text on the app's own background, with the title in the app's own accent colour.
+
+## [1.1.19]
+
 - Patch: voice announcements no longer repeat. Every announcement now goes through one central queue and the same words are never spoken twice within 20 seconds, whatever caused them. The cause of the repeats was that, with a Bluetooth device connected, every announcement was deliberately spoken again on Bluetooth right after the phone speaker. That replay is removed: each announcement is spoken once. A late announcement is possible, a repeat is not.
 - Patch: the charger advice now speaks ONLY when charging is slow AND the battery temperature is rising. It stays quiet when the temperature is normal or falling, when the charger has shown it can charge fast, when the battery is at 95% or more (the phone slows charging on purpose near full), and when the level or power is not reported. "Slow charging." is no longer announced at 95% or more. The fixed 40 and 45 degree warnings are unchanged.
 - Patch: the "Slow / Normal / Fast charging" change announcement now waits at least 60 seconds after the previous one, even if the charging speed changed again meanwhile, so it cannot keep repeating. The new speed is announced once the 60 seconds are over if it still differs.
