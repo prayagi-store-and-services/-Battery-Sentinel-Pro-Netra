@@ -128,6 +128,9 @@ No solar provider is enabled in the app today. Before any provider ships, these 
 - The app checks GitHub (the public release API, with a backup file on the project website) for a newer version. It sends no user data. Settings has a "Check for updates" button that shows the real status or error.
 
 ### Automatic crash reports
+
+- Version 1.2.5: Feedback has a manual "Send crash report" button that shows the exact text first. An automatic or manual send now counts as sent only when the forwarding service answers success=true; before, any HTTP 200 reply was enough and the saved report was deleted. The last crash is kept on the device so it can be sent again.
+- Version 1.2.5: Power Preferences use `WRITE_SETTINGS` (user allows it on an Android screen) for brightness, and `WRITE_SECURE_SETTINGS` only if the owner granted it with a computer command; no new permission is declared.
 - When the app crashes, it saves a short report on the device. The next time the app opens, it sends that report by itself, with no button and no question. After a successful send the file is deleted; after a failed send it is kept and retried at the next start.
 - The report contains only: phone model, Android version, app version, and the crash stack trace (exception class names and code locations; exception messages are dropped on purpose). It contains no name, email, location, files, device IDs or battery history.
 - It goes through the same form pipeline as the website forms (FormSubmit) to the developer's email. The optional "Send feedback" form still sends only when the user presses Send.
