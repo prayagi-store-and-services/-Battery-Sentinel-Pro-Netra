@@ -117,7 +117,7 @@ fun SaverCard() {
 internal fun restrictedSettingsLikely(c: android.content.Context): Boolean {
     if (android.os.Build.VERSION.SDK_INT < 33) return false
     return try {
-        val installer = c.packageManager.getInstallSourceInfo(c.packageName).getInstallingPackage()
+        val installer = c.packageManager.getInstallSourceInfo(c.packageName).installingPackageName
         installer != "com.android.vending" && installer != c.packageName
     } catch (e: Exception) { true }
 }
