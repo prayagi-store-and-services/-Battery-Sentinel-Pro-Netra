@@ -169,6 +169,7 @@ fun BatteryScreen(
             ) {
                 // 2. Circular Status Meter (Reused, surfaces live canonical information & ETA)
                 item { com.example.ui.components.LivePowerCard() }
+                item { com.example.ui.components.ChargingScreenCard() }
                 item {
                     SentinelCard(
                         title = "Battery & Power Sentinel",
