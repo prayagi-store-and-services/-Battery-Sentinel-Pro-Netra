@@ -32,7 +32,8 @@ import com.example.viewmodel.NetraViewModel
 fun HomeScreen(
     viewModel: NetraViewModel,
     onNavigateTab: (NetraTab) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    topContent: @Composable () -> Unit = {}
 ) {
     val telemetry by viewModel.liveTelemetry.collectAsStateWithLifecycle()
     val canonical by viewModel.canonicalState.collectAsStateWithLifecycle()
@@ -47,6 +48,7 @@ fun HomeScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        topContent()
         // Live Charging Active Shortcut Card
         if (canonical.isCharging == true) {
             SentinelCard(
@@ -97,4 +99,4 @@ fun HomeScreen(
             }
         }
     }
-}
+                     }
