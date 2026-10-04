@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: help where the "Restricted setting" block appears. When Android greys out Notification access for this app (it does this for apps installed from a file), the Saver card now shows a step by step guide: press and hold the app icon, tap App info, tap the three dots, tap Allow restricted settings, then switch notification access on. It also explains that the menu item disappears after you tap it, which means it worked. The guide is a drawn illustration, not a real screenshot, and the app says so. Android gives no way for an app to unlock this itself.
+
+## [1.2.3]
+
 - What's new: the header is now the Netra standard, 56 dp tall, showing only the app name, the installed version and the date and time. The festival banner, the Widgets button and the Refresh button moved to the top of the scrolling Home screen, so everything except the header and the bottom bar scrolls. The live battery and temperature capsule left the header; the same values are on the Home screen.
 - What's new: two more dummy controls removed. The lightning button in the header and the red "Ultra Battery Saver" banner only stored a flag and changed nothing on the phone.
 
