@@ -1,5 +1,8 @@
 # Security Policy
 
+## Festival list cleanup (1.2.14)
+- Five non-Indian festival entries are removed from the built-in festival list (Lunar New Year, Passover, Friendship Day, two Hanukkah days; 2026 and 2027). It is a fixed list inside the app; nothing is fetched. No permission, library or network change.
+
 ## Charging screen over the lock screen (1.2.13)
 - The charging screen can now show over the lock screen (Android activity flag showWhenLocked). It turns the screen on only when the charger is plugged in. It does not unlock the phone and reads nothing from it.
 - It opens when the charger is connected, and again each time the screen turns off while charging. The screen-off event is an Android broadcast received only while the existing battery service runs. Opening it from the background still needs the existing Display over other apps permission and the existing off-by-default switch. No new permission, library or network call.
