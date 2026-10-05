@@ -70,6 +70,8 @@ object SaverEngine {
         val enabled = p.getBoolean(KEY_ENABLED, false)
         val active = p.getBoolean(KEY_ACTIVE, false)
         val journeyOn = SaverPolicy.journeyActive(p.getLong(KEY_JOURNEY_UNTIL, 0L), System.currentTimeMillis())
+        // A display restore that could not run earlier (permission missing) is retried on every reading until it works.
+        if (!active && p.getBoolean(KEY_DISPLAY_CHANGED, false)) restoreDisplay(app)
         if (!enabled && !active && !journeyOn) return
         val temp = tempC?.takeIf { it > 0f }
         val decision = SaverPolicy.decide(
@@ -114,7 +116,8 @@ object SaverEngine {
         if (ScreenOffSaver.isApplied(app)) return "display: skipped (charging saver already active)"
         return try {
             val cr: ContentResolver = app.contentResolver
-            p.edit()
+            // A restore point from an earlier run that never got restored must not be overwritten by the throttled values.
+            if (!p.getBoolean(KEY_DISPLAY_CHANGED, false)) p.edit()
                 .putInt(KEY_PREV_BRIGHTNESS, Settings.System.getInt(cr, Settings.System.SCREEN_BRIGHTNESS, -1))
                 .putInt(KEY_PREV_MODE, Settings.System.getInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL))
                 .putInt(KEY_PREV_TIMEOUT, Settings.System.getInt(cr, Settings.System.SCREEN_OFF_TIMEOUT, -1))
@@ -188,20 +191,29 @@ object SaverEngine {
     private fun restoreDisplay(app: Context) {
         val p = prefs(app)
         if (!p.getBoolean(KEY_DISPLAY_CHANGED, false)) return
+        if (!Settings.System.canWrite(app)) {
+            // Keep the restore point. Nothing is restored and nothing is claimed.
+            p.edit().putString(KEY_RESULT, "Display not restored yet. Unavailable: allow \"Modify system settings\" for this app so brightness and screen timeout can be put back.").apply()
+            return
+        }
         try {
-            if (Settings.System.canWrite(app)) {
-                val cr = app.contentResolver
+            val cr = app.contentResolver
+            // Only put back what is still the value this app set. If you changed it yourself meanwhile, your choice stays.
+            val ours = Settings.System.getInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, -1) == Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL &&
+                Settings.System.getInt(cr, Settings.System.SCREEN_BRIGHTNESS, -1) == LOW_BRIGHTNESS
+            if (ours) {
                 val b = p.getInt(KEY_PREV_BRIGHTNESS, -1)
                 if (b >= 0) Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS, b)
                 Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, p.getInt(KEY_PREV_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL))
+            }
+            if (Settings.System.getInt(cr, Settings.System.SCREEN_OFF_TIMEOUT, -1) == MIN_TIMEOUT_MS) {
                 val t = p.getInt(KEY_PREV_TIMEOUT, -1)
                 if (t > 0) Settings.System.putInt(cr, Settings.System.SCREEN_OFF_TIMEOUT, t)
             }
         } catch (e: Exception) {
             Log.w(TAG, "display restore failed", e)
-        } finally {
-            p.edit().putBoolean(KEY_DISPLAY_CHANGED, false).apply()
         }
+        p.edit().putBoolean(KEY_DISPLAY_CHANGED, false).apply()
     }
 
     /** Puts everything back. Closed apps and cleared notifications cannot be brought back; display settings are. */
