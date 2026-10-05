@@ -9,6 +9,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
@@ -149,7 +151,7 @@ private fun ChargingScreenDialog(onClose: () -> Unit) {
 
 /** The black screen itself. Used by the in-app dialog and by ChargingScreenActivity (opened from the background). */
 @Composable
-fun ChargingScreenContent(onClose: () -> Unit) {
+fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
     val c = LocalContext.current
     val owner = LocalLifecycleOwner.current
     var ui by remember { mutableStateOf<LivePowerUi?>(null) }
@@ -165,7 +167,7 @@ fun ChargingScreenContent(onClose: () -> Unit) {
     }
     val view = LocalView.current
     DisposableEffect(Unit) {
-        view.keepScreenOn = true
+        view.keepScreenOn = keepScreenOn
         onDispose { view.keepScreenOn = false }
     }
     run {
@@ -180,7 +182,7 @@ fun ChargingScreenContent(onClose: () -> Unit) {
             else -> "STATUS UNAVAILABLE"
         }
         Column(
-            Modifier.fillMaxSize().background(Color.Black).clickable { onClose() }.padding(24.dp),
+            Modifier.fillMaxSize().background(Color.Black).pointerInput(Unit) { detectTapGestures(onDoubleTap = { onClose() }) }.padding(24.dp),
             verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -205,7 +207,7 @@ fun ChargingScreenContent(onClose: () -> Unit) {
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(u?.power ?: "Unavailable", color = Color.White, fontSize = 22.sp, maxLines = 1)
-                Text("Power is battery-side (voltage x current), not wall-adapter wattage. Tap to close.", color = Color(0xFF757575), fontSize = 10.sp, textAlign = TextAlign.Center)
+                Text("Power is battery-side (voltage x current), not wall-adapter wattage. Double tap to close.", color = Color(0xFF757575), fontSize = 10.sp, textAlign = TextAlign.Center)
             }
         }
     }
