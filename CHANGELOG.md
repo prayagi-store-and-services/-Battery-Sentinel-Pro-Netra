@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: a Permissions list in Settings. It shows every permission the app uses (notifications, location, nearby devices, phone state, display over other apps, modify system settings, secure settings, battery optimisation, install apps and the normal always-allowed ones) with the plain reason and the live status read from Android. Tap a row to open the matching Android page. Secure settings can only be granted from a computer, so that row has no button and says so. No new permission is added.
+
+## [1.2.8]
+
 - What's new: one home screen widget, rebuilt. All 13 old widgets were empty and did nothing, so they are removed (if you added one, remove it from the home screen and add the new one). The new "Netra Sentinel" widget shows, in one card: battery percent, charging or discharging, power source and charging speed, temperature, voltage, current, power in watts, battery health, time to full or time left, and the time of the last reading. Anything the phone does not report shows Unavailable. It redraws only when the app records a new reading, with no timer or extra background work, and says "Stale" if the last reading is older than 15 minutes. Its colour and background are set in Settings, Widget style. The "Widgets" button on Home is removed.
 
 ## [1.2.7]
