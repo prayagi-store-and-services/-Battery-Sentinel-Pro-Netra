@@ -539,7 +539,7 @@ private fun SystemTelemetryTabContent(
                         val formattedDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(cacheStats.lastCleanupTimestamp))
                         TelemetryRow("Last Cleaned", "$formattedDate (${cacheStats.lastFreedBytes / 1024} KB freed)")
                     }
-                    TelemetryRow("User Data Protection", "Guaranteed (DB & Settings preserved)")
+                    TelemetryRow("Cleanup scope", "Cache files only (the code never touches settings or saved data)")
 
                     if (cleanNotice != null) {
                         Text(
