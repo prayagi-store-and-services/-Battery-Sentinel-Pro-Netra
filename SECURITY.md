@@ -209,3 +209,11 @@ The header is the Netra standard: 56 dp, only the app name, the installed versio
 - Opening it from the background (overlay permission) is planned, not built.
 - Android app backup is now off (allowBackup=false). Before, the app's saved data could be copied to Google backup with sample rules that limited nothing.
 - No new permission, network call or library.
+
+## Charging screen from the background (version 1.2.7)
+
+- New permission: SYSTEM_ALERT_WINDOW ("Display over other apps"). Android requires it to let an app open a screen from the background; only the user can grant it, in Android settings. Without it the switch stays off. It is used for this one screen and nothing else, and no overlay is drawn on top of other apps: the app opens its own full screen.
+- The charger-connected event is received by the battery service the app already runs; no new service, polling or wake lock. The only new stored value is the on/off flag for this switch (local, off by default).
+- Not possible and not attempted: opening over the lock screen (Android 14 limits full-screen notifications to calling and alarm apps: https://source.android.com/docs/core/permissions/fsi-limits ).
+- Android's rules for starting screens from the background: https://developer.android.com/guide/components/activities/secure-bal
+- No network call or library added.
