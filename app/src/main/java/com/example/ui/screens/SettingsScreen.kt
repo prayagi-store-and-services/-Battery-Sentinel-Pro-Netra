@@ -541,7 +541,7 @@ fun SettingsScreen(
             ) {
                 Text(text = "App Name: Battery Sentinel Pro Netra", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 Text(text = "Version: ${com.example.BuildConfig.VERSION_NAME} Pro • Autonomous Engine", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(text = "Protocol: Ultra-Low Power 24/7 Event-Driven Architecture", fontSize = 11.sp, color = NetraEmerald)
+                Text(text = "Monitoring: reacts to Android battery events and re-checks every 45 seconds (every 15 minutes in the ideal charge state) while the monitor runs", fontSize = 11.sp, color = NetraEmerald)
             }
         }
 
