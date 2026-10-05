@@ -129,148 +129,16 @@
             </intent-filter>
         </receiver>
 
-        <!-- Home Screen Battery Widgets -->
+        <!-- Home Screen: the single Netra battery widget -->
         <receiver
-            android:name=".widget.BatteryQuickProvider"
+            android:name=".widget.NetraBatteryWidgetProvider"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_battery_quick" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.BatteryStatsProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_battery_stats" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.BatteryFullProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_battery_full" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.TemperatureProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_temperature" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.VoltageProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_voltage" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.CurrentProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_current" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.PowerProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_power" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.HealthProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_health" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.GraphCurrentProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_graph_current" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.GraphPowerProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_graph_power" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.GraphTempProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_graph_temp" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.GraphCurrentVoltageProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_graph_current_voltage" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.GraphWattageVoltageProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_graph_wattage_voltage" />
+                android:resource="@xml/netra_battery_widget_info" />
         </receiver>
 
         <receiver
