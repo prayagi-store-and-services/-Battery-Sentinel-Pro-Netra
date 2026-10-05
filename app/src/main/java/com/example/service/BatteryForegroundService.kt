@@ -43,6 +43,20 @@ class BatteryForegroundService : Service() {
             ) {
                 updateBatteryStateFromIntent(intent)
             }
+            if (action == Intent.ACTION_POWER_CONNECTED) openChargingScreenIfAllowed()
+        }
+    }
+
+    /** Charging screen from the background: only when the user turned it on AND Android's Display over other apps is granted. */
+    private fun openChargingScreenIfAllowed() {
+        try {
+            val on = getSharedPreferences(com.example.ui.components.CHARGING_SCREEN_PREFS, Context.MODE_PRIVATE)
+                .getBoolean(com.example.ui.components.KEY_BACKGROUND, false)
+            if (on && android.provider.Settings.canDrawOverlays(this)) {
+                startActivity(Intent(this, com.example.ui.ChargingScreenActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not open the charging screen", e)
         }
     }
 
