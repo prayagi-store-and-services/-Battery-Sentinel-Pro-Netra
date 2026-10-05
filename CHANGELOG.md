@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: truth fix in Settings. A line called the monitor an "Ultra-Low Power 24/7 Event-Driven Architecture", which the app cannot prove: it also re-checks on a timer. It now says what the code does: it reacts to Android battery events and re-checks every 45 seconds (every 15 minutes in the ideal charge state) while the monitor runs. No new permission.
+
+## [1.2.10]
+
 - What's new: truth fix on the Monitoring screen. The cache row said "User Data Protection: Guaranteed", which the app cannot prove. It now reads "Cleanup scope: Cache files only", which matches the cleanup code: it deletes only cache folders. No new permission.
 
 ## [1.2.9]
