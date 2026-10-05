@@ -15,7 +15,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.unit.dp
 import com.example.ai.BatteryDegradationPredictor
 import com.example.ui.components.GeminiHealthInsightsContent
-import com.example.widget.WidgetStateAdapter
 import com.example.model.NetraCentralState
 import com.example.model.CalibrationSessionState
 import com.example.model.BatteryTelemetry
@@ -155,28 +154,11 @@ class TruthfulnessCardRenderTest {
     @Test
     fun renderWidgetUnavailableDefaults() {
         val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
-        val layouts = listOf(
-            R.layout.widget_graph_temperature,
-            R.layout.widget_power,
-            R.layout.widget_temperature,
-            R.layout.widget_health,
-            R.layout.widget_netra_degradation_sparkline,
-            R.layout.widget_voltage,
-            R.layout.widget_graph_power,
-            R.layout.widget_graph_current_voltage,
-            R.layout.widget_battery_quick,
-            R.layout.widget_graph_wattage_voltage,
-            R.layout.widget_current,
-            R.layout.widget_graph_temp,
-            R.layout.widget_battery_stats,
-            R.layout.widget_graph_current,
-            R.layout.widget_battery_full,
-            R.layout.widget_netra_battery
-        )
+        val layouts = listOf(R.layout.widget_netra_battery)
         for (layout in layouts) {
             val view = android.widget.RemoteViews(context.packageName, layout).apply(context, null)
             val width = 360
-            val height = if (layout == R.layout.widget_battery_full || layout == R.layout.widget_battery_stats) 320 else 180
+            val height = 240
             view.measure(android.view.View.MeasureSpec.makeMeasureSpec(width, android.view.View.MeasureSpec.EXACTLY),
                 android.view.View.MeasureSpec.makeMeasureSpec(height, android.view.View.MeasureSpec.EXACTLY))
             view.layout(0, 0, width, height)
@@ -192,12 +174,22 @@ class TruthfulnessCardRenderTest {
     }
 
     @Test
-    fun widgetsNeverInventCapacityHealth() {
-        val state = NetraCentralState()
-        assertTrue(WidgetStateAdapter.getBatteryFull(state).healthText == "Unavailable")
-        val health = WidgetStateAdapter.getHealthStat(state)
-        assertTrue(health.healthStatus == "Unavailable")
-        assertTrue(health.healthScoreText == "Unavailable")
+    fun widgetNeverInventsValues() {
+        val m = com.example.widget.NetraBatteryWidgetProvider.buildModel(com.example.model.BatteryTelemetry(), 0L)
+        assertTrue(m.percent == "Unavailable")
+        assertTrue(m.temperature == "Unavailable")
+        assertTrue(m.voltage == "Unavailable")
+        assertTrue(m.current == "Unavailable")
+        assertTrue(m.power == "Unavailable")
+        assertTrue(m.health == "Unavailable")
+        assertTrue(m.eta == "Unavailable")
+        val live = com.example.model.BatteryTelemetry(level = 80, isCharging = true, pluggedType = "AC", temperature = 31.5f, voltageMv = 4100, isDataAvailable = true, lastUpdateTimestamp = 1000L)
+        val l = com.example.widget.NetraBatteryWidgetProvider.buildModel(live, 2000L)
+        assertTrue(l.percent == "80%")
+        assertTrue(l.temperature == "31.5\u00B0C")
+        assertTrue(l.voltage == "4.10 V")
+        assertTrue(l.current == "Unavailable")
+        assertTrue(l.power == "Unavailable")
     }
 
     @Test
