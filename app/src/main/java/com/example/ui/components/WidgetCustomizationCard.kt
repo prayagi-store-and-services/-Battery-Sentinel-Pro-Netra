@@ -53,7 +53,6 @@ import com.example.ui.theme.StatusAmber
 import com.example.ui.theme.StatusBlue
 import com.example.viewmodel.NetraViewModel
 import com.example.widget.NetraBatteryWidgetProvider
-import com.example.widget.NetraDegradationSparklineWidgetProvider
 
 @Composable
 fun WidgetCustomizationCard(
@@ -188,7 +187,6 @@ fun WidgetCustomizationCard(
                         .clickable {
                             viewModel.setWidgetThemeColor(key)
                             NetraBatteryWidgetProvider.updateAllWidgets(context, telemetry)
-                            NetraDegradationSparklineWidgetProvider.updateAllWidgets(context)
                         }
                         .testTag("widget_color_${key.lowercase()}"),
                     contentAlignment = Alignment.Center
@@ -216,7 +214,6 @@ fun WidgetCustomizationCard(
                     onClick = {
                         viewModel.setWidgetRefreshInterval(interval)
                         NetraBatteryWidgetProvider.updateAllWidgets(context, telemetry)
-                        NetraDegradationSparklineWidgetProvider.updateAllWidgets(context)
                     },
                     label = { Text(label, fontSize = 10.5.sp) },
                     colors = FilterChipDefaults.filterChipColors(
@@ -244,7 +241,6 @@ fun WidgetCustomizationCard(
                     onClick = {
                         viewModel.setWidgetBackgroundStyle(styleKey)
                         NetraBatteryWidgetProvider.updateAllWidgets(context, telemetry)
-                        NetraDegradationSparklineWidgetProvider.updateAllWidgets(context)
                     },
                     label = { Text(styleLabel, fontSize = 11.sp) },
                     colors = FilterChipDefaults.filterChipColors(
@@ -260,7 +256,6 @@ fun WidgetCustomizationCard(
         Button(
             onClick = {
                 NetraBatteryWidgetProvider.updateAllWidgets(context, telemetry)
-                NetraDegradationSparklineWidgetProvider.updateAllWidgets(context)
                 Toast.makeText(context, "Widgets refreshed with new theme & data", Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier
