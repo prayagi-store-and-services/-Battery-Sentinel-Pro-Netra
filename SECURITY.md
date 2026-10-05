@@ -225,3 +225,7 @@ The header is the Netra standard: 56 dp, only the app name, the installed versio
 - The 13 old widgets were empty (they drew nothing), so they and the Widgets catalogue screen are removed. One widget remains: "Netra Sentinel". It shows battery level, charging state, power source and speed, temperature, voltage, current, power, health, a time estimate and the time of the last reading, all from the phone's own battery readings. A value Android does not report shows "Unavailable".
 - No new permission, network call, library, timer or alarm. The widget is redrawn only when the battery service (already running) records a reading. If the last reading is older than 15 minutes it says so.
 - The widget receiver is exported because Android's launcher must be able to send it update events; it only handles Android's widget update action and has no other entry point. Tapping the widget opens the app.
+
+## Truthful monitoring line in Settings (version 1.2.11)
+
+- Settings no longer says the monitor is an "Ultra-Low Power 24/7 Event-Driven Architecture". The code reacts to Android battery events and also re-checks on a timer (45 seconds, or 15 minutes in the ideal charge state) while the monitor runs, so the old line could not be proven. Text change only: no new permission, network call, library, timer or alarm.
