@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: one home screen widget, rebuilt. All 13 old widgets were empty and did nothing, so they are removed (if you added one, remove it from the home screen and add the new one). The new "Netra Sentinel" widget shows, in one card: battery percent, charging or discharging, power source and charging speed, temperature, voltage, current, power in watts, battery health, time to full or time left, and the time of the last reading. Anything the phone does not report shows Unavailable. It redraws only when the app records a new reading, with no timer or extra background work, and says "Stale" if the last reading is older than 15 minutes. Its colour and background are set in Settings, Widget style. The "Widgets" button on Home is removed.
+
+## [1.2.7]
+
 - What's new: the Charging screen can now open by itself when you plug in the charger, even when the app is closed or in the background. It is a second switch under the Charging screen card, off by default. Android only allows this after you grant "Display over other apps" to this app, so the switch opens that Android screen and stays off until you allow it. It uses the charger-connected event the app already listens for, with no extra polling. It cannot open over a locked screen. Tap the screen to close it.
 
 ## [1.2.6]
