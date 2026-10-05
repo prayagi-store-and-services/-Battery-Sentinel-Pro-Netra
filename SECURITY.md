@@ -206,7 +206,7 @@ The header is the Netra standard: 56 dp, only the app name, the installed versio
 ## Charging screen and backup (version 1.2.6)
 
 - New optional Charging screen (Battery tab). It shows only real battery readings from Android, on a black screen, and keeps the display on while it is open. It stores one local on/off flag (auto-open when the charger is plugged in, off by default). While the app is on screen it listens for Android's power-connected event, which is event-driven and does not poll. Nothing is sent anywhere.
-- Opening it from the background (overlay permission) is planned, not built.
+- Opening it from the background came in 1.2.7 (see below).
 - Android app backup is now off (allowBackup=false). Before, the app's saved data could be copied to Google backup with sample rules that limited nothing.
 - No new permission, network call or library.
 
@@ -217,3 +217,9 @@ The header is the Netra standard: 56 dp, only the app name, the installed versio
 - Not possible and not attempted: opening over the lock screen (Android 14 limits full-screen notifications to calling and alarm apps: https://source.android.com/docs/core/permissions/fsi-limits ).
 - Android's rules for starting screens from the background: https://developer.android.com/guide/components/activities/secure-bal
 - No network call or library added.
+
+## One home screen widget (version 1.2.8)
+
+- The 13 old widgets were empty (they drew nothing), so they and the Widgets catalogue screen are removed. One widget remains: "Netra Sentinel". It shows battery level, charging state, power source and speed, temperature, voltage, current, power, health, a time estimate and the time of the last reading, all from the phone's own battery readings. A value Android does not report shows "Unavailable".
+- No new permission, network call, library, timer or alarm. The widget is redrawn only when the battery service (already running) records a reading. If the last reading is older than 15 minutes it says so.
+- The widget receiver is exported because Android's launcher must be able to send it update events; it only handles Android's widget update action and has no other entry point. Tapping the widget opens the app.
