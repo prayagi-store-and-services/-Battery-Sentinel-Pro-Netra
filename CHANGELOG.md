@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: the Charging screen can now open by itself when you plug in the charger, even when the app is closed or in the background. It is a second switch under the Charging screen card, off by default. Android only allows this after you grant "Display over other apps" to this app, so the switch opens that Android screen and stays off until you allow it. It uses the charger-connected event the app already listens for, with no extra polling. It cannot open over a locked screen. Tap the screen to close it.
+
+## [1.2.6]
+
 - What's new: optional Charging screen (Battery tab, under Live Power). A plain black screen with the clock and the live battery values from this phone: percentage, charging state, power, voltage, current, temperature and the time estimate, each shown only when Android reports it. It keeps the screen on while open; tap to close. A switch, off by default, opens it when you plug in the charger while the app is open. Opening it while the app is in the background is not included yet because it needs a permission; that is the next part.
 - What's new: Android app backup is turned off. The old setting copied the app's saved data to Google backup with sample rules that limited nothing. No new permission or library.
 
