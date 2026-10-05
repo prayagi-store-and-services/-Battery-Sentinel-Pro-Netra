@@ -31,6 +31,7 @@ import java.util.Locale
 class BatteryForegroundService : Service() {
 
     private var isReceiverRegistered = false
+    private var chargingScreenShownThisPlug = false
     private var batteryManager: BatteryManager? = null
 
     private val batteryReceiver = object : BroadcastReceiver() {
@@ -43,7 +44,16 @@ class BatteryForegroundService : Service() {
             ) {
                 updateBatteryStateFromIntent(intent)
             }
-            if (action == Intent.ACTION_POWER_CONNECTED) openChargingScreenIfAllowed()
+            if (action == Intent.ACTION_POWER_CONNECTED) { chargingScreenShownThisPlug = true; openChargingScreenIfAllowed() }
+            if (action == Intent.ACTION_POWER_DISCONNECTED) chargingScreenShownThisPlug = false
+            if (action == Intent.ACTION_SCREEN_OFF && !chargingScreenShownThisPlug) {
+                // Screen turned off while the charger is connected: show the charging screen once per plug-in.
+                val sticky = try { registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
+                if ((sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0) {
+                    chargingScreenShownThisPlug = true
+                    openChargingScreenIfAllowed()
+                }
+            }
         }
     }
 
@@ -111,6 +121,7 @@ class BatteryForegroundService : Service() {
                     addAction(Intent.ACTION_BATTERY_CHANGED)
                     addAction(Intent.ACTION_POWER_CONNECTED)
                     addAction(Intent.ACTION_POWER_DISCONNECTED)
+                    addAction(Intent.ACTION_SCREEN_OFF)
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     registerReceiver(batteryReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
