@@ -1,5 +1,10 @@
 # Security Policy
 
+## Charging screen over the lock screen (1.2.13)
+- The charging screen can now show over the lock screen and turn the screen on (Android activity flags showWhenLocked and turnScreenOn). It does not unlock the phone and reads nothing from it.
+- It opens when the charger is connected, or once when the screen turns off while charging. The screen-off event is an Android broadcast received only while the existing battery service runs. Opening it from the background still needs the existing Display over other apps permission and the existing off-by-default switch. No new permission, library or network call.
+- It closes on a tap or when the charger is unplugged. Values come from the same source as the Live Power card; missing values show Unavailable. The label "Fast charging" appears only at 15 W or more of measured battery-side power.
+
 ## Restricted-settings help (1.2.4)
 The Saver card shows a drawn step guide only when Android may block Notification access (app not installed from a store or by this app's updater). It is an illustration, labelled as such. It changes no setting, requests no permission, makes no network call and runs no background work; the "Open app info" button only opens Android's own App info screen.
 
