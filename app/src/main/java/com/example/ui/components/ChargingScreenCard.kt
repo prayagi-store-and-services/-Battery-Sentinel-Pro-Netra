@@ -51,6 +51,8 @@ import java.util.Locale
 
 private const val PREFS = "netra_charging_screen"
 private const val KEY_AUTO = "auto_open_on_plug"
+const val CHARGING_SCREEN_PREFS = PREFS
+const val KEY_BACKGROUND = "auto_open_background"
 
 /**
  * Optional charging screen, Portion 1. A plain black full screen with only real readings from the same
@@ -65,11 +67,27 @@ fun ChargingScreenCard() {
     val prefs = remember { c.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }
     var auto by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO, false)) }
     var show by remember { mutableStateOf(false) }
+    var bg by remember { mutableStateOf(prefs.getBoolean(KEY_BACKGROUND, false) && android.provider.Settings.canDrawOverlays(c)) }
+    var bgNote by remember { mutableStateOf<String?>(null) }
+    // Coming back from Android's "Display over other apps" screen: turn it on only if the permission was really granted.
+    DisposableEffect(owner) {
+        val o = LifecycleEventObserver { _, e ->
+            if (e == Lifecycle.Event.ON_RESUME) {
+                val granted = android.provider.Settings.canDrawOverlays(c)
+                if (prefs.getBoolean(KEY_BACKGROUND, false) && !granted) { prefs.edit().putBoolean(KEY_BACKGROUND, false).apply(); bg = false }
+                if (bgNote != null && granted && !bg && prefs.getBoolean("bg_pending", false)) {
+                    prefs.edit().putBoolean(KEY_BACKGROUND, true).putBoolean("bg_pending", false).apply(); bg = true; bgNote = null
+                }
+            }
+        }
+        owner.lifecycle.addObserver(o)
+        onDispose { owner.lifecycle.removeObserver(o) }
+    }
 
-    DisposableEffect(owner, auto) {
+    DisposableEffect(owner, auto, bg) {
         var receiver: BroadcastReceiver? = null
         val obs = LifecycleEventObserver { _, e ->
-            if (e == Lifecycle.Event.ON_START && auto && receiver == null) {
+            if (e == Lifecycle.Event.ON_START && auto && !bg && receiver == null) {
                 receiver = object : BroadcastReceiver() {
                     override fun onReceive(context: Context, intent: Intent) { show = true }
                 }
@@ -91,10 +109,25 @@ fun ChargingScreenCard() {
             Text("Open it when I plug in the charger (app must be open)", fontSize = 14.sp, modifier = Modifier.weight(1f))
             Switch(checked = auto, onCheckedChange = { auto = it; prefs.edit().putBoolean(KEY_AUTO, it).apply() })
         }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("Also open it when the app is closed or in the background (needs Display over other apps)", fontSize = 14.sp, modifier = Modifier.weight(1f))
+            Switch(checked = bg, onCheckedChange = { on ->
+                if (!on) { prefs.edit().putBoolean(KEY_BACKGROUND, false).putBoolean("bg_pending", false).apply(); bg = false; bgNote = null }
+                else if (android.provider.Settings.canDrawOverlays(c)) { prefs.edit().putBoolean(KEY_BACKGROUND, true).apply(); bg = true; bgNote = null }
+                else {
+                    prefs.edit().putBoolean("bg_pending", true).apply()
+                    bgNote = "Unavailable until you allow Display over other apps for this app in the Android screen that just opened, then come back."
+                    try {
+                        c.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + c.packageName)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    } catch (_: Exception) { bgNote = "Unavailable: this phone has no Display over other apps screen." }
+                }
+            })
+        }
+        bgNote?.let { Text(it, fontSize = 12.sp) }
         Button(onClick = { show = true }, modifier = Modifier.fillMaxWidth()) { Text("Open charging screen now") }
         Text(
-            "A black screen with the live battery values from this phone. It keeps the screen on while it is open, so close it with a tap. Off by default. " +
-                "Opening it when the app is in the background needs a permission and is not part of this version.",
+            "A black screen with the live battery values from this phone. It keeps the screen on while it is open, so close it with a tap. Both switches are off by default. " +
+                "The background option uses the charger-connected event the app already listens for (no extra polling) and Android's Display over other apps permission, which only you can grant. It cannot open over a locked screen.",
             fontSize = 10.sp, color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -104,6 +137,14 @@ fun ChargingScreenCard() {
 
 @Composable
 private fun ChargingScreenDialog(onClose: () -> Unit) {
+    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        ChargingScreenContent(onClose)
+    }
+}
+
+/** The black screen itself. Used by the in-app dialog and by ChargingScreenActivity (opened from the background). */
+@Composable
+fun ChargingScreenContent(onClose: () -> Unit) {
     val c = LocalContext.current
     val owner = LocalLifecycleOwner.current
     var ui by remember { mutableStateOf<LivePowerUi?>(null) }
@@ -122,7 +163,7 @@ private fun ChargingScreenDialog(onClose: () -> Unit) {
         view.keepScreenOn = true
         onDispose { view.keepScreenOn = false }
     }
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+    run {
         val u = ui
         Column(
             Modifier.fillMaxSize().background(Color.Black).clickable { onClose() }.padding(24.dp),
