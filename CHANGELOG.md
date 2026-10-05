@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+## [1.2.12]
+
 - What's new: safer Battery Saver display restore. If Android's "Modify system settings" permission is missing when the phone has cooled down, the saved brightness and screen timeout are no longer thrown away: they are kept, the Saver card says "Unavailable" with the reason, and they are put back as soon as the permission is allowed. If you change brightness or screen timeout yourself while the saver is on, your choice is kept and only settings still at the saver's value are put back. A saved restore point is no longer overwritten by a second run. No new permission.
 
 ## [1.2.11]
