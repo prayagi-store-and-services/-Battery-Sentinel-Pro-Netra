@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: truth fix on the Monitoring screen. The cache row said "User Data Protection: Guaranteed", which the app cannot prove. It now reads "Cleanup scope: Cache files only", which matches the cleanup code: it deletes only cache folders. No new permission.
+
+## [1.2.9]
+
 - What's new: a Permissions list in Settings. It shows every permission the app uses (notifications, location, nearby devices, phone state, display over other apps, modify system settings, secure settings, battery optimisation, install apps and the normal always-allowed ones) with the plain reason and the live status read from Android. Tap a row to open the matching Android page. Secure settings can only be granted from a computer, so that row has no button and says so. No new permission is added.
 
 ## [1.2.8]
