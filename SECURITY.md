@@ -229,3 +229,10 @@ The header is the Netra standard: 56 dp, only the app name, the installed versio
 ## Truthful monitoring line in Settings (version 1.2.11)
 
 - Settings no longer says the monitor is an "Ultra-Low Power 24/7 Event-Driven Architecture". The code reacts to Android battery events and also re-checks on a timer (45 seconds, or 15 minutes in the ideal charge state) while the monitor runs, so the old line could not be proven. Text change only: no new permission, network call, library, timer or alarm.
+
+## Battery Saver display restore (version 1.2.12)
+- Before the saver lowers brightness and screen timeout, the app saves the old values in its private storage. They are put back when the phone cools down, charging starts or the level recovers.
+- If "Modify system settings" is not allowed at restore time, the saved values are kept and the Saver card says Unavailable with the reason. They are restored once the permission is allowed. Nothing is restored in secret and no restore is claimed that did not happen.
+- If you changed brightness or screen timeout yourself while the saver was on, your value is kept.
+- Closing background apps asks Android to end only background processes of non-system apps (KILL_BACKGROUND_PROCESSES, a normal permission). Android decides what actually stops; apps with a foreground service or that restart themselves can come back. The card reports RAM before and after instead of a promise. Cleared notifications and closed apps cannot be brought back.
+- No new permission or library.
