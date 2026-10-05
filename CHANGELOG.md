@@ -4,7 +4,7 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-- What's new: new charging screen. With the charger connected and the screen turned off or the phone locked, a black screen shows a big clock, the date, a battery ring with the percentage, the charging label, temperature, charging time, estimate and power. It shows over the lock screen without unlocking the phone, once per plug-in, and closes on a tap or when you unplug. It uses the existing "Also open it when the app is closed" switch (off by default) and Display over other apps, which you already allow there. "Fast charging" appears only when the measured power is 15 W or more; any value Android does not give shows Unavailable.
+- What's new: new charging screen. With the charger connected and the screen turned off or the phone locked, a black screen shows a big clock, the date, a battery ring with the percentage, the charging label, temperature, charging time, estimate and power. It shows over the lock screen without unlocking the phone. It opens at once when you plug in, comes back every time the screen turns off while charging (it stays dark and shows when you next wake the phone), and closes on a double tap (the app you had open comes back) or when you unplug. It uses the existing "Also open it when the app is closed" switch (off by default) and Display over other apps, which you already allow there. "Fast charging" appears only when the measured power is 15 W or more; any value Android does not give shows Unavailable.
 
 ## [1.2.12]
 
