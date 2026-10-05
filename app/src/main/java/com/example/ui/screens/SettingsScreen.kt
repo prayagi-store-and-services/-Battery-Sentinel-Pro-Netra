@@ -122,6 +122,7 @@ fun SettingsScreen(
         }
 
         item { com.example.ui.components.UpdateCheckCard() }
+        item { com.example.ui.components.BsPermissionsCard() }
         item { com.example.stats.UsageCountCard() }
 
         // 1. Charging Target Cutoff (80%, 85%, 90%, 95%, 100%)
