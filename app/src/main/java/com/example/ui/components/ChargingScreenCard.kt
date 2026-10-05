@@ -8,7 +8,12 @@ import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -165,32 +170,54 @@ fun ChargingScreenContent(onClose: () -> Unit) {
     }
     run {
         val u = ui
+        val pct = u?.percentage?.trim()?.removeSuffix("%")?.toFloatOrNull()
+        val watts = u?.power?.trim()?.removeSuffix(" W")?.toDoubleOrNull()
+        val label = when (u?.mode) {
+            PowerMode.CHARGING -> if (watts != null && watts >= FAST_CHARGE_WATTS) "FAST CHARGING" else "CHARGING"
+            PowerMode.DISCHARGING -> "NOT ON CHARGER"
+            PowerMode.FULL -> "FULL"
+            PowerMode.NOT_CHARGING -> "NOT CHARGING"
+            else -> "STATUS UNAVAILABLE"
+        }
         Column(
             Modifier.fillMaxSize().background(Color.Black).clickable { onClose() }.padding(24.dp),
-            verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(now)), color = Color.White, fontSize = 40.sp, fontWeight = FontWeight.Light)
-            Text(SimpleDateFormat("EEE, d MMM yyyy", Locale.getDefault()).format(Date(now)), color = Color(0xFF9E9E9E), fontSize = 14.sp)
-            Text(u?.percentage ?: "Calculating...", color = NetraCyan, fontSize = 72.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 24.dp))
-            Text(
-                when (u?.mode) {
-                    PowerMode.CHARGING -> "Charging"
-                    PowerMode.DISCHARGING -> "Not on charger"
-                    PowerMode.FULL -> "Full"
-                    PowerMode.NOT_CHARGING -> "Not charging"
-                    else -> "Status unknown"
-                },
-                color = Color.White, fontSize = 22.sp, textAlign = TextAlign.Center
-            )
-            if (u != null) {
-                val rows = listOf("Power" to u.power, "Voltage" to u.voltage, "Current" to u.current, "Temperature" to u.temperature,
-                    (u.estimateLabel ?: "Estimate") to (u.estimate ?: "Unavailable"))
-                rows.forEach { (k, v) ->
-                    if (v != "Unavailable") Text("$k: $v", color = Color(0xFFE0E0E0), fontSize = 16.sp, modifier = Modifier.padding(top = 6.dp))
-                }
-                Text("Power is calculated battery-side (voltage x current), not wall-adapter wattage.", color = Color(0xFF757575), fontSize = 10.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 16.dp))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(now)), color = Color.White, fontSize = 64.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date(now)), color = Color(0xFF9E9E9E), fontSize = 16.sp, maxLines = 1)
             }
-            Text("Tap anywhere to close", color = Color(0xFF616161), fontSize = 11.sp, modifier = Modifier.padding(top = 20.dp))
+            Box(Modifier.size(240.dp), contentAlignment = Alignment.Center) {
+                Canvas(Modifier.fillMaxSize()) {
+                    val stroke = 14.dp.toPx()
+                    drawArc(Color(0xFF1B3A2C), -90f, 360f, false, style = Stroke(stroke, cap = StrokeCap.Round))
+                    if (pct != null) drawArc(Color(0xFF3DB07D), -90f, 360f * (pct.coerceIn(0f, 100f) / 100f), false, style = Stroke(stroke, cap = StrokeCap.Round))
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(u?.percentage ?: "Calculating...", color = Color.White, fontSize = 44.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(label, color = Color(0xFF9E9E9E), fontSize = 13.sp, maxLines = 1)
+                }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                ChargingStat(u?.temperature ?: "Unavailable", "Temp")
+                ChargingStat(u?.sessionDuration ?: "Unavailable", "Charging time")
+                ChargingStat(u?.estimate ?: "Unavailable", u?.estimateLabel ?: "Estimate")
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(u?.power ?: "Unavailable", color = Color.White, fontSize = 22.sp, maxLines = 1)
+                Text("Power is battery-side (voltage x current), not wall-adapter wattage. Tap to close.", color = Color(0xFF757575), fontSize = 10.sp, textAlign = TextAlign.Center)
+            }
         }
+    }
+}
+
+/** Shown as "Fast charging" only when the measured battery-side power is at or above this many watts. */
+private const val FAST_CHARGE_WATTS = 15.0
+
+@Composable
+private fun ChargingStat(value: String, name: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = Color.White, fontSize = 18.sp, maxLines = 1)
+        Text(name, color = Color(0xFF9E9E9E), fontSize = 12.sp, maxLines = 1)
     }
 }
