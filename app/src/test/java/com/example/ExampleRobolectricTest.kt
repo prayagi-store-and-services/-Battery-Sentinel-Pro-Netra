@@ -198,10 +198,10 @@ class ExampleRobolectricTest {
 
     @Test
     fun `test degradation sparkline widget color and configuration`() {
-        val emeraldHex = com.example.widget.NetraDegradationSparklineWidgetProvider.getThemeColorHex("EMERALD")
+        val emeraldHex = com.example.widget.NetraBatteryWidgetProvider.getThemeColorHex("EMERALD")
         assertEquals("#00E676", emeraldHex)
 
-        val amoledBg = com.example.widget.NetraDegradationSparklineWidgetProvider.getBgColorHex("AMOLED_BLACK")
+        val amoledBg = com.example.widget.NetraBatteryWidgetProvider.getBgColorHex("AMOLED_BLACK")
         assertEquals("#000000", amoledBg)
     }
 }
