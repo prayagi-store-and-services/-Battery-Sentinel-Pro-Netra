@@ -31,7 +31,6 @@ import java.util.Locale
 class BatteryForegroundService : Service() {
 
     private var isReceiverRegistered = false
-    private var chargingScreenShownThisPlug = false
     private var batteryManager: BatteryManager? = null
 
     private val batteryReceiver = object : BroadcastReceiver() {
@@ -44,26 +43,24 @@ class BatteryForegroundService : Service() {
             ) {
                 updateBatteryStateFromIntent(intent)
             }
-            if (action == Intent.ACTION_POWER_CONNECTED) { chargingScreenShownThisPlug = true; openChargingScreenIfAllowed() }
-            if (action == Intent.ACTION_POWER_DISCONNECTED) chargingScreenShownThisPlug = false
-            if (action == Intent.ACTION_SCREEN_OFF && !chargingScreenShownThisPlug) {
-                // Screen turned off while the charger is connected: show the charging screen once per plug-in.
+            if (action == Intent.ACTION_POWER_CONNECTED) { openChargingScreenIfAllowed(wake = true) }
+            if (action == Intent.ACTION_SCREEN_OFF) {
+                // Screen turned off (idle timeout or lock) while the charger is connected: bring the charging screen back. It stays dark and shows when the phone is next woken.
                 val sticky = try { registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
                 if ((sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0) {
-                    chargingScreenShownThisPlug = true
-                    openChargingScreenIfAllowed()
+                    openChargingScreenIfAllowed(wake = false)
                 }
             }
         }
     }
 
     /** Charging screen from the background: only when the user turned it on AND Android's Display over other apps is granted. */
-    private fun openChargingScreenIfAllowed() {
+    private fun openChargingScreenIfAllowed(wake: Boolean) {
         try {
             val on = getSharedPreferences(com.example.ui.components.CHARGING_SCREEN_PREFS, Context.MODE_PRIVATE)
                 .getBoolean(com.example.ui.components.KEY_BACKGROUND, false)
             if (on && android.provider.Settings.canDrawOverlays(this)) {
-                startActivity(Intent(this, com.example.ui.ChargingScreenActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                startActivity(Intent(this, com.example.ui.ChargingScreenActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra(com.example.ui.ChargingScreenActivity.EXTRA_WAKE, wake))
             }
         } catch (e: Exception) {
             Log.w(TAG, "Could not open the charging screen", e)
