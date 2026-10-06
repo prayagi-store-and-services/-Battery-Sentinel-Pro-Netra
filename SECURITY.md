@@ -1,5 +1,9 @@
 # Security Policy
 
+## Plain update failure messages (1.2.15)
+- If the update check or download fails, the app shows one plain sentence instead of raw system text. The app's own messages (checksum, invalid APK) are unchanged.
+- No new permission, library or network call.
+
 ## Festival list cleanup (1.2.14)
 - Five non-Indian festival entries are removed from the built-in festival list (Lunar New Year, Passover, Friendship Day, two Hanukkah days; 2026 and 2027). It is a fixed list inside the app; nothing is fetched. No permission, library or network change.
 
