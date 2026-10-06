@@ -42,7 +42,15 @@ class LivePowerTelemetry {
     private var sessionStartMs = 0L
     private val window = ArrayDeque<Point>()
 
-    fun reset() { sessionMode = null; window.clear() }
+    /** Charge level the estimate counts down to (the user's target, 100 when not set). */
+    var targetPercent: Int = 100
+
+    // The finish time is fixed when a new whole percent arrives and then only counts down,
+    // so the clock never climbs between readings.
+    private var anchorFinishMs: Long? = null
+    private var anchorPercent: Double? = null
+
+    fun reset() { sessionMode = null; window.clear(); anchorFinishMs = null; anchorPercent = null }
 
     fun update(s: BatterySnapshot, nowMs: Long): LivePowerUi {
         val mode = classify(s)
@@ -78,8 +86,8 @@ class LivePowerTelemetry {
         val tempC = s.temperatureTenthsC?.takeIf { it in -400..1000 }?.let { it / 10.0 }
 
         val (label, estimate) = when (mode) {
-            PowerMode.CHARGING -> "Estimated Time To Full" to estimateText(percent, true, s.status)
-            PowerMode.DISCHARGING -> "Estimated Time Until Empty" to estimateText(percent, false, s.status)
+            PowerMode.CHARGING -> (if (targetPercent in 1..99) "Estimated Time To $targetPercent%" else "Estimated Time To Full") to estimateText(percent, true, s.status, nowMs)
+            PowerMode.DISCHARGING -> "Estimated Time Until Empty" to estimateText(percent, false, s.status, nowMs)
             PowerMode.FULL -> "Estimated Time To Full" to (if (percent != null && percent >= 100.0) "00:00:00" else UNAVAILABLE)
             else -> null to null
         }
@@ -96,10 +104,12 @@ class LivePowerTelemetry {
         )
     }
 
-    private fun estimateText(percent: Double?, charging: Boolean, status: Int): String {
+    private fun estimateText(percent: Double?, charging: Boolean, status: Int, nowMs: Long): String {
         if (percent == null) return UNAVAILABLE
         if (charging && status == BatteryManager.BATTERY_STATUS_FULL) return "00:00:00"
-        val remaining = if (charging) 100.0 - percent else percent
+        val goal = if (charging) targetPercent.coerceIn(1, 100).toDouble() else 0.0
+        val remaining = if (charging) goal - percent else percent
+        if (charging && remaining <= 0.0) return "00:00:00"
         if (remaining <= 0.0) return UNAVAILABLE
         val first = window.firstOrNull() ?: return CALCULATING
         val last = window.last()
@@ -110,7 +120,13 @@ class LivePowerTelemetry {
         if (moved <= 0.0) return if (dtSec < NO_PROGRESS_SEC) CALCULATING else UNAVAILABLE
         val seconds = remaining / (moved / dtSec)
         if (!seconds.isFinite() || seconds <= 0.0 || seconds > MAX_ETA_SEC) return UNAVAILABLE
-        return formatDuration(seconds.toLong())
+        val prevFinish = anchorFinishMs
+        if (prevFinish == null || anchorPercent != percent) {
+            anchorFinishMs = nowMs + (seconds * 1000).toLong()
+            anchorPercent = percent
+        }
+        val left = ((anchorFinishMs ?: (nowMs + (seconds * 1000).toLong())) - nowMs) / 1000L
+        return formatDuration(left.coerceAtLeast(0L))
     }
 
     companion object {
