@@ -19,6 +19,7 @@ class MediaPlaybackController(private val context: Context) {
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
     private var wasMediaPlayingBeforeAnnouncement: Boolean = false
+    private var pausedByKey: Boolean = false
 
     private val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
         Log.d(TAG, "Audio focus changed: $focusChange")
@@ -47,6 +48,9 @@ class MediaPlaybackController(private val context: Context) {
 
         if (wasMediaPlayingBeforeAnnouncement) {
             requestTransientFocus()
+            // Audio focus alone only lowers or mutes some players (Android 12+), the video keeps
+            // running silently. Send a real pause so the other media stops until we finish.
+            pausedByKey = pauseWithMediaKey()
         }
 
         return wasMediaPlayingBeforeAnnouncement
@@ -61,8 +65,36 @@ class MediaPlaybackController(private val context: Context) {
         Log.d(TAG, "restoreAfterAnnouncement - wasMediaPlaying: $wasMediaPlayingBeforeAnnouncement")
         if (wasMediaPlayingBeforeAnnouncement) {
             abandonTransientFocus()
+            // Resume only what we paused ourselves, and only if nothing else started playing.
+            if (pausedByKey && !isMediaPlaying()) {
+                sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY)
+            }
         }
+        pausedByKey = false
         wasMediaPlayingBeforeAnnouncement = false
+    }
+
+    /** Sends a media PAUSE key and waits briefly to confirm media really stopped. */
+    private fun pauseWithMediaKey(): Boolean {
+        sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PAUSE)
+        var waited = 0
+        while (waited < 600) {
+            if (!isMediaPlaying()) return true
+            try { Thread.sleep(100) } catch (_: InterruptedException) { break }
+            waited += 100
+        }
+        return !isMediaPlaying()
+    }
+
+    private fun sendMediaKey(code: Int) {
+        val am = audioManager ?: return
+        try {
+            val now = android.os.SystemClock.uptimeMillis()
+            am.dispatchMediaKeyEvent(android.view.KeyEvent(now, now, android.view.KeyEvent.ACTION_DOWN, code, 0))
+            am.dispatchMediaKeyEvent(android.view.KeyEvent(now, now, android.view.KeyEvent.ACTION_UP, code, 0))
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to send media key $code", e)
+        }
     }
 
     private fun requestTransientFocus() {
