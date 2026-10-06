@@ -96,10 +96,10 @@ class ChargerThermalGuard {
     fun text(advice: Advice, tempC: Float): String {
         val t = String.format(java.util.Locale.US, "%.1f", tempC)
         return when (advice) {
-            Advice.EARLY_RISE -> "Your phone is warming up while charging, now $t degrees and still rising. Close background apps, take off the case, and avoid heavy use."
-            Advice.PRE_DANGER -> "Phone temperature is $t degrees and rising toward the danger zone. Please unplug the charger now and let the phone cool down."
-            Advice.USB_PORT_HEAT -> "Charging through a USB port is slow and the phone is warming, now $t degrees. A file transfer or a low power port can cause this, so it may not be the charger. If it keeps rising, unplug and let the phone cool."
-            Advice.CHARGER_SUSPECT -> "Charging is slow and the phone is heating, now $t degrees. The charger or cable may be faulty. Try a different cable or charger."
+            Advice.EARLY_RISE -> "Phone warming, $t degrees."
+            Advice.PRE_DANGER -> "Phone $t degrees. Unplug the charger."
+            Advice.USB_PORT_HEAT -> "Slow USB port, $t degrees. It may not be the charger."
+            Advice.CHARGER_SUSPECT -> "Slow and hot, $t degrees. Charger may be faulty."
         }
     }
 }
