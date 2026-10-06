@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: when the update check or download fails, the app now shows one plain sentence (for example "No internet, or the server did not answer") instead of raw system text. The app's own messages are unchanged. No new permission.
+
 ## [1.2.14]
 
 - What's new: festival banner cleanup. Five entries that are not Indian festivals (Lunar New Year, Passover, Friendship Day and the two Hanukkah days, in 2026 and 2027) are removed, so the banner only shows days from the Indian list. No other change.
