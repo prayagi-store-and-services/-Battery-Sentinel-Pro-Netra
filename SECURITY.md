@@ -1,5 +1,9 @@
 # Security Policy
 
+## Installer file cleanup (2.0.7)
+
+When the app comes back to the front it also deletes installer files older than one hour from its private cache folder. Nothing outside the app's own folder is touched. No new permission, library or network call.
+
 ## Update download progress (2.0.6)
 
 The update window now stays open during the download and shows progress. Display only: the download, size check, checksum and signature checks are unchanged. No new permission, library or network call.
