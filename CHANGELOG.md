@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: Battery Sentinel 2.0. The charging screen is now yours to design. In the Charging screen card you can pick the clock style (Off, Light, Regular, Bold, Outline, Mono), the battery gauge style (Ring, Dotted ring, Arc, Bars, Battery bar, Number only), the battery details style (Plain, Boxed, One line), which details show (Temp, Voltage, Wattage, Current, Estimate, Charging time), the gauge colour (Auto follows the battery level, or one of 8 colours), the gauge brightness, and how dim the screen gets when idle (5 to 50%, default 10%). Every choice is saved on this phone only. Not tested on a phone by the developer. Dot-matrix and animated clock or gauge styles are not included yet.
+
+## [1.2.15]
+
 - What's new: when the update check or download fails, the app now shows one plain sentence (for example "No internet, or the server did not answer") instead of raw system text. The app's own messages are unchanged. No new permission.
 - What's new: charging screen update. The battery percentage now shows the whole number Android reports (for example 73%) instead of 73.00%, because Android only gives whole numbers. The ring and the percentage change colour with the level, using the same colours as the rest of the app (75% and up green, 50% and up light green, 20% and up amber, below 20% red). The screen dims to 10% brightness after 15 seconds without a touch; a touch or unplugging the charger brings normal brightness back. The charging screen switches are now on by default (showing over other apps still needs you to allow Display over other apps in Android). Not tested on a phone by the developer.
 
