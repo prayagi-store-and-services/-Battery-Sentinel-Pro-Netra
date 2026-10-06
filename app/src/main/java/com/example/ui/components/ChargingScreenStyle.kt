@@ -54,6 +54,7 @@ data class ChargingStyleSettings(
     val color: Int = 0,
     val gaugeBrightness: Float = 1f,
     val dimPercent: Int = 10,
+    val activePercent: Int = 30,
     val items: Set<String> = setOf("temp", "time", "estimate", "watt")
 ) {
     companion object {
@@ -78,6 +79,7 @@ data class ChargingStyleSettings(
                 color = p.getInt("color", d.color).coerceIn(0, COLORS.size - 1),
                 gaugeBrightness = p.getFloat("gaugeBrightness", d.gaugeBrightness).coerceIn(0.3f, 1f),
                 dimPercent = p.getInt("dimPercent", d.dimPercent).coerceIn(5, 50),
+                activePercent = p.getInt("activePercent", d.activePercent).coerceIn(5, 100),
                 items = items
             )
         }
@@ -85,7 +87,7 @@ data class ChargingStyleSettings(
         fun save(c: Context, s: ChargingStyleSettings) {
             c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .putInt("clock", s.clock).putInt("gauge", s.gauge).putInt("details", s.details).putInt("color", s.color)
-                .putFloat("gaugeBrightness", s.gaugeBrightness).putInt("dimPercent", s.dimPercent)
+                .putFloat("gaugeBrightness", s.gaugeBrightness).putInt("dimPercent", s.dimPercent).putInt("activePercent", s.activePercent)
                 .putStringSet("items", s.items).apply()
         }
     }
@@ -226,6 +228,8 @@ fun ChargingDesignSettings() {
         }
         Text("Gauge brightness: ${(s.gaugeBrightness * 100).toInt()}%", fontSize = 13.sp, fontWeight = FontWeight.Bold)
         Slider(value = s.gaugeBrightness, onValueChange = { update(s.copy(gaugeBrightness = it.coerceIn(0.3f, 1f))) }, valueRange = 0.3f..1f)
+        Text("Screen brightness while it is open: ${if (s.activePercent >= 100) "Phone setting" else s.activePercent.toString() + "%"}", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Slider(value = s.activePercent.toFloat(), onValueChange = { update(s.copy(activePercent = it.toInt().coerceIn(5, 100))) }, valueRange = 5f..100f)
         Text("Screen brightness when idle (after 15 seconds): ${s.dimPercent}%", fontSize = 13.sp, fontWeight = FontWeight.Bold)
         Slider(value = s.dimPercent.toFloat(), onValueChange = { update(s.copy(dimPercent = it.toInt().coerceIn(5, 50))) }, valueRange = 5f..50f)
     }
