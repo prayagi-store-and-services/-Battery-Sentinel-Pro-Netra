@@ -255,7 +255,7 @@ fun AnnouncementSettingsCard(
                     icon = Icons.Default.BatteryChargingFull,
                     iconTint = NetraCyan,
                     title = "Phone Battery Announcements",
-                    subtitle = "Spoken at every 5% boundary: 'C 80 percent' (Charging) or 'D 80 percent' (Discharging)",
+                    subtitle = "Spoken at every 5%: '80 percent'",
                     checked = settings.announcePhoneBattery,
                     onCheckedChange = { viewModel.setAnnouncePhoneBattery(it) },
                     testTag = "announce_phone_battery_switch"
@@ -268,7 +268,7 @@ fun AnnouncementSettingsCard(
                     icon = Icons.Default.Power,
                     iconTint = NetraEmerald,
                     title = "Charger Connected / Disconnected",
-                    subtitle = "Speaks 'Charger connected.' and 'Charger disconnected.' on state transitions",
+                    subtitle = "Says 'Power connected, 42 percent.' or 'Power disconnected, 42 percent.'",
                     checked = settings.announceChargerConnected,
                     onCheckedChange = { viewModel.setAnnounceChargerConnected(it) },
                     testTag = "announce_charger_connected_switch"
