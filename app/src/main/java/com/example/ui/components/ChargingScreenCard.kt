@@ -180,7 +180,8 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
     LaunchedEffect(win) {
         var dimmed = false
         while (true) {
-            val idle = SystemClock.elapsedRealtime() - lastTouchMs >= 15_000L
+            val stillCharging = ui?.mode.let { it == null || it == com.example.service.PowerMode.CHARGING || it == com.example.service.PowerMode.FULL }
+            val idle = stillCharging && SystemClock.elapsedRealtime() - lastTouchMs >= 15_000L
             if (idle && !dimmed) { setBrightness(st.dimPercent / 100f); dimmed = true }
             else if (!idle && dimmed) { setBrightness(android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE); dimmed = false }
             delay(250L)
