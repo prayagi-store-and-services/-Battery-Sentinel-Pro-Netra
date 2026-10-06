@@ -808,6 +808,8 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             }
 
             if (mergedLevel != null) {
+                // Plugged in: the screen must be readable again at once. The low battery state itself stays until 35%.
+                if (mergedIsCharging == true && isLowBatteryControlActiveState && !isCriticalThermalActiveState) targetBrightnessPercentState = null
                 if (mergedLevel <= 30 && mergedIsCharging != true && !isLowBatteryControlActiveState) {
                     isLowBatteryControlActiveState = true
                     targetBrightnessPercentState = 10
@@ -821,7 +823,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                             source = source
                         )
                     )
-                } else if ((mergedLevel >= 35 || mergedIsCharging == true) && isLowBatteryControlActiveState) {
+                } else if (mergedLevel >= 35 && isLowBatteryControlActiveState) {
                     isLowBatteryControlActiveState = false
                     if (!isCriticalThermalActiveState) {
                         targetBrightnessPercentState = null
