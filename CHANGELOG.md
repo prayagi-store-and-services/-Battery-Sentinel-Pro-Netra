@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: the Estimate time on the charging screen and in Live Power went up instead of down. It now counts down to the charge target you picked (for example "Estimated Time To 80%") and only recalculates when the battery percent changes, so it never climbs between readings. It shows 00:00:00 once the target is reached.
+
+## [2.0.1]
+
 - What's new: shorter announcements. Plugging in says "Power connected, 42 percent." and unplugging says "Power disconnected, 42 percent." (the percent is left out at 100 and at your own target). The extra "Charging started", "Charging stopped" and "Discharging started" lines are gone. Bluetooth says "BT Buds, 60 percent." on connect and on disconnect, or only "BT Buds." when the device gives no battery. Phone battery says only "80 percent". Heat and power saving messages are shorter.
 - Fixed: the charge target you pick (80, 85, 90 or 95) was only a notification and was never spoken. It now speaks "85 percent. Target reached." the moment that level is reached, and also if you change the target while charging.
 
