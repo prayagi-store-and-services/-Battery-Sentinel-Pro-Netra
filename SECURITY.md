@@ -1,5 +1,9 @@
 # Security Policy
 
+## Shorter announcements and spoken charge target (2.0.1)
+
+Only spoken text and one local alert changed. No new permission, network call, library or stored data. The charge target alert now also speaks through the existing text to speech engine.
+
 ## Charging screen design options (2.0.0)
 - New choices for the charging screen look: clock, gauge, details style, shown items, colour, gauge brightness and idle brightness. They are saved only in this app's private settings on the phone. Nothing is sent anywhere.
 - All values shown are the same real readings as before. A reading Android does not give still shows "Unavailable".
