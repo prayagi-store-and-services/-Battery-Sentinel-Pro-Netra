@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: voice announcements now really pause other media. Before, some players (most videos on Android 12 and newer) were only muted while the video kept running silently. The app now sends a pause to the playing media, speaks, then resumes it automatically. It resumes only media that was playing before the announcement, and never starts media that was not playing. No new permission.
+
 ## [1.2.14]
 
 - What's new: festival banner cleanup. Five entries that are not Indian festivals (Lunar New Year, Passover, Friendship Day and the two Hanukkah days, in 2026 and 2027) are removed, so the banner only shows days from the Indian list. No other change.
