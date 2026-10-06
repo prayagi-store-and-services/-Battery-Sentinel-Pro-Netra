@@ -1,5 +1,9 @@
 # Security Policy
 
+## Charging screen brightness and switch (2.0.5)
+
+Two new on-phone settings (screen brightness level and an on/off switch) saved in the app's private preferences. Only the app window brightness changes, no system setting. No new permission, library or network call.
+
 ## Brightness restore (2.0.4)
 
 Only the app window brightness override changed (no system setting, no new permission). It now lifts on touch and when the protection ends.
