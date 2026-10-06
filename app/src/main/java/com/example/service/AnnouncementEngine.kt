@@ -283,7 +283,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                     enqueue(
                         AnnouncementItem(
                             id = "charger_connected_$now",
-                            text = "Charger connected.",
+                            text = levelText("Power connected", event.eventType),
                             priority = AnnouncementPriority.CHARGER_STATE,
                             category = "CHARGER",
                             isNightException = true
@@ -296,7 +296,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                     enqueue(
                         AnnouncementItem(
                             id = "charger_disconnected_$now",
-                            text = "Charger disconnected.",
+                            text = levelText("Power disconnected", event.eventType),
                             priority = AnnouncementPriority.CHARGER_STATE,
                             category = "CHARGER",
                             isNightException = true
@@ -305,43 +305,13 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 }
             }
             NetraEventType.CHARGING_STARTED -> {
-                if (settings.announceChargerConnected) {
-                    enqueue(
-                        AnnouncementItem(
-                            id = "charging_started_$now",
-                            text = "Charging started.",
-                            priority = AnnouncementPriority.CHARGER_STATE,
-                            category = "CHARGER",
-                            isNightException = true
-                        )
-                    )
-                }
+                // Not announced: the plug or unplug announcement already says it (one short phrase per event).
             }
             NetraEventType.CHARGING_STOPPED -> {
-                if (settings.announceChargerConnected) {
-                    enqueue(
-                        AnnouncementItem(
-                            id = "charging_stopped_$now",
-                            text = "Charging stopped.",
-                            priority = AnnouncementPriority.CHARGER_STATE,
-                            category = "CHARGER",
-                            isNightException = true
-                        )
-                    )
-                }
+                // Not announced: the plug or unplug announcement already says it (one short phrase per event).
             }
             NetraEventType.DISCHARGING_STARTED -> {
-                if (settings.announcePhoneBattery) {
-                    enqueue(
-                        AnnouncementItem(
-                            id = "discharging_started_$now",
-                            text = "Discharging started.",
-                            priority = AnnouncementPriority.CHARGER_STATE,
-                            category = "CHARGER",
-                            isNightException = true
-                        )
-                    )
-                }
+                // Not announced: the plug or unplug announcement already says it (one short phrase per event).
             }
             NetraEventType.BATTERY_LEVEL_CROSSED -> {
                 val boundary = event.newValue?.toIntOrNull()
@@ -349,7 +319,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                     val state = NetraApplication.instance.centralDataCenter.centralState.value
                     val isCharging = state.isCharging == true
                     val prefix = if (isCharging) "C" else "D"
-                    val text = "$prefix $boundary percent"
+                    val text = "$boundary percent"
                     enqueue(
                         AnnouncementItem(
                             id = "phone_boundary_$boundary",
@@ -365,7 +335,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 enqueue(
                     AnnouncementItem(
                         id = "bt_conn_${event.eventId}",
-                        text = "BT connected.",
+                        text = btText(event.newValue, event.previousValue?.toIntOrNull(), false),
                         priority = AnnouncementPriority.BLUETOOTH_STATE,
                         category = "BLUETOOTH_STATE",
                         isNightException = false
@@ -376,7 +346,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 enqueue(
                     AnnouncementItem(
                         id = "bt_disc_${event.eventId}",
-                        text = "BT disconnected.",
+                        text = btText(event.newValue, event.previousValue?.toIntOrNull(), true),
                         priority = AnnouncementPriority.BLUETOOTH_STATE,
                         category = "BLUETOOTH_STATE",
                         isNightException = false
@@ -389,7 +359,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                     enqueue(
                         AnnouncementItem(
                             id = "bt_battery_${event.eventId}",
-                            text = "BT $batteryPct percent",
+                            text = btText(event.previousValue, batteryPct, false),
                             priority = AnnouncementPriority.BLUETOOTH_BATTERY,
                             category = "BLUETOOTH_BATTERY",
                             isNightException = false
@@ -401,7 +371,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 if (settings.announceThermalWarning) {
                     val temp = event.newValue?.toFloatOrNull() ?: 40.0f
                     val tempFormatted = String.format(Locale.US, "%.1f", temp)
-                    val text = "Phone temperature is $tempFormatted degrees. Please stop using the phone and move to a cooler environment."
+                    val text = "Phone hot, $tempFormatted degrees."
                     enqueue(
                         AnnouncementItem(
                             id = "thermal_warn_$now",
@@ -417,7 +387,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 if (settings.announceThermalWarning) {
                     val temp = event.newValue?.toFloatOrNull() ?: 45.0f
                     val tempFormatted = String.format(Locale.US, "%.1f", temp)
-                    val text = "Thermal warning. Your phone temperature is $tempFormatted degrees. Please stop using the phone and move to a cooler environment."
+                    val text = "Overheating, $tempFormatted degrees."
                     enqueue(
                         AnnouncementItem(
                             id = "thermal_crit_$now",
@@ -433,7 +403,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 enqueue(
                     AnnouncementItem(
                         id = "thermal_prot_start_$now",
-                        text = "Thermal control started.",
+                        text = "Cooling on.",
                         priority = AnnouncementPriority.CRITICAL_THERMAL,
                         category = "THERMAL_PROTECTION",
                         isNightException = true
@@ -444,7 +414,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 enqueue(
                     AnnouncementItem(
                         id = "low_bat_prot_start_$now",
-                        text = "Battery power saving started.",
+                        text = "Power saving on.",
                         priority = AnnouncementPriority.CHARGER_STATE,
                         category = "LOW_BATTERY_PROTECTION",
                         isNightException = true
@@ -514,6 +484,20 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
      * Enqueues an announcement item respecting master enabled, night protection, and deduplication.
      */
     @Synchronized
+    /** "Power connected, 42 percent." The percent is left out at 100 and at the user's own target, which have their own line. */
+    /** "BT Buds, 60 percent." With no battery info: "BT Buds." The percent is left out at 100 on disconnect. */
+    private fun btText(name: String?, pct: Int?, disconnect: Boolean): String {
+        val n = name?.takeIf { it.isNotBlank() } ?: "device"
+        return if (pct == null || (disconnect && pct >= 100)) "BT $n." else "BT $n, $pct percent."
+    }
+
+    private fun levelText(base: String, type: NetraEventType): String {
+        val level = NetraApplication.instance.centralDataCenter.centralState.value.batteryLevel ?: return "$base."
+        val target = NetraApplication.instance.settingsRepository.settings.value.chargeTargetPercent
+        if (type == NetraEventType.CHARGER_DISCONNECTED && (level >= 100 || level == target)) return "$base."
+        return "$base, $level percent."
+    }
+
     fun enqueue(item: AnnouncementItem) {
         val settings = getSettings()
 
