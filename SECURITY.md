@@ -1,5 +1,9 @@
 # Security Policy
 
+## Update alert tap installs (2.0.3)
+
+The existing update notification now opens the app with a flag that runs the existing verified download and install flow (same SHA-256 and signature checks). No new permission, library or server. The check runs every 6 hours instead of 24.
+
 ## Estimate time countdown (2.0.2)
 
 Only the estimate calculation and its label changed. It reads the existing charge target setting. No new permission, network call, library or stored data.
