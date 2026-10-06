@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: tapping Update made the update window disappear, so nothing looked like it was downloading. The window now stays open and shows the real progress: percent downloaded (counting up), megabytes done of total, a progress bar and the time left (it never goes up). The same progress shows in the App updates card.
+
+## [2.0.5]
+
 - Fixed: the charging screen was too bright. It now opens at 30% brightness by default, and a new slider "Screen brightness while it is open" lets you set it from 5% to 100% (100% means the phone's own setting). The idle dim after 15 seconds can never be brighter than that.
 
 - What's new: a new switch "Charging screen on" in the Charging screen card. Turn it off and the charging screen never opens by itself (app open or closed). "Open charging screen now" still works.
