@@ -135,6 +135,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        Thread { com.example.update.UpdateFileCleanup.cleanStale(applicationContext) }.start()
         viewModel.refreshHardwareState()
     }
 }
