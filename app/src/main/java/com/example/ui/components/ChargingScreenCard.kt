@@ -63,7 +63,7 @@ const val KEY_BACKGROUND = "auto_open_background"
 
 /**
  * Optional charging screen, Portion 1. A plain black full screen with only real readings from the same
- * source as the Live Power card. The auto-open switch is OFF by default and only reacts while the app is
+ * source as the Live Power card. The auto-open switch is ON by default and only reacts while the app is
  * on screen (an event from Android, no polling). Opening it while the app is hidden needs the overlay
  * permission and ships in Portion 2. Tap anywhere to close.
  */
@@ -72,16 +72,16 @@ fun ChargingScreenCard() {
     val c = LocalContext.current
     val owner = LocalLifecycleOwner.current
     val prefs = remember { c.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }
-    var auto by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO, false)) }
+    var auto by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO, true)) }
     var show by remember { mutableStateOf(false) }
-    var bg by remember { mutableStateOf(prefs.getBoolean(KEY_BACKGROUND, false) && android.provider.Settings.canDrawOverlays(c)) }
+    var bg by remember { mutableStateOf(prefs.getBoolean(KEY_BACKGROUND, true) && android.provider.Settings.canDrawOverlays(c)) }
     var bgNote by remember { mutableStateOf<String?>(null) }
     // Coming back from Android's "Display over other apps" screen: turn it on only if the permission was really granted.
     DisposableEffect(owner) {
         val o = LifecycleEventObserver { _, e ->
             if (e == Lifecycle.Event.ON_RESUME) {
                 val granted = android.provider.Settings.canDrawOverlays(c)
-                if (prefs.getBoolean(KEY_BACKGROUND, false) && !granted) { prefs.edit().putBoolean(KEY_BACKGROUND, false).apply(); bg = false }
+                if (prefs.contains(KEY_BACKGROUND) && prefs.getBoolean(KEY_BACKGROUND, true) && !granted) { prefs.edit().putBoolean(KEY_BACKGROUND, false).apply(); bg = false }
                 if (bgNote != null && granted && !bg && prefs.getBoolean("bg_pending", false)) {
                     prefs.edit().putBoolean(KEY_BACKGROUND, true).putBoolean("bg_pending", false).apply(); bg = true; bgNote = null
                 }
@@ -111,7 +111,7 @@ fun ChargingScreenCard() {
         }
     }
 
-    SentinelCard(title = "Charging screen (optional)", icon = Icons.Default.Bolt, dotState = DotState.CONNECTED, accentColor = NetraCyan) {
+    SentinelCard(title = "Charging screen", icon = Icons.Default.Bolt, dotState = DotState.CONNECTED, accentColor = NetraCyan) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Open it when I plug in the charger (app must be open)", fontSize = 14.sp, modifier = Modifier.weight(1f))
             Switch(checked = auto, onCheckedChange = { auto = it; prefs.edit().putBoolean(KEY_AUTO, it).apply() })
@@ -133,7 +133,7 @@ fun ChargingScreenCard() {
         bgNote?.let { Text(it, fontSize = 12.sp) }
         Button(onClick = { show = true }, modifier = Modifier.fillMaxWidth()) { Text("Open charging screen now") }
         Text(
-            "A black screen with the live battery values from this phone. It keeps the screen on while it is open, so close it with a tap. Both switches are off by default. " +
+            "A black screen with the live battery values from this phone. It keeps the screen on while it is open (dimmed after 15 seconds), so close it with a double tap. Both switches are on by default; you can turn them off. After 15 seconds without a touch the screen dims to 10% brightness; a touch brings normal brightness back, and so does unplugging. " +
                 "The background option uses the charger-connected event the app already listens for (no extra polling) and Android's Display over other apps permission, which only you can grant. It cannot open over a locked screen.",
             fontSize = 10.sp, color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -170,10 +170,27 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
         view.keepScreenOn = keepScreenOn
         onDispose { view.keepScreenOn = false }
     }
+    // Dim to 10% after 15 seconds without a touch; a touch or closing the screen restores normal brightness.
+    var lastTouchMs by remember { mutableStateOf(SystemClock.elapsedRealtime()) }
+    val win = remember(view) { windowOfView(view) }
+    fun setBrightness(v: Float) { win?.let { w -> val a = w.attributes; a.screenBrightness = v; w.attributes = a } }
+    LaunchedEffect(win) {
+        var dimmed = false
+        while (true) {
+            val idle = SystemClock.elapsedRealtime() - lastTouchMs >= 15_000L
+            if (idle && !dimmed) { setBrightness(0.1f); dimmed = true }
+            else if (!idle && dimmed) { setBrightness(android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE); dimmed = false }
+            delay(250L)
+        }
+    }
+    DisposableEffect(win) {
+        onDispose { win?.let { w -> val a = w.attributes; a.screenBrightness = android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE; w.attributes = a } }
+    }
     run {
         val u = ui
         val pct = u?.percentage?.trim()?.removeSuffix("%")?.toFloatOrNull()
         val watts = u?.power?.trim()?.removeSuffix(" W")?.toDoubleOrNull()
+        val pctColor = chargingLevelColor(pct)
         val label = when (u?.mode) {
             PowerMode.CHARGING -> if (watts != null && watts >= FAST_CHARGE_WATTS) "FAST CHARGING" else "CHARGING"
             PowerMode.DISCHARGING -> "NOT ON CHARGER"
@@ -182,7 +199,7 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
             else -> "STATUS UNAVAILABLE"
         }
         Column(
-            Modifier.fillMaxSize().background(Color.Black).pointerInput(Unit) { detectTapGestures(onDoubleTap = { onClose() }) }.padding(24.dp),
+            Modifier.fillMaxSize().background(Color.Black).pointerInput(Unit) { awaitPointerEventScope { while (true) { awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial); lastTouchMs = SystemClock.elapsedRealtime() } } }.pointerInput(Unit) { detectTapGestures(onDoubleTap = { onClose() }) }.padding(24.dp),
             verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -192,12 +209,12 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
             Box(Modifier.size(240.dp), contentAlignment = Alignment.Center) {
                 Canvas(Modifier.fillMaxSize()) {
                     val stroke = 14.dp.toPx()
-                    drawArc(Color(0xFF1B3A2C), -90f, 360f, false, style = Stroke(stroke, cap = StrokeCap.Round))
-                    if (pct != null) drawArc(Color(0xFF3DB07D), -90f, 360f * (pct.coerceIn(0f, 100f) / 100f), false, style = Stroke(stroke, cap = StrokeCap.Round))
+                    drawArc(pctColor.copy(alpha = 0.22f), -90f, 360f, false, style = Stroke(stroke, cap = StrokeCap.Round))
+                    if (pct != null) drawArc(pctColor, -90f, 360f * (pct.coerceIn(0f, 100f) / 100f), false, style = Stroke(stroke, cap = StrokeCap.Round))
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(u?.percentage ?: "Calculating...", color = Color.White, fontSize = 44.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                    Text(label, color = Color(0xFF9E9E9E), fontSize = 13.sp, maxLines = 1)
+                    Text(if (pct != null) "${pct.toInt()}%" else (u?.percentage ?: "Calculating..."), color = pctColor, fontSize = 44.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(label, color = pctColor, fontSize = 13.sp, maxLines = 1)
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -222,4 +239,23 @@ private fun ChargingStat(value: String, name: String) {
         Text(value, color = Color.White, fontSize = 18.sp, maxLines = 1)
         Text(name, color = Color(0xFF9E9E9E), fontSize = 12.sp, maxLines = 1)
     }
+}
+
+/** Same colour steps as the battery colours elsewhere in the app: 75+ green, 50+ light green, 20+ amber, below 20 red. */
+internal fun chargingLevelColor(pct: Float?): Color = when {
+    pct == null -> Color(0xFF9E9E9E)
+    pct >= 75f -> com.example.ui.theme.NetraEmerald
+    pct >= 50f -> com.example.ui.theme.StatusGreen
+    pct >= 20f -> com.example.ui.theme.StatusAmber
+    else -> com.example.ui.theme.DangerRed
+}
+
+private fun windowOfView(view: android.view.View): android.view.Window? {
+    (view.parent as? androidx.compose.ui.window.DialogWindowProvider)?.let { return it.window }
+    var ctx: Context? = view.context
+    while (ctx is android.content.ContextWrapper) {
+        if (ctx is android.app.Activity) return ctx.window
+        ctx = ctx.baseContext
+    }
+    return null
 }
