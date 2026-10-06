@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: the screen could stay stuck at 10% brightness. The temperature and low battery protection dim now only applies after 15 seconds without a touch, any touch brings normal brightness back at once, and it is released when you plug in the charger or the phone cools down. The charging screen also restores brightness the moment the charger is unplugged.
+
 - What's new: update alert. When a new version is out, a notification appears (checked every 6 hours). Tapping it downloads the new build and starts the install straight away. Android may still ask you to allow installs from this app once.
 
 ## [2.0.2]
