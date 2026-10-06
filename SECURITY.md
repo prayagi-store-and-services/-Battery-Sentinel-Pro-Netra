@@ -1,5 +1,9 @@
 # Security Policy
 
+## Update download progress (2.0.6)
+
+The update window now stays open during the download and shows progress. Display only: the download, size check, checksum and signature checks are unchanged. No new permission, library or network call.
+
 ## Charging screen brightness and switch (2.0.5)
 
 Two new on-phone settings (screen brightness level and an on/off switch) saved in the app's private preferences. Only the app window brightness changes, no system setting. No new permission, library or network call.
