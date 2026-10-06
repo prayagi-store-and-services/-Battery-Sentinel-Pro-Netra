@@ -101,6 +101,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun dispatchTouchEvent(ev: android.view.MotionEvent?): Boolean {
+        BrightnessTouch.lastMs = android.os.SystemClock.elapsedRealtime()
+        return super.dispatchTouchEvent(ev)
+    }
+
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         handleNetworkPanelExtra(intent)
@@ -151,18 +156,27 @@ fun MainAppContent(viewModel: NetraViewModel) {
     }
 
     // Thermal & Low Battery Brightness Protection Lock
+    // The protection dim (10%) only applies while the screen is idle. Any touch brings normal brightness back at once,
+    // and it comes back for good as soon as the protection ends (charger connected, cooled down, battery recovered).
     LaunchedEffect(canonical.targetBrightnessPercent) {
         val activity = context as? ComponentActivity
         val window = activity?.window
         val target = canonical.targetBrightnessPercent
         if (window != null) {
-            val lp = window.attributes
-            if (target != null) {
-                lp.screenBrightness = (target / 100f).coerceIn(0.01f, 1.0f)
-            } else {
-                lp.screenBrightness = android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+            var applied: Float? = null
+            while (true) {
+                val idle = android.os.SystemClock.elapsedRealtime() - com.example.BrightnessTouch.lastMs >= 15_000L
+                val want = if (target != null && idle) (target / 100f).coerceIn(0.01f, 1.0f)
+                    else android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                if (applied != want) {
+                    val lp = window.attributes
+                    lp.screenBrightness = want
+                    window.attributes = lp
+                    applied = want
+                }
+                if (target == null) break
+                kotlinx.coroutines.delay(300L)
             }
-            window.attributes = lp
         }
     }
 
@@ -271,4 +285,9 @@ fun MainAppContent(viewModel: NetraViewModel) {
             }
         }
     }
+}
+
+/** Time of the last touch in the main window; the protection dim waits 15 s after it. */
+object BrightnessTouch {
+    @Volatile var lastMs: Long = android.os.SystemClock.elapsedRealtime()
 }
