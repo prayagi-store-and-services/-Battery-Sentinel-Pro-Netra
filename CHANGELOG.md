@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: update alert. When a new version is out, a notification appears (checked every 6 hours). Tapping it downloads the new build and starts the install straight away. Android may still ask you to allow installs from this app once.
+
+## [2.0.2]
+
 - Fixed: the Estimate time on the charging screen and in Live Power went up instead of down. It now counts down to the charge target you picked (for example "Estimated Time To 80%") and only recalculates when the battery percent changes, so it never climbs between readings. It shows 00:00:00 once the target is reached.
 
 ## [2.0.1]
