@@ -49,6 +49,7 @@ class BatteryMonitorService : Service() {
     private var lastTemp: Float = 0f
     private var lastTempTimestamp: Long = 0L
     private var lastNotified80PercentSession = false
+    private var lastNotifiedTargetValue = -1
     private var lastOverheatAlertTime = 0L
     private var lastThresholdAlertTime = 0L
 
@@ -379,8 +380,21 @@ class BatteryMonitorService : Service() {
 
         // 80% (or user target) Unplug Alert
         if (settings.unplugAlarmEnabled && state.isCharging == true && state.batteryLevel != null && state.batteryLevel >= settings.chargeTargetPercent) {
-            if (!lastNotified80PercentSession) {
+            // Re-arm when the user picks a different target while charging, so the new level also speaks.
+            if (!lastNotified80PercentSession || lastNotifiedTargetValue != settings.chargeTargetPercent) {
                 lastNotified80PercentSession = true
+                lastNotifiedTargetValue = settings.chargeTargetPercent
+                try {
+                    NetraApplication.instance.announcementEngine.enqueue(
+                        AnnouncementItem(
+                            id = "charge_target_${settings.chargeTargetPercent}_${now}",
+                            text = "${requireNotNull(state.batteryLevel)} percent. Target reached.",
+                            priority = AnnouncementPriority.CHARGER_STATE,
+                            category = "CHARGE_TARGET",
+                            isNightException = true
+                        )
+                    )
+                } catch (_: Exception) {}
                 sendUnplugAlarmNotification(requireNotNull(state.batteryLevel), settings.chargeTargetPercent)
                 triggerVibrationAlert()
                 serviceScope.launch {
