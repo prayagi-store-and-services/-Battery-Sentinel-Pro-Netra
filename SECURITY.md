@@ -1,5 +1,9 @@
 # Security Policy
 
+## Estimate time countdown (2.0.2)
+
+Only the estimate calculation and its label changed. It reads the existing charge target setting. No new permission, network call, library or stored data.
+
 ## Shorter announcements and spoken charge target (2.0.1)
 
 Only spoken text and one local alert changed. No new permission, network call, library or stored data. The charge target alert now also speaks through the existing text to speech engine.
