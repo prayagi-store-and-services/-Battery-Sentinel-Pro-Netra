@@ -1,5 +1,10 @@
 # Security Policy
 
+## Charging screen design options (2.0.0)
+- New choices for the charging screen look: clock, gauge, details style, shown items, colour, gauge brightness and idle brightness. They are saved only in this app's private settings on the phone. Nothing is sent anywhere.
+- All values shown are the same real readings as before. A reading Android does not give still shows "Unavailable".
+- No new permission, library or network call.
+
 ## Charging screen update (1.2.15)
 - The charging screen now shows the whole battery percentage that Android reports, colours it by level, and dims the screen to 10% after 15 seconds without a touch. A touch, closing the screen or unplugging the charger restores normal brightness. Only the screen window brightness is changed, and only while this screen is open.
 - The charging screen switches are on by default. Opening it over other apps still needs the Android permission Display over other apps, which only the user can grant. Anyone who turned a switch off before keeps it off.
