@@ -111,7 +111,7 @@ class GitHubReleaseUpdater(context: Context) {
                 withContext(Dispatchers.Main) {
                     // Keep the update offered (so the user can retry) and tell them exactly why it failed.
                     _state.value = UpdateUiState.Available(release)
-                    onError(e.message ?: "Update failed.")
+                    onError(plainFailure(e, "Update failed."))
                 }
             }
         }
@@ -149,7 +149,7 @@ class GitHubReleaseUpdater(context: Context) {
         try {
             metadata = fetchText(API_URL, true)
         } catch (e: Exception) {
-            apiFailure = e.message ?: "GitHub API unreachable"
+            apiFailure = plainFailure(e, "GitHub API unreachable")
         }
         var candidate: GitHubReleasePolicy.Candidate? = null
         var tag = ""
@@ -177,7 +177,7 @@ class GitHubReleaseUpdater(context: Context) {
             _state.value = if (cached != null && cached.versionCode > installed) {
                 UpdateUiState.Available(cached)
             } else {
-                UpdateUiState.Error(((apiFailure ?: "") + " " + (e.message ?: "backup source failed")).trim())
+                UpdateUiState.Error(listOfNotNull(apiFailure, plainFailure(e, "backup source failed")).distinct().joinToString(" "))
             }
             return@withContext
         }
