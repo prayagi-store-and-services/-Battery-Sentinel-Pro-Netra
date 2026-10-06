@@ -60,6 +60,7 @@ private const val PREFS = "netra_charging_screen"
 private const val KEY_AUTO = "auto_open_on_plug"
 const val CHARGING_SCREEN_PREFS = PREFS
 const val KEY_BACKGROUND = "auto_open_background"
+const val KEY_SCREEN_ENABLED = "charging_screen_enabled"
 
 /**
  * Optional charging screen, Portion 1. A plain black full screen with only real readings from the same
@@ -72,6 +73,7 @@ fun ChargingScreenCard() {
     val c = LocalContext.current
     val owner = LocalLifecycleOwner.current
     val prefs = remember { c.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }
+    var enabled by remember { mutableStateOf(prefs.getBoolean(KEY_SCREEN_ENABLED, true)) }
     var auto by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO, true)) }
     var show by remember { mutableStateOf(false) }
     var bg by remember { mutableStateOf(prefs.getBoolean(KEY_BACKGROUND, true) && android.provider.Settings.canDrawOverlays(c)) }
@@ -91,10 +93,10 @@ fun ChargingScreenCard() {
         onDispose { owner.lifecycle.removeObserver(o) }
     }
 
-    DisposableEffect(owner, auto, bg) {
+    DisposableEffect(owner, auto, bg, enabled) {
         var receiver: BroadcastReceiver? = null
         val obs = LifecycleEventObserver { _, e ->
-            if (e == Lifecycle.Event.ON_START && auto && !bg && receiver == null) {
+            if (e == Lifecycle.Event.ON_START && enabled && auto && !bg && receiver == null) {
                 receiver = object : BroadcastReceiver() {
                     override fun onReceive(context: Context, intent: Intent) { show = true }
                 }
@@ -112,6 +114,10 @@ fun ChargingScreenCard() {
     }
 
     SentinelCard(title = "Charging screen", icon = Icons.Default.Bolt, dotState = DotState.CONNECTED, accentColor = NetraCyan) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("Charging screen on (turn off to stop it opening by itself)", fontSize = 14.sp, modifier = Modifier.weight(1f))
+            Switch(checked = enabled, onCheckedChange = { enabled = it; prefs.edit().putBoolean(KEY_SCREEN_ENABLED, it).apply() })
+        }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Open it when I plug in the charger (app must be open)", fontSize = 14.sp, modifier = Modifier.weight(1f))
             Switch(checked = auto, onCheckedChange = { auto = it; prefs.edit().putBoolean(KEY_AUTO, it).apply() })
@@ -177,13 +183,16 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
     var lastTouchMs by remember { mutableStateOf(SystemClock.elapsedRealtime()) }
     val win = remember(view) { windowOfView(view) }
     fun setBrightness(v: Float) { win?.let { w -> val a = w.attributes; a.screenBrightness = v; w.attributes = a } }
+    val activeB = if (st.activePercent >= 100) android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE else st.activePercent / 100f
+    val idleB = (minOf(st.dimPercent, st.activePercent) / 100f)
     LaunchedEffect(win) {
         var dimmed = false
+        setBrightness(activeB)
         while (true) {
             val stillCharging = ui?.mode.let { it == null || it == com.example.service.PowerMode.CHARGING || it == com.example.service.PowerMode.FULL }
             val idle = stillCharging && SystemClock.elapsedRealtime() - lastTouchMs >= 15_000L
-            if (idle && !dimmed) { setBrightness(st.dimPercent / 100f); dimmed = true }
-            else if (!idle && dimmed) { setBrightness(android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE); dimmed = false }
+            if (idle && !dimmed) { setBrightness(idleB); dimmed = true }
+            else if (!idle && dimmed) { setBrightness(activeB); dimmed = false }
             delay(250L)
         }
     }
