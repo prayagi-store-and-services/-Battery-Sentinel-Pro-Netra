@@ -79,13 +79,13 @@ class UpdateCheckWorker(appContext: Context, params: WorkerParameters) : Corouti
             nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "App updates", NotificationManager.IMPORTANCE_DEFAULT))
         }
         val open = PendingIntent.getActivity(
-            c, 0, Intent(c, com.example.MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            c, 0, Intent(c, com.example.MainActivity::class.java).putExtra(EXTRA_AUTO_UPDATE, true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val n = NotificationCompat.Builder(c, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setContentTitle("Naya version available hai")
-            .setContentText("Battery Sentinel Pro Netra ka naya version aa gaya hai - tap karke download karein.")
+            .setContentTitle("Update available")
+            .setContentText("A new Battery Sentinel Pro Netra is out. Tap to update.")
             .setContentIntent(open)
             .setAutoCancel(true)
             .build()
@@ -94,15 +94,16 @@ class UpdateCheckWorker(appContext: Context, params: WorkerParameters) : Corouti
     }
 
     companion object {
+        const val EXTRA_AUTO_UPDATE = "netra_auto_update"
         private const val CHANNEL_ID = "netra_app_update"
         private const val NOTIFICATION_ID = 7430
         private const val WORK_NAME = "netra_update_check"
 
         fun schedule(context: Context) {
-            val request = PeriodicWorkRequestBuilder<UpdateCheckWorker>(24, TimeUnit.HOURS)
+            val request = PeriodicWorkRequestBuilder<UpdateCheckWorker>(6, TimeUnit.HOURS)
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .build()
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)
         }
     }
 }
