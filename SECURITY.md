@@ -1,5 +1,9 @@
 # Security Policy
 
+## Brightness restore (2.0.4)
+
+Only the app window brightness override changed (no system setting, no new permission). It now lifts on touch and when the protection ends.
+
 ## Update alert tap installs (2.0.3)
 
 The existing update notification now opens the app with a flag that runs the existing verified download and install flow (same SHA-256 and signature checks). No new permission, library or server. The check runs every 6 hours instead of 24.
