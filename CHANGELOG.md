@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Changed: when you come back to the app it now also deletes update installer files older than one hour from its own private folder, so nothing from an update stays in storage. Nothing outside the app's own folder is touched.
+
+## [2.0.6]
+
 - Fixed: tapping Update made the update window disappear, so nothing looked like it was downloading. The window now stays open and shows the real progress: percent downloaded (counting up), megabytes done of total, a progress bar and the time left (it never goes up). The same progress shows in the App updates card.
 
 ## [2.0.5]
