@@ -63,6 +63,25 @@ class LivePowerTelemetryTest {
         t.update(snap(level = 55), 300_000L)
         assertEquals("00:40:00", t.update(snap(level = 60), 600_000L).estimate)
     }
+    @Test fun etaCountsDownToTargetAndNeverClimbs() {
+        val t = LivePowerTelemetry()
+        t.targetPercent = 80
+        t.update(snap(level = 50), 0L)
+        t.update(snap(level = 50), 60_000L)
+        t.update(snap(level = 55), 300_000L)
+        val first = t.update(snap(level = 60), 600_000L)
+        assertEquals("Estimated Time To 80%", first.estimateLabel)
+        assertEquals("00:20:00", first.estimate)
+        assertEquals("00:19:00", t.update(snap(level = 60), 660_000L).estimate)
+        assertEquals("00:18:00", t.update(snap(level = 60), 720_000L).estimate)
+    }
+    @Test fun etaIsZeroOnceTargetReached() {
+        val t = LivePowerTelemetry()
+        t.targetPercent = 80
+        t.update(snap(level = 79), 0L)
+        t.update(snap(level = 79), 60_000L)
+        assertEquals("00:00:00", t.update(snap(level = 80), 120_000L).estimate)
+    }
     @Test fun etaUnavailableWhenNoProgress() {
         val t = LivePowerTelemetry()
         t.update(snap(level = 50), 0L)
