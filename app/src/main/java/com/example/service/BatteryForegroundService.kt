@@ -59,7 +59,9 @@ class BatteryForegroundService : Service() {
         try {
             val on = getSharedPreferences(com.example.ui.components.CHARGING_SCREEN_PREFS, Context.MODE_PRIVATE)
                 .getBoolean(com.example.ui.components.KEY_BACKGROUND, true)
-            if (on && android.provider.Settings.canDrawOverlays(this)) {
+            val enabled = getSharedPreferences(com.example.ui.components.CHARGING_SCREEN_PREFS, Context.MODE_PRIVATE)
+                .getBoolean(com.example.ui.components.KEY_SCREEN_ENABLED, true)
+            if (enabled && on && android.provider.Settings.canDrawOverlays(this)) {
                 startActivity(Intent(this, com.example.ui.ChargingScreenActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra(com.example.ui.ChargingScreenActivity.EXTRA_WAKE, wake))
             }
         } catch (e: Exception) {
