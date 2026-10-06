@@ -18,4 +18,12 @@ object UpdateFileCleanup {
     fun cleanLeftovers(context: Context) {
         try { cleanDir(File(context.cacheDir, "updates")) } catch (_: Exception) {}
     }
+
+    /** Called when the app comes back to the front. Removes installer files older than one hour. */
+    fun cleanStale(context: Context) {
+        try {
+            val now = System.currentTimeMillis()
+            File(context.cacheDir, "updates").listFiles()?.forEach { if (now - it.lastModified() > 3_600_000L) it.delete() }
+        } catch (_: Exception) {}
+    }
 }
