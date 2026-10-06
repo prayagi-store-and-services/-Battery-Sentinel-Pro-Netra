@@ -33,13 +33,14 @@ fun UpdateCheckCard(modifier: Modifier = Modifier) {
         is UpdateUiState.Checking -> "Checking GitHub for a newer version..."
         is UpdateUiState.UpToDate -> "You are up to date (v" + s.versionName + ")."
         is UpdateUiState.Available -> "Update available: " + s.release.versionName + ". Tap Update in the popup."
-        is UpdateUiState.Downloading -> "Downloading " + s.release.versionName + "..."
+        is UpdateUiState.Downloading -> s.line.ifBlank { "Downloading " + s.release.versionName + "..." }
         is UpdateUiState.Error -> "Update check failed: " + s.message
     }
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(text = "App updates", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Text(text = status, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            (state as? UpdateUiState.Downloading)?.let { androidx.compose.material3.LinearProgressIndicator(progress = { it.fraction }, modifier = Modifier.fillMaxWidth()) }
             Spacer(modifier = Modifier.height(4.dp))
             Button(
                 onClick = { updater.checkNow() },
