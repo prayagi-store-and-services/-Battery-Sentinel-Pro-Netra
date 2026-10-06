@@ -1041,6 +1041,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                             eventId = "event_bt_conn_${deviceKey}_$now",
                             eventType = NetraEventType.BLUETOOTH_CONNECTED,
                             timestamp = now,
+                            previousValue = device.batteryPercent?.toString(),
                             newValue = device.name,
                             source = source
                         )
@@ -1075,6 +1076,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                             eventId = "event_bt_disc_${deviceKey}_$now",
                             eventType = NetraEventType.BLUETOOTH_DISCONNECTED,
                             timestamp = now,
+                            previousValue = oldDevice.batteryPercent?.toString(),
                             newValue = oldDevice.name,
                             source = source
                         )
