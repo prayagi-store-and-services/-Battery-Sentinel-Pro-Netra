@@ -821,7 +821,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                             source = source
                         )
                     )
-                } else if (mergedLevel >= 35 && isLowBatteryControlActiveState) {
+                } else if ((mergedLevel >= 35 || mergedIsCharging == true) && isLowBatteryControlActiveState) {
                     isLowBatteryControlActiveState = false
                     if (!isCriticalThermalActiveState) {
                         targetBrightnessPercentState = null
