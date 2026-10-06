@@ -30,7 +30,7 @@ sealed interface UpdateUiState {
     data object Checking : UpdateUiState
     data class UpToDate(val versionName: String) : UpdateUiState
     data class Available(val release: GitHubReleaseInfo) : UpdateUiState
-    data class Downloading(val release: GitHubReleaseInfo) : UpdateUiState
+    data class Downloading(val release: GitHubReleaseInfo, val line: String = "", val fraction: Float = 0f) : UpdateUiState
     data class Error(val message: String) : UpdateUiState
 }
 
@@ -224,12 +224,19 @@ class GitHubReleaseUpdater(context: Context) {
                 target.outputStream().use { output ->
                     val buffer = ByteArray(8192)
                     var total = 0L
+                    val meter = DownloadMeter()
+                    var lastReport = 0L
                     while (true) {
                         val count = input.read(buffer)
                         if (count < 0) break
                         total += count
                         require(total <= release.sizeBytes && total <= GitHubReleasePolicy.MAX_APK_BYTES) { "APK is too large." }
                         output.write(buffer, 0, count)
+                        val now = System.currentTimeMillis()
+                        if (now - lastReport >= 250L) {
+                            lastReport = now
+                            _state.value = UpdateUiState.Downloading(release, meter.line(total, release.sizeBytes, now), DownloadMeter.fraction(total, release.sizeBytes))
+                        }
                     }
                 }
             }
