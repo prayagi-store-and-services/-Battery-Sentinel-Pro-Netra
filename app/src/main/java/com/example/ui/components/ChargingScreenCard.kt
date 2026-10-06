@@ -131,6 +131,7 @@ fun ChargingScreenCard() {
             })
         }
         bgNote?.let { Text(it, fontSize = 12.sp) }
+        ChargingDesignSettings()
         Button(onClick = { show = true }, modifier = Modifier.fillMaxWidth()) { Text("Open charging screen now") }
         Text(
             "A black screen with the live battery values from this phone. It keeps the screen on while it is open (dimmed after 15 seconds), so close it with a double tap. Both switches are on by default; you can turn them off. After 15 seconds without a touch the screen dims to 10% brightness; a touch brings normal brightness back, and so does unplugging. " +
@@ -154,6 +155,7 @@ private fun ChargingScreenDialog(onClose: () -> Unit) {
 fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
     val c = LocalContext.current
     val owner = LocalLifecycleOwner.current
+    val st = remember { ChargingStyleSettings.load(c) }
     var ui by remember { mutableStateOf<LivePowerUi?>(null) }
     var now by remember { mutableStateOf(System.currentTimeMillis()) }
     LaunchedEffect(owner) {
@@ -170,7 +172,7 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
         view.keepScreenOn = keepScreenOn
         onDispose { view.keepScreenOn = false }
     }
-    // Dim to 10% after 15 seconds without a touch; a touch or closing the screen restores normal brightness.
+    // Dim to the chosen level (10% unless changed) after 15 seconds without a touch; a touch or closing the screen restores normal brightness.
     var lastTouchMs by remember { mutableStateOf(SystemClock.elapsedRealtime()) }
     val win = remember(view) { windowOfView(view) }
     fun setBrightness(v: Float) { win?.let { w -> val a = w.attributes; a.screenBrightness = v; w.attributes = a } }
@@ -178,7 +180,7 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
         var dimmed = false
         while (true) {
             val idle = SystemClock.elapsedRealtime() - lastTouchMs >= 15_000L
-            if (idle && !dimmed) { setBrightness(0.1f); dimmed = true }
+            if (idle && !dimmed) { setBrightness(st.dimPercent / 100f); dimmed = true }
             else if (!idle && dimmed) { setBrightness(android.view.WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE); dimmed = false }
             delay(250L)
         }
@@ -190,7 +192,7 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
         val u = ui
         val pct = u?.percentage?.trim()?.removeSuffix("%")?.toFloatOrNull()
         val watts = u?.power?.trim()?.removeSuffix(" W")?.toDoubleOrNull()
-        val pctColor = chargingLevelColor(pct)
+        val pctColor = styleColor(st, pct)
         val label = when (u?.mode) {
             PowerMode.CHARGING -> if (watts != null && watts >= FAST_CHARGE_WATTS) "FAST CHARGING" else "CHARGING"
             PowerMode.DISCHARGING -> "NOT ON CHARGER"
@@ -203,29 +205,22 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
             verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(now)), color = Color.White, fontSize = 64.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                ChargingClockText(st.clock, SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(now)))
                 Text(SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date(now)), color = Color(0xFF9E9E9E), fontSize = 16.sp, maxLines = 1)
             }
-            Box(Modifier.size(240.dp), contentAlignment = Alignment.Center) {
-                Canvas(Modifier.fillMaxSize()) {
-                    val stroke = 14.dp.toPx()
-                    drawArc(pctColor.copy(alpha = 0.22f), -90f, 360f, false, style = Stroke(stroke, cap = StrokeCap.Round))
-                    if (pct != null) drawArc(pctColor, -90f, 360f * (pct.coerceIn(0f, 100f) / 100f), false, style = Stroke(stroke, cap = StrokeCap.Round))
+            ChargingGauge(st.gauge, pct, pctColor, st.gaugeBrightness, if (pct != null) "${pct.toInt()}%" else (u?.percentage ?: "Calculating..."), label)
+            val entries = ChargingStyleSettings.ITEMS.filter { it.first in st.items }.map { (key, name) ->
+                when (key) {
+                    "temp" -> name to (u?.temperature ?: "Unavailable")
+                    "voltage" -> name to (u?.voltage ?: "Unavailable")
+                    "watt" -> name to (u?.power ?: "Unavailable")
+                    "current" -> name to (u?.current ?: "Unavailable")
+                    "estimate" -> (u?.estimateLabel ?: name) to (u?.estimate ?: "Unavailable")
+                    else -> name to (u?.sessionDuration ?: "Unavailable")
                 }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(if (pct != null) "${pct.toInt()}%" else (u?.percentage ?: "Calculating..."), color = pctColor, fontSize = 44.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                    Text(label, color = pctColor, fontSize = 13.sp, maxLines = 1)
-                }
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                ChargingStat(u?.temperature ?: "Unavailable", "Temp")
-                ChargingStat(u?.sessionDuration ?: "Unavailable", "Charging time")
-                ChargingStat(u?.estimate ?: "Unavailable", u?.estimateLabel ?: "Estimate")
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(u?.power ?: "Unavailable", color = Color.White, fontSize = 22.sp, maxLines = 1)
-                Text("Power is battery-side (voltage x current), not wall-adapter wattage. Double tap to close.", color = Color(0xFF757575), fontSize = 10.sp, textAlign = TextAlign.Center)
-            }
+            ChargingDetailsBlock(st.details, entries)
+            Text("Power is battery-side (voltage x current), not wall-adapter wattage. Double tap to close.", color = Color(0xFF757575), fontSize = 10.sp, textAlign = TextAlign.Center)
         }
     }
 }
