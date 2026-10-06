@@ -80,6 +80,18 @@ class GitHubReleaseUpdater(context: Context) {
         periodicJob = null
     }
 
+    /** Used by the update notification: look for the newest release, then download and start the install at once. */
+    fun checkAndInstall(onError: (String) -> Unit = {}) {
+        if (_state.value is UpdateUiState.Checking || _state.value is UpdateUiState.Downloading) return
+        CoroutineScope(Dispatchers.IO).launch {
+            checkInternal()
+            withContext(Dispatchers.Main) {
+                if (_state.value is UpdateUiState.Available) installLatest(onError = onError)
+                else onError("No newer version found.")
+            }
+        }
+    }
+
     fun installLatest(onInstallStarted: () -> Unit = {}, onError: (String) -> Unit = {}) {
         val release = (_state.value as? UpdateUiState.Available)?.release ?: readCache()
         if (release == null) {
