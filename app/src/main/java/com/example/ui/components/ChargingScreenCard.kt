@@ -161,6 +161,7 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
     LaunchedEffect(owner) {
         owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) {
+                sharedTelemetry.targetPercent = com.example.NetraApplication.instance.settingsRepository.settings.value.chargeTargetPercent
                 ui = sharedTelemetry.update(readSnapshot(c), SystemClock.elapsedRealtime())
                 now = System.currentTimeMillis()
                 delay(1000L)
