@@ -92,6 +92,7 @@ class MainActivity : ComponentActivity() {
         } catch (_: Exception) {}
 
         handleNetworkPanelExtra(intent)
+        handleAutoUpdateExtra(intent)
 
         setContent {
             MyApplicationTheme {
@@ -103,6 +104,17 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         handleNetworkPanelExtra(intent)
+        handleAutoUpdateExtra(intent)
+    }
+
+    /** Tapping the update notification downloads the newest verified build and starts the install. */
+    private fun handleAutoUpdateExtra(intent: android.content.Intent?) {
+        if (intent?.getBooleanExtra(com.example.update.UpdateCheckWorker.EXTRA_AUTO_UPDATE, false) != true) return
+        intent.removeExtra(com.example.update.UpdateCheckWorker.EXTRA_AUTO_UPDATE)
+        android.widget.Toast.makeText(this, "Downloading the update...", android.widget.Toast.LENGTH_SHORT).show()
+        GitHubReleaseUpdater.shared(this).checkAndInstall { msg ->
+            android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun handleNetworkPanelExtra(intent: android.content.Intent?) {
