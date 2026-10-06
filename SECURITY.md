@@ -1,5 +1,10 @@
 # Security Policy
 
+## Charging screen update (1.2.15)
+- The charging screen now shows the whole battery percentage that Android reports, colours it by level, and dims the screen to 10% after 15 seconds without a touch. A touch, closing the screen or unplugging the charger restores normal brightness. Only the screen window brightness is changed, and only while this screen is open.
+- The charging screen switches are on by default. Opening it over other apps still needs the Android permission Display over other apps, which only the user can grant. Anyone who turned a switch off before keeps it off.
+- No new permission, library or network call.
+
 ## Plain update failure messages (1.2.15)
 - If the update check or download fails, the app shows one plain sentence instead of raw system text. The app's own messages (checksum, invalid APK) are unchanged.
 - No new permission, library or network call.
