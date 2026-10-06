@@ -4,6 +4,11 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- What's new: shorter announcements. Plugging in says "Power connected, 42 percent." and unplugging says "Power disconnected, 42 percent." (the percent is left out at 100 and at your own target). The extra "Charging started", "Charging stopped" and "Discharging started" lines are gone. Bluetooth says "BT Buds, 60 percent." on connect and on disconnect, or only "BT Buds." when the device gives no battery. Phone battery says only "80 percent". Heat and power saving messages are shorter.
+- Fixed: the charge target you pick (80, 85, 90 or 95) was only a notification and was never spoken. It now speaks "85 percent. Target reached." the moment that level is reached, and also if you change the target while charging.
+
+## [2.0.0]
+
 - What's new: Battery Sentinel 2.0. The charging screen is now yours to design. In the Charging screen card you can pick the clock style (Off, Light, Regular, Bold, Outline, Mono), the battery gauge style (Ring, Dotted ring, Arc, Bars, Battery bar, Number only), the battery details style (Plain, Boxed, One line), which details show (Temp, Voltage, Wattage, Current, Estimate, Charging time), the gauge colour (Auto follows the battery level, or one of 8 colours), the gauge brightness, and how dim the screen gets when idle (5 to 50%, default 10%). Every choice is saved on this phone only. Not tested on a phone by the developer. Dot-matrix and animated clock or gauge styles are not included yet.
 
 ## [1.2.15]
