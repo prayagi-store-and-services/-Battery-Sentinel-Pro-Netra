@@ -184,8 +184,10 @@ fun MainAppContent(viewModel: NetraViewModel) {
     com.example.permissions.PermissionOnboardingHost(onChanged = { viewModel.refreshHardwareState() })
 
     var updateDismissedFor by remember { mutableStateOf(-1L) }
-    val availableUpdate = (updateState as? UpdateUiState.Available)?.release
-    if (availableUpdate != null && updateDismissedFor != availableUpdate.versionCode) {
+    val downloadingState = updateState as? UpdateUiState.Downloading
+    // The dialog stays open while the download runs, so the user sees the progress instead of it vanishing.
+    val availableUpdate = (updateState as? UpdateUiState.Available)?.release ?: downloadingState?.release
+    if (availableUpdate != null && (updateDismissedFor != availableUpdate.versionCode || downloadingState != null)) {
         AlertDialog(
             onDismissRequest = { updateDismissedFor = availableUpdate.versionCode },
             title = { Text("Update available: " + availableUpdate.versionName) },
@@ -196,6 +198,12 @@ fun MainAppContent(viewModel: NetraViewModel) {
                     Text("What's new", fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.size(4.dp))
                     Text(availableUpdate.notes.ifBlank { "Release notes are unavailable." })
+                    downloadingState?.let { ds ->
+                        Spacer(modifier = Modifier.size(8.dp))
+                        androidx.compose.material3.LinearProgressIndicator(progress = { ds.fraction }, modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.size(4.dp))
+                        Text(ds.line.ifBlank { "Starting the download..." }, style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+                    }
                 }
             },
             confirmButton = {
