@@ -1,5 +1,9 @@
 # Security Policy
 
+## Pause and resume media around announcements (1.2.15)
+- Voice announcements send a standard media pause key to the currently playing media, speak, then send a play key only if the app paused it. Media that was not playing is never started.
+- No new permission, library or network call. The key goes to the phone's media system only; nothing is sent anywhere else.
+
 ## Festival list cleanup (1.2.14)
 - Five non-Indian festival entries are removed from the built-in festival list (Lunar New Year, Passover, Friendship Day, two Hanukkah days; 2026 and 2027). It is a fixed list inside the app; nothing is fetched. No permission, library or network change.
 
