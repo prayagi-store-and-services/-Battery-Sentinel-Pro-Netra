@@ -70,7 +70,7 @@ object ScreenOffSaver {
             if (canWriteSettings(app)) {
                 val b = p.getInt(KEY_BRIGHTNESS, -1)
                 if (b >= 0) Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS, b)
-                Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, p.getInt(KEY_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL))
+                Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC)
             }
             ContentResolver.setMasterSyncAutomatically(p.getBoolean(KEY_SYNC, true))
         } catch (e: Exception) {
