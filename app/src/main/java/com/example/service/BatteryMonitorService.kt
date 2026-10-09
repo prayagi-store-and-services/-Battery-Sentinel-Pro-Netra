@@ -393,7 +393,7 @@ class BatteryMonitorService : Service() {
                     NetraApplication.instance.announcementEngine.enqueue(
                         AnnouncementItem(
                             id = "charge_target_${settings.chargeTargetPercent}_${now}",
-                            text = "${requireNotNull(state.batteryLevel)} percent. Target reached.",
+                            text = "${requireNotNull(state.batteryLevel)} percent. Target reached. Please unplug the charger.",
                             priority = AnnouncementPriority.CHARGER_STATE,
                             category = "CHARGE_TARGET",
                             isNightException = true
