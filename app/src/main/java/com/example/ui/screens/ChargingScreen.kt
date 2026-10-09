@@ -235,7 +235,12 @@ fun ChargingScreen(
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = "Target ${settings.chargeTargetPercent}%: ${if (telemetry.level >= settings.chargeTargetPercent) "REACHED" else "ARMED"}",
+                            text = "Target ${settings.chargeTargetPercent}%: ${if (telemetry.level >= settings.chargeTargetPercent) "REACHED" else "ARMED"}" + (
+                                telemetry.timeToFullMinutes
+                                    ?.takeIf { telemetry.isCharging && it > 0 && telemetry.level in 1..99 && telemetry.level < settings.chargeTargetPercent }
+                                    ?.let { full -> " - about " + maxOf(1, full * (settings.chargeTargetPercent - telemetry.level) / (100 - telemetry.level)) + " min (estimate)" }
+                                    ?: ""
+                            ),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = NetraEmerald
