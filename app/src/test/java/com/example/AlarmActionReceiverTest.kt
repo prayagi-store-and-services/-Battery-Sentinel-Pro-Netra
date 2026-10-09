@@ -56,10 +56,12 @@ class AlarmActionReceiverTest {
         assertEquals(80, SettingsRepository(context).settings.value.chargeTargetPercent)
     }
 
-    @Test fun `continue charging persists 100 target and cancels alarm`() {
+    @Test fun `continue charging raises the target for this session only and cancels alarm`() {
         postAlarm()
         AlarmActionReceiver().onReceive(context, AlarmActionReceiver.intent(context, BatteryMonitorService.ACTION_SET_TARGET_100))
-        assertEquals(100, SettingsRepository(context).settings.value.chargeTargetPercent)
+        assertEquals(80, SettingsRepository(context).settings.value.chargeTargetPercent)
+        assertEquals(100, com.example.service.TargetAlarmRepeat.sessionTarget)
+        com.example.service.TargetAlarmRepeat.resetForNewSession()
         assertNull(shadowOf(manager).getNotification(BatteryMonitorService.NOTIFICATION_ALARM_ID))
     }
 
