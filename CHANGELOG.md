@@ -4,6 +4,7 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Changed: if the phone is still charging at or above your charge target, the target alert now repeats about every 2 minutes until you unplug the charger or tap Dismiss Alarm (before, it rang once). The alert now says plainly that the app can alert you but cannot stop charging, because Android does not let apps do that.
 - Changed: when you come back to the app it now also deletes update installer files older than one hour from its own private folder, so nothing from an update stays in storage. Nothing outside the app's own folder is touched.
 
 ## [2.0.6]
