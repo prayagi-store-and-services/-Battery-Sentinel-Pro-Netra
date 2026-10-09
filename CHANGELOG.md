@@ -4,6 +4,12 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Added: Battery Booster in Settings. It does not close other apps, because since Android 14 Android does not let an app do that. It opens your phone's own battery usage and restriction screens (only when the phone has them) and has a Start/Read drain check that shows percent lost per hour. It cannot tell which app caused the drain.
+- Fixed: the Saver's "Close background apps" option did nothing on Android 14 and newer but still reported free RAM. It is now switched off there and says so; on Android 13 and older it works as before.
+
+## [2.0.8]
+
+
 - Changed: if the phone is still charging at or above your charge target, the target alert now repeats about every 2 minutes until you unplug the charger or tap Dismiss Alarm (before, it rang once). The alert now says plainly that the app can alert you but cannot stop charging, because Android does not let apps do that.
 - Changed: when you come back to the app it now also deletes update installer files older than one hour from its own private folder, so nothing from an update stays in storage. Nothing outside the app's own folder is touched.
 
