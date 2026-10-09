@@ -57,7 +57,7 @@ fun SaverCard() {
             Text("Journey mode (up to 12 hours)", fontSize = 13.sp)
             Switch(checked = journey, onCheckedChange = { journey = it; SaverEngine.setJourney(c, it) })
         }
-        Text("For a long trip. You turn it on yourself; it never starts alone and ends by itself after 12 hours. While it is on and the phone is not charging, the Saver actions below run at the next battery reading without waiting for the level limit, and they are put back when you plug in, turn it off or it ends. It uses only the battery readings the app already takes and adds no background work. It cannot stop other apps from using data or battery; it can only close background processes (see the limits below).", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("For a long trip. You turn it on yourself; it never starts alone and ends by itself after 12 hours. While it is on and the phone is not charging, the Saver actions below run at the next battery reading without waiting for the level limit, and they are put back when you plug in, turn it off or it ends. It uses only the battery readings the app already takes and adds no background work. It cannot stop other apps from using data or battery; on Android 13 and older it can close background processes (see the limits below); on Android 14 and newer it cannot.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Battery temperature: ${temp.toInt()} °C or more", fontSize = 13.sp)
             Row {
@@ -77,14 +77,14 @@ fun SaverCard() {
             Switch(checked = actDisplay, onCheckedChange = { actDisplay = it; prefs.edit().putBoolean(SaverEngine.KEY_ACT_DISPLAY, it).apply() })
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Close background apps", fontSize = 13.sp)
-            Switch(checked = actKill, onCheckedChange = { actKill = it; prefs.edit().putBoolean(SaverEngine.KEY_ACT_KILL, it).apply() })
+            Text(if (android.os.Build.VERSION.SDK_INT >= 34) "Close background apps (not possible on Android 14 and newer)" else "Close background apps", fontSize = 13.sp)
+            Switch(checked = actKill && android.os.Build.VERSION.SDK_INT < 34, enabled = android.os.Build.VERSION.SDK_INT < 34, onCheckedChange = { actKill = it; prefs.edit().putBoolean(SaverEngine.KEY_ACT_KILL, it).apply() })
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Clear notifications", fontSize = 13.sp)
             Switch(checked = actNotif, onCheckedChange = { actNotif = it; prefs.edit().putBoolean(SaverEngine.KEY_ACT_NOTIF, it).apply() })
         }
-        Text("Android only lets an app end the background processes of other apps. Music, navigation, calls, messaging, keyboard, launcher and Netra apps are not touched, and some apps restart by themselves, so the saving can be small. The result below shows real free RAM before and after. Closed apps and cleared notifications cannot be brought back; brightness and timeout are restored.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("On Android 13 and older an app can end the background processes of other apps; on Android 14 and newer it cannot, so that option does nothing there. Music, navigation, calls, messaging, keyboard, launcher and Netra apps are not touched, and some apps restart by themselves, so the saving can be small. The result below shows real free RAM before and after. Closed apps and cleared notifications cannot be brought back; brightness and timeout are restored.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (enabled && actDisplay && !canWrite) {
             Text("Modify system settings permission is needed for brightness and timeout. Until it is granted nothing is changed.", fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
             TextButton(onClick = {
