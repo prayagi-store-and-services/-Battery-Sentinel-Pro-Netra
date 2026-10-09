@@ -14,9 +14,7 @@ class AlarmActionReceiver : BroadcastReceiver() {
         when (intent.action) {
             BatteryMonitorService.ACTION_DISMISS_ALARM -> com.example.service.TargetAlarmRepeat.muted = true
             BatteryMonitorService.ACTION_SET_TARGET_100 -> {
-                val app = context.applicationContext
-                val settings = if (app is NetraApplication) app.settingsRepository else SettingsRepository(context)
-                settings.updateChargeTarget(100)
+                com.example.service.TargetAlarmRepeat.sessionTarget = 100
             }
             else -> return
         }
