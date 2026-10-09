@@ -48,12 +48,13 @@ fun NetworkSavingCard() {
         }
         Text("5G to 4G, 4G to 3G. Skipped if about 2 MB or more of mobile data was used in the last 10 minutes. Android does not let apps switch the network, so you get a notification to tap. Needs Phone State and Usage Access.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Experimental: auto-switch via ADB grant", fontSize = 13.sp)
-            Switch(checked = experiment, onCheckedChange = { experiment = it; prefs.edit().putBoolean(N.KEY_EXPERIMENT_ENABLED, it).apply() })
+            Text("Preferred network type", fontSize = 13.sp)
+            androidx.compose.material3.TextButton(onClick = {
+                runCatching { c.startActivity(android.content.Intent(android.provider.Settings.ACTION_NETWORK_OPERATOR_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                    .onFailure { runCatching { c.startActivity(android.content.Intent(android.provider.Settings.ACTION_WIRELESS_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) } }
+            }) { Text("Open") }
         }
-        Text("Unverified, may do nothing on your phone. Needs a one-time command from a computer: adb shell pm grant ${c.packageName} android.permission.WRITE_SECURE_SETTINGS. Restores on screen on.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text("Secure-setting access: ${if (N.hasSecureSettingsPermission(c)) "granted" else "not granted"}", fontSize = 11.sp)
-        prefs.getString(N.KEY_LAST_RESULT, null)?.let { Text("Last experiment: $it", fontSize = 11.sp) }
+        Text("Android does not let apps change the network type, so this opens the phone's own mobile network page where you can pick 4G or 3G yourself.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text("TIME ON NETWORK TYPE (measured while Netra runs)", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         listOf(RadioClass.NR_5G to "5G", RadioClass.LTE_4G to "4G", RadioClass.THREE_G_OR_LOWER to "3G or lower", RadioClass.UNKNOWN to "Unknown").forEach { (k, l) ->
             Text("$l: ${fmt(N.radioTimeMs(c, k))}", fontSize = 12.sp)
