@@ -18,6 +18,9 @@ object FeedbackSender {
             conn.doOutput = true
             conn.setRequestProperty("Content-Type", "application/json")
             conn.setRequestProperty("Accept", "application/json")
+            // FormSubmit rejects posts without an Origin. Use the website origin it was activated for.
+            conn.setRequestProperty("Origin", "https://prayagi-store-and-services.github.io")
+            conn.setRequestProperty("Referer", "https://prayagi-store-and-services.github.io/")
             conn.outputStream.use { it.write(json.toString().toByteArray(Charsets.UTF_8)) }
             val ok = conn.responseCode in 200..299 && accepted(conn.inputStream.bufferedReader().use { it.readText() })
             conn.disconnect()
