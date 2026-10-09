@@ -51,6 +51,28 @@ private val LightColorScheme = lightColorScheme(
     onError = Color.White
 )
 
+/** New look (from 11 Oct 2026): dark navy surfaces, orange primary, mint accent. */
+private val NewColorScheme = darkColorScheme(
+    primary = Color(0xFFFF8A00),
+    onPrimary = Color.Black,
+    primaryContainer = Color(0xFF121C30),
+    onPrimaryContainer = Color(0xFFFFB74D),
+    secondary = Color(0xFF3DDC97),
+    onSecondary = Color.Black,
+    secondaryContainer = Color(0xFF121C30),
+    onSecondaryContainer = Color(0xFF3DDC97),
+    tertiary = Color(0xFF3DDC97),
+    background = Color(0xFF0B1220),
+    onBackground = Color(0xFFF1F5F9),
+    surface = Color(0xFF121C30),
+    onSurface = Color(0xFFF1F5F9),
+    surfaceVariant = Color(0xFF1A2742),
+    onSurfaceVariant = Color(0xFF94A3B8),
+    outline = Color(0xFF2A3A5A),
+    error = StatusRed,
+    onError = Color.White
+)
+
 @Composable
 fun MyApplicationTheme(
     darkTheme: Boolean = false,
@@ -62,6 +84,7 @@ fun MyApplicationTheme(
             val context = LocalContext.current
             dynamicLightColorScheme(context)
         }
+        RedesignGate.isOn() -> NewColorScheme
         else -> LightColorScheme
     }
 
