@@ -14,7 +14,12 @@ object TargetAlarmRepeat {
     fun due(lastFiredAtMs: Long, nowMs: Long, isMuted: Boolean, intervalMs: Long = INTERVAL_MS): Boolean =
         !isMuted && lastFiredAtMs > 0L && nowMs - lastFiredAtMs >= intervalMs
 
+    /** "Continue to 100%" raises the target for this charge only. It is never saved. */
+    @Volatile
+    var sessionTarget: Int? = null
+
     fun resetForNewSession() {
         muted = false
+        sessionTarget = null
     }
 }
