@@ -530,6 +530,7 @@ fun SettingsScreen(
         item { com.example.ui.components.FeedbackCard() }
         item { com.example.ui.components.ScreenOffSaverCard() }
         item { com.example.ui.components.SaverCard() }
+        item { com.example.ui.components.BoosterCard() }
 
         // 9. About App & Update Channel
         item {
