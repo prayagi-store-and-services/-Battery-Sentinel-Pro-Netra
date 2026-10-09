@@ -271,7 +271,7 @@ var DEV={
 "Sony":["Xperia 1 V","Xperia 5 V","Xperia 10 V","Xperia 1 IV","Xperia XZ2"],
 "Asus":["ROG Phone 8","ROG Phone 7","ROG Phone 6","Zenfone 10","Zenfone 9","Zenfone 8","Zenfone Max Pro M1"]
 };
-function esc(t){var d=document.createElement("div");d.textContent=t;return d.innerHTML}
+function esc(t){return String(t==null?"":t).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 var picks=[];
 function initPick(p){var br=p.querySelector(".dbrand"),md=p.querySelector(".dmodel"),oth=p.querySelector(".dother"),se=p.querySelector(".dsearch");
  Object.keys(DEV).forEach(function(b){var o=document.createElement("option");o.value=b;o.textContent=b;br.appendChild(o)});
