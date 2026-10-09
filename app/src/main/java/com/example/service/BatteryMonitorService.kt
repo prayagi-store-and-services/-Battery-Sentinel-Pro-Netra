@@ -50,6 +50,7 @@ class BatteryMonitorService : Service() {
     private var lastTempTimestamp: Long = 0L
     private var lastNotified80PercentSession = false
     private var lastNotifiedTargetValue = -1
+    private var lastTargetAlarmAt = 0L
     private var lastOverheatAlertTime = 0L
     private var lastThresholdAlertTime = 0L
 
@@ -57,9 +58,11 @@ class BatteryMonitorService : Service() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 Intent.ACTION_BATTERY_CHANGED -> batteryInputs.trySend(intent)
-                Intent.ACTION_POWER_CONNECTED -> lastNotified80PercentSession = false
+                Intent.ACTION_POWER_CONNECTED -> { lastNotified80PercentSession = false; lastTargetAlarmAt = 0L; TargetAlarmRepeat.resetForNewSession() }
                 Intent.ACTION_POWER_DISCONNECTED -> {
                     lastNotified80PercentSession = false
+                    lastTargetAlarmAt = 0L
+                    TargetAlarmRepeat.resetForNewSession()
                     ScreenOffSaver.restore(applicationContext)
                     val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     notificationManager.cancel(NOTIFICATION_ALARM_ID)
@@ -384,6 +387,8 @@ class BatteryMonitorService : Service() {
             if (!lastNotified80PercentSession || lastNotifiedTargetValue != settings.chargeTargetPercent) {
                 lastNotified80PercentSession = true
                 lastNotifiedTargetValue = settings.chargeTargetPercent
+                lastTargetAlarmAt = now
+                TargetAlarmRepeat.muted = false
                 try {
                     NetraApplication.instance.announcementEngine.enqueue(
                         AnnouncementItem(
@@ -406,6 +411,11 @@ class BatteryMonitorService : Service() {
                         dotColor = "AMBER"
                     )
                 }
+            } else if (TargetAlarmRepeat.due(lastTargetAlarmAt, now, TargetAlarmRepeat.muted)) {
+                // Still charging at or above the target: repeat the alert every 2 minutes until unplug or Dismiss.
+                lastTargetAlarmAt = now
+                sendUnplugAlarmNotification(requireNotNull(state.batteryLevel), settings.chargeTargetPercent)
+                triggerVibrationAlert()
             }
         }
 
@@ -485,10 +495,10 @@ class BatteryMonitorService : Service() {
         val notification = NotificationCompat.Builder(this, CHANNEL_ALERTS_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Charge target reached ($level%)")
-            .setContentText("Target of $target% reached. Consider unplugging.")
+            .setContentText("Target of $target% reached. This app can alert you but cannot stop charging. Unplug the charger.")
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText("Battery reached the $target% target. Disconnect the charger if you want to avoid further charging.")
+                    .bigText("Battery reached the $target% target. Android does not let apps stop charging, so this alert repeats about every 2 minutes until you unplug the charger or tap Dismiss Alarm.")
                     .setSummaryText("Electrochemical Longevity Recommendation")
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
