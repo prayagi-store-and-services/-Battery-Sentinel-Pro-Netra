@@ -125,6 +125,11 @@ fun PowerPreferencesBody() {
             else androidx.compose.material3.TextButton(onClick = { PowerPrefs.openBatterySaver(context) }) { Text("Open") }
         }
         PrefRow(
+            "Active Power Saving",
+            "Forced from 11 PM to 7 AM, and after the screen has been off 15 minutes. Dims, 15 s screen timeout, auto-sync off; restores (brightness back to automatic) at 7 AM or when the screen turns on. Android does not let apps switch off Wi-Fi, Bluetooth, mobile data or the network type, so this lowers drain but cannot promise a fixed figure. " + com.example.service.ActivePowerSaver.statusText(context),
+            com.example.service.ActivePowerSaver.isEnabled(context), canWrite
+        ) { on -> com.example.service.ActivePowerSaver.setEnabled(context, on); tick++ }
+        PrefRow(
             "Brightness preference",
             if (canWrite) "Sets brightness to a saving level (" + (PowerPrefs.SAVING_BRIGHTNESS * 100 / 255) + "%). Off turns automatic (adaptive) brightness back on."
             else "Needs the \"Modify system settings\" permission. Turn the switch to open that Android screen and allow it.",
