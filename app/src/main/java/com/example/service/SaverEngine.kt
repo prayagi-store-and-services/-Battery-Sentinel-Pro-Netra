@@ -135,6 +135,7 @@ object SaverEngine {
     }
 
     private suspend fun closeBackgroundApps(app: Context, p: android.content.SharedPreferences): String {
+        if (android.os.Build.VERSION.SDK_INT >= 34) return "apps: not done (since Android 14 an app can only end its own processes)"
         val now = System.currentTimeMillis()
         val last = p.getLong(KEY_LAST_KILL, 0L)
         if (now - last < KILL_COOLDOWN_MS) return "apps: skipped (ran less than 30 min ago)"
