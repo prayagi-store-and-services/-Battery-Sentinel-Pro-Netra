@@ -352,6 +352,10 @@ class BatteryMonitorService : Service() {
             } catch (_: Exception) {}
 
             try {
+                ActivePowerSaver.tick(this@BatteryMonitorService)
+            } catch (_: Exception) {}
+
+            try {
                 NetraApplication.instance.telemetrySentinel.onTelemetryReceived(canonical)
             } catch (_: Exception) {}
 
