@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class PowerProfileManager(context: Context) {
+    private val app: Context = context.applicationContext
+    private var lastApplied: PowerProfileMode? = null
+    private var lastResult = ProfileApplier.Result("Not applied", "Not applied", "Not applied")
     private val prefs: SharedPreferences = context.getSharedPreferences("netra_power_profile_prefs", Context.MODE_PRIVATE)
 
     private val _profileState = MutableStateFlow(loadProfileState())
@@ -62,15 +65,15 @@ class PowerProfileManager(context: Context) {
                 }
                 isCharging -> {
                     effectiveMode = PowerProfileMode.PERFORMANCE
-                    reason = "Charger connected: performance preference suggested; no controls applied"
+                    reason = "Charger connected: performance preference suggested"
                 }
                 level!! <= 10 -> {
                     effectiveMode = PowerProfileMode.ULTRA_SAVER
-                    reason = "Critical battery (≤10%): saver preference suggested; no controls applied"
+                    reason = "Critical battery (≤10%): saver preference suggested"
                 }
                 level!! <= 20 -> {
                     effectiveMode = PowerProfileMode.ENDURANCE
-                    reason = "Low battery (≤20%): endurance preference suggested; no controls applied"
+                    reason = "Low battery (≤20%): endurance preference suggested"
                 }
                 level!! <= 45 -> {
                     effectiveMode = PowerProfileMode.BALANCED
@@ -83,16 +86,24 @@ class PowerProfileManager(context: Context) {
             }
         } else {
             effectiveMode = selected
-            reason = "Selected preference (no controls applied): ${selected.title}"
+            reason = "Selected: ${selected.title}. What was applied is listed below."
         }
 
+        if (effectiveMode != lastApplied) {
+            lastResult = runCatching { ProfileApplier.apply(app, effectiveMode) }
+                .getOrDefault(ProfileApplier.Result("Unavailable on this phone", "Unavailable on this phone", "Unavailable on this phone"))
+            lastApplied = effectiveMode
+        }
         val newState = PowerProfileState(
             selectedMode = selected,
             activeEffectiveMode = effectiveMode,
             dynamicSyncThrottled = false,
             adaptiveBrightnessSuggested = null,
             backgroundSyncPaused = false,
-            lastProfileTransitionReason = reason
+            lastProfileTransitionReason = reason,
+            syncResult = lastResult.sync,
+            brightnessResult = lastResult.brightness,
+            timeoutResult = lastResult.timeout
         )
 
         _profileState.value = newState
