@@ -380,27 +380,28 @@ class BatteryMonitorService : Service() {
     private fun checkSafetyAlerts(state: NetraCentralState) {
         val settings = NetraApplication.instance.settingsRepository.settings.value
         val now = System.currentTimeMillis()
+        val targetPercent = TargetAlarmRepeat.sessionTarget ?: settings.chargeTargetPercent
 
         // 80% (or user target) Unplug Alert
-        if (settings.unplugAlarmEnabled && state.isCharging == true && state.batteryLevel != null && state.batteryLevel >= settings.chargeTargetPercent) {
+        if (settings.unplugAlarmEnabled && state.isCharging == true && state.batteryLevel != null && state.batteryLevel >= targetPercent) {
             // Re-arm when the user picks a different target while charging, so the new level also speaks.
-            if (!lastNotified80PercentSession || lastNotifiedTargetValue != settings.chargeTargetPercent) {
+            if (!lastNotified80PercentSession || lastNotifiedTargetValue != targetPercent) {
                 lastNotified80PercentSession = true
-                lastNotifiedTargetValue = settings.chargeTargetPercent
+                lastNotifiedTargetValue = targetPercent
                 lastTargetAlarmAt = now
                 TargetAlarmRepeat.muted = false
                 try {
                     NetraApplication.instance.announcementEngine.enqueue(
                         AnnouncementItem(
-                            id = "charge_target_${settings.chargeTargetPercent}_${now}",
-                            text = "${requireNotNull(state.batteryLevel)} percent. Target reached. Please unplug the charger.",
+                            id = "charge_target_${targetPercent}_${now}",
+                            text = "${requireNotNull(state.batteryLevel)} percent. Target reached. Phone ko charger se hatao.",
                             priority = AnnouncementPriority.CHARGER_STATE,
                             category = "CHARGE_TARGET",
                             isNightException = true
                         )
                     )
                 } catch (_: Exception) {}
-                sendUnplugAlarmNotification(requireNotNull(state.batteryLevel), settings.chargeTargetPercent)
+                sendUnplugAlarmNotification(requireNotNull(state.batteryLevel), targetPercent)
                 triggerVibrationAlert()
                 serviceScope.launch {
                     NetraApplication.instance.batteryRepository.logEvent(
@@ -414,7 +415,7 @@ class BatteryMonitorService : Service() {
             } else if (TargetAlarmRepeat.due(lastTargetAlarmAt, now, TargetAlarmRepeat.muted)) {
                 // Still charging at or above the target: repeat the alert every 2 minutes until unplug or Dismiss.
                 lastTargetAlarmAt = now
-                sendUnplugAlarmNotification(requireNotNull(state.batteryLevel), settings.chargeTargetPercent)
+                sendUnplugAlarmNotification(requireNotNull(state.batteryLevel), targetPercent)
                 triggerVibrationAlert()
             }
         }
