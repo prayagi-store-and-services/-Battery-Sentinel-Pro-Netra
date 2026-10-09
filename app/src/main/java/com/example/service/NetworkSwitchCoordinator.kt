@@ -159,7 +159,7 @@ object NetworkSwitchCoordinator {
 
     /** Experimental and unverified: Android may not apply this setting to the radio. Original value is always saved and restored. */
     private fun runExperiment(c: Context) {
-        if (!hasSecureSettingsPermission(c)) { setResult(c, "Not run: WRITE_SECURE_SETTINGS not granted via ADB"); return }
+        if (!hasSecureSettingsPermission(c)) { setResult(c, "Not run: Android does not allow apps to change the network type"); return }
         if (prefs(c).contains(KEY_ORIG_MODE)) { setResult(c, "Not run: a previous change is still waiting to be restored"); return }
         try {
             val name = settingName(c)
