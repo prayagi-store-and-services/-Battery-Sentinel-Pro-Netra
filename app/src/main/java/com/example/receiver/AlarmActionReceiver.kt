@@ -12,7 +12,7 @@ import com.example.service.BatteryMonitorService
 class AlarmActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
-            BatteryMonitorService.ACTION_DISMISS_ALARM -> Unit
+            BatteryMonitorService.ACTION_DISMISS_ALARM -> com.example.service.TargetAlarmRepeat.muted = true
             BatteryMonitorService.ACTION_SET_TARGET_100 -> {
                 val app = context.applicationContext
                 val settings = if (app is NetraApplication) app.settingsRepository else SettingsRepository(context)
