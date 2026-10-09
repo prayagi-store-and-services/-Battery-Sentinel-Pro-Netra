@@ -6,8 +6,6 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 - Improved: general improvements and bug fixes.
 
-- Improved: general improvements and bug fixes.
-
 ## [2.0.9]
 
 - Added: Battery Booster in Settings. It does not close other apps, because since Android 14 Android does not let an app do that. It opens your phone's own battery usage and restriction screens (only when the phone has them) and has a Start/Read drain check that shows percent lost per hour. It cannot tell which app caused the drain.
