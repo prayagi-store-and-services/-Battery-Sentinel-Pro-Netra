@@ -78,8 +78,6 @@ private fun bsPermissions(): List<BsPerm> = listOf(
         { overlayStatus(it) }, { tryOpen(it, Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + it.packageName))) }),
     BsPerm("Modify system settings", "Used by the savers to lower brightness and screen timeout when you switch them on.",
         { writeSettingsStatus(it) }, { tryOpen(it, Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + it.packageName))) }),
-    BsPerm("Secure settings", "Used by the network-mode switch and the low-power preference. Android allows it only through a one-time computer (adb) step, so these two controls stay unavailable until then.",
-        { runtime(it, "android.permission.WRITE_SECURE_SETTINGS").replace("Allowed", "Granted").replace("Not allowed", "Not granted") }, null),
     BsPerm("Battery optimisation", "Lets the battery service keep running in the background. Tap to change it on the Android page.",
         { batteryStatus(it) }, { tryOpen(it, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }),
     BsPerm("Install apps", "Used only when you tap Install on an update, so Android can install the new Battery Sentinel file.",
