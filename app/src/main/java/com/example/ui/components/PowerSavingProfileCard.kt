@@ -81,7 +81,7 @@ fun PowerSavingProfileCard(
         modifier = modifier.testTag("power_saving_profile_card")
     ) {
         Text(
-            text = "Preferences only. This app does not apply profile-based polling, account sync, brightness or device-wide restrictions. Use Android Settings for device controls.",
+            text = "Applies brightness, screen timeout and auto-sync where Android allows it, and restores them when you pick a lighter profile. Polling and system Battery Saver are not controlled by this app.",
             fontSize = 11.5.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -172,7 +172,7 @@ fun PowerSavingProfileCard(
                             Spacer(modifier = Modifier.width(6.dp))
                             Column {
                                 Text("BACKGROUND SYNC", fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text("Not applied", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = NetraCyan)
+                                Text(profileState.syncResult, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = NetraCyan)
                             }
                         }
                     }
@@ -189,7 +189,7 @@ fun PowerSavingProfileCard(
                             Spacer(modifier = Modifier.width(6.dp))
                             Column {
                                 Text("DISPLAY BRIGHTNESS", fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text("Not applied", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = StatusAmber)
+                                Text(profileState.brightnessResult + " | Screen timeout: " + profileState.timeoutResult, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = StatusAmber)
                             }
                         }
                     }
