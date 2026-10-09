@@ -44,7 +44,9 @@ class BatteryForegroundService : Service() {
                 updateBatteryStateFromIntent(intent)
             }
             if (action == Intent.ACTION_POWER_CONNECTED) { openChargingScreenIfAllowed(wake = true) }
+            if (action == Intent.ACTION_SCREEN_ON) { try { ActivePowerSaver.onScreenOn(this@BatteryForegroundService) } catch (_: Exception) {} }
             if (action == Intent.ACTION_SCREEN_OFF) {
+                try { ActivePowerSaver.onScreenOff(this@BatteryForegroundService) } catch (_: Exception) {}
                 // Screen turned off (idle timeout or lock) while the charger is connected: bring the charging screen back. It stays dark and shows when the phone is next woken.
                 val sticky = try { registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
                 if ((sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0) {
@@ -121,6 +123,7 @@ class BatteryForegroundService : Service() {
                     addAction(Intent.ACTION_POWER_CONNECTED)
                     addAction(Intent.ACTION_POWER_DISCONNECTED)
                     addAction(Intent.ACTION_SCREEN_OFF)
+                    addAction(Intent.ACTION_SCREEN_ON)
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     registerReceiver(batteryReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
