@@ -1,5 +1,9 @@
 # Security Policy
 
+## Report delivery fix (2.0.11)
+
+Crash and feedback reports from the app now send the website address as the origin header, so the report service accepts them. Reports that could not be delivered before (they stay saved on the phone and retry at the next start) will now go through. Report contents, the stored file and the opt-in text are unchanged. No new permission, library or server.
+
 ## Installer file cleanup (2.0.7)
 
 When the app comes back to the front it also deletes installer files older than one hour from its private cache folder. Nothing outside the app's own folder is touched. No new permission, library or network call.
