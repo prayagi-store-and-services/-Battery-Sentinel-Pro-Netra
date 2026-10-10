@@ -4,8 +4,12 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-- Added: the app is not available in some regions. It checks only your phone's own SIM/network country, on the phone, and sends nothing anywhere. If it cannot tell, it works as normal.
+- Fixed: Bluetooth announcements. When a device disconnects, the app now says only its name and "disconnected", with no battery percent. When it connects, it says its name and "connected", and the battery percent only if the phone reports one.
 - Improved: general improvements and bug fixes.
+
+## [2.1.4]
+
+- Added: the app is not available in some regions. It checks only your phone's own SIM/network country, on the phone, and sends nothing anywhere. If it cannot tell, it works as normal.
 
 ## [2.1.3]
 
