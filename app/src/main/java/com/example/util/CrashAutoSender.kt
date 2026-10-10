@@ -22,7 +22,7 @@ object CrashAutoSender {
         if (trace.isBlank()) { runCatching { file.delete() }; return false }
         val payload = FeedbackBuilder.crash(Build.MODEL ?: "Unknown", Build.VERSION.RELEASE ?: "Unknown", BuildConfig.VERSION_NAME, trace)
         val ok = FeedbackSender.send(payload)
-        if (ok) runCatching { File(context.filesDir, LAST_FILE).writeText(trace); file.delete() }
+        if (ok) runCatching { file.delete(); File(context.filesDir, LAST_FILE).delete() } // one trace is never sent twice
         return ok
     }
 }
