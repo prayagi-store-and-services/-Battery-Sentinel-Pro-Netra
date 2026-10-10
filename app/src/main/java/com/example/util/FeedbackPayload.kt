@@ -62,6 +62,24 @@ object FeedbackBuilder {
     fun feedback(model: String, androidVersion: String, appVersion: String, message: String): FeedbackPayload =
         FeedbackPayload("Feedback", model, androidVersion, appVersion, message.trim().take(MAX_MESSAGE), null)
 
-    fun crash(model: String, androidVersion: String, appVersion: String, sanitizedTrace: String): FeedbackPayload =
-        FeedbackPayload("Crash report", model, androidVersion, appVersion, null, sanitizedTrace.take(MAX_TRACE))
+    const val STAMP_PREFIX = "[captured on app version "
+    const val UNKNOWN_LABEL = "[captured on an earlier version, exact version unknown]"
+    const val UNKNOWN_VERSION = "unknown (earlier version)"
+
+    /** Written when the crash happens, so the report always says which build actually crashed. */
+    fun stamp(version: String, trace: String): String = STAMP_PREFIX + version + "]\n" + trace
+
+    /** The version a saved trace was captured on, or null for a trace saved before stamping existed. */
+    fun stampedVersion(trace: String): String? =
+        if (trace.startsWith(STAMP_PREFIX)) trace.removePrefix(STAMP_PREFIX).substringBefore(']').ifBlank { null } else null
+
+    /**
+     * The app version sent is the one the trace was captured on, never the version that happens to be installed when it is sent.
+     * A trace saved before stamping existed is labelled as such. [appVersion] is no longer used for crash reports.
+     */
+    fun crash(model: String, androidVersion: String, @Suppress("UNUSED_PARAMETER") appVersion: String, sanitizedTrace: String): FeedbackPayload {
+        val ver = stampedVersion(sanitizedTrace)
+        val body = if (ver != null) sanitizedTrace else UNKNOWN_LABEL + "\n" + sanitizedTrace
+        return FeedbackPayload("Crash report", model, androidVersion, ver ?: UNKNOWN_VERSION, null, body.take(MAX_TRACE))
+    }
 }
