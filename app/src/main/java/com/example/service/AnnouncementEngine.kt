@@ -335,7 +335,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 enqueue(
                     AnnouncementItem(
                         id = "bt_conn_${event.eventId}",
-                        text = btText(event.newValue, event.previousValue?.toIntOrNull(), false),
+                        text = btConnectedText(event.newValue, event.previousValue?.toIntOrNull()),
                         priority = AnnouncementPriority.BLUETOOTH_STATE,
                         category = "BLUETOOTH_STATE",
                         isNightException = false
@@ -346,7 +346,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 enqueue(
                     AnnouncementItem(
                         id = "bt_disc_${event.eventId}",
-                        text = btText(event.newValue, event.previousValue?.toIntOrNull(), true),
+                        text = btDisconnectedText(event.newValue),
                         priority = AnnouncementPriority.BLUETOOTH_STATE,
                         category = "BLUETOOTH_STATE",
                         isNightException = false
@@ -487,9 +487,12 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
     /** "Power connected, 42 percent." The percent is left out at 100 and at the user's own target, which have their own line. */
     /** "BT Buds, 60 percent." With no battery info: "BT Buds." The percent is left out at 100 on disconnect. */
     private fun btText(name: String?, pct: Int?, disconnect: Boolean): String {
-        val n = name?.takeIf { it.isNotBlank() } ?: "device"
-        return if (pct == null || (disconnect && pct >= 100)) "BT $n." else "BT $n, $pct percent."
+        return btLine(name, pct, disconnect)
     }
+
+    private fun btConnectedText(name: String?, pct: Int?): String = btConnectedLine(name, pct)
+
+    private fun btDisconnectedText(name: String?): String = btDisconnectedLine(name)
 
     private fun levelText(base: String, type: NetraEventType): String {
         val level = NetraApplication.instance.centralDataCenter.centralState.value.batteryLevel ?: return "$base."
@@ -794,4 +797,21 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
 
         private const val TAG = "NetraAnnouncementEngine"
     }
+}
+
+internal fun btLine(name: String?, pct: Int?, disconnect: Boolean): String {
+    val n = name?.takeIf { it.isNotBlank() } ?: "device"
+    return if (pct == null || (disconnect && pct >= 100)) "BT $n." else "BT $n, $pct percent."
+}
+
+/** On connect: name, "connected", and the battery percent only when the phone really reports one (1..100). */
+internal fun btConnectedLine(name: String?, pct: Int?): String {
+    val n = name?.takeIf { it.isNotBlank() } ?: "Bluetooth device"
+    return if (pct != null && pct in 1..100) "$n connected, $pct percent." else "$n connected."
+}
+
+/** On disconnect: only the name and "disconnected". Never a battery percent. */
+internal fun btDisconnectedLine(name: String?): String {
+    val n = name?.takeIf { it.isNotBlank() } ?: "Bluetooth device"
+    return "$n disconnected."
 }
