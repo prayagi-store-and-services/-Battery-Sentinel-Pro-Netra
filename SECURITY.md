@@ -1,7 +1,7 @@
 # Security Policy
 
 ## Region guard (2.1.4)
-- The app refuses to open when the phone's SIM or network country is on a built-in block list (PK, BD, AF). The check runs only on the phone, uses no permission, no network call and no IP lookup, and nothing is stored or sent. With no signal, or an Indian SIM, it never blocks. It is a deterrent, not foolproof: removing the SIM or changing the language region bypasses it.
+- The app refuses to open when the phone's SIM or network country is on a built-in block list (PK, BD, AF, CN, KP). The check runs only on the phone, uses no permission, no network call and no IP lookup, and nothing is stored or sent. With no signal, or an Indian SIM, it never blocks. It is a deterrent, not foolproof: removing the SIM or changing the language region bypasses it.
 
 ## Report delivery fix (2.0.11)
 
