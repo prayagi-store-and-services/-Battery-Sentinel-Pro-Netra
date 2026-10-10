@@ -59,7 +59,7 @@ object ActivePowerSaver {
         if (screenOn) p.edit().putLong(KEY_OFF_SINCE, 0L).apply() else onScreenOff(app, nowMs)
         val since = p.getLong(KEY_OFF_SINCE, 0L)
         val offFor = if (since > 0L) nowMs - since else 0L
-        val want = shouldBeActive(isEnabled(app), hourNow(), screenOn, offFor)
+        val want = shouldBeActive(isEnabled(app), hourNow(), screenOn, offFor) && !DrivingFlag.isDriving(app)
         if (want && !isApplied(app)) apply(app) else if (!want && isApplied(app)) restore(app)
     }
 
