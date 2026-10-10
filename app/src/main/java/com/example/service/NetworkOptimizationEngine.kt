@@ -157,7 +157,16 @@ class AndroidTelephonyStatusProvider(private val context: Context) : TelephonySt
 
     override fun isInActiveCall(): Boolean {
         val tm = telephonyManager ?: return false
-        return tm.callState != TelephonyManager.CALL_STATE_IDLE
+        // Reading the call state needs READ_PHONE_STATE. Without it (or if the system refuses), the call state is unknown:
+        // report "not in a call" instead of crashing the screen-off evaluation.
+        if (context.checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            return false
+        }
+        return try {
+            tm.callState != TelephonyManager.CALL_STATE_IDLE
+        } catch (_: SecurityException) {
+            false
+        }
     }
 
     override fun is3GSupported(): Boolean {
