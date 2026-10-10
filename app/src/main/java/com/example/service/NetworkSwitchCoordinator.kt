@@ -132,7 +132,7 @@ object NetworkSwitchCoordinator {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "Network suggestions", NotificationManager.IMPORTANCE_LOW))
             }
-            val open = Intent(c, MainActivity::class.java).putExtra(EXTRA_OPEN_NETWORK_PANEL, true)
+            val open = com.example.Brand.launchIntent(c).putExtra(EXTRA_OPEN_NETWORK_PANEL, true)
             val pi = PendingIntent.getActivity(c, 7421, open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
             val n = androidx.core.app.NotificationCompat.Builder(c, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
