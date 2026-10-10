@@ -99,6 +99,7 @@ open class MainActivity : ComponentActivity() {
             setContentView(box)
             return
         }
+        com.example.festival.JayMataDi.greetIfDue(this)
         enableEdgeToEdge()
 
         // Anonymous daily usage count (+1 on a public counter, nothing else). The user can turn it off in Settings.
