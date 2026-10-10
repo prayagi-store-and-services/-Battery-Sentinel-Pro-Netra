@@ -4,8 +4,12 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-- Fixed: the 24-hour battery trend chart could crash on some phones. It now draws its time labels safely.
+- Added: the app is not available in some regions. It checks only your phone's own SIM/network country, on the phone, and sends nothing anywhere. If it cannot tell, it works as normal.
 - Improved: general improvements and bug fixes.
+
+## [2.1.3]
+
+- Fixed: the 24-hour battery trend chart could crash on some phones. It now draws its time labels safely.
 
 ## [2.0.9]
 
