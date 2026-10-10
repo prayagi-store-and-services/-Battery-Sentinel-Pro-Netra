@@ -4,6 +4,7 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: the 24-hour battery trend chart could crash on some phones. It now draws its time labels safely.
 - Improved: general improvements and bug fixes.
 
 ## [2.0.9]
