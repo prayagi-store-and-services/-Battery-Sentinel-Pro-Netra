@@ -70,6 +70,16 @@ enum class VicoTrendMetric {
 }
 
 /**
+ * Label for the chart's bottom axis. Vico 2.0 throws IllegalStateException when a formatter returns an empty string,
+ * so labels that should stay hidden return a single space instead (it draws nothing).
+ */
+internal fun bottomAxisLabel(labels: List<String>, value: Double): String {
+    val index = value.toInt()
+    if (index !in labels.indices) return " "
+    return if (index == 0 || index == labels.lastIndex || index % 10 == 0) labels[index].ifEmpty { " " } else " "
+}
+
+/**
  * Modern dashboard component visualizing 24-hour battery percentage and temperature trends
  * using the Vico charting library.
  */
@@ -110,15 +120,7 @@ fun VicoBatteryTrendsDashboard(
     }
 
     val bottomAxisFormatter = remember(bottomTimeLabels) {
-        CartesianValueFormatter { _, value, _ ->
-            val index = value.toInt()
-            if (index in bottomTimeLabels.indices) {
-                // Show labels at spaced intervals
-                if (index == 0 || index == bottomTimeLabels.lastIndex || index % 10 == 0) {
-                    bottomTimeLabels[index]
-                } else ""
-            } else ""
-        }
+        CartesianValueFormatter { _, value, _ -> bottomAxisLabel(bottomTimeLabels, value) }
     }
 
     val startAxisFormatter = remember(selectedMetric) {
