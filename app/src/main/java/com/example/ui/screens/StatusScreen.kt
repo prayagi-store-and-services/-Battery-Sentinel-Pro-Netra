@@ -767,7 +767,7 @@ fun StatusScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(6.dp))
-            Text(text = "App: Battery Sentinel Pro Netra v1.0 • Autonomous Engine", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = "App: ${com.example.Brand.name} v1.0 • Autonomous Engine", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
