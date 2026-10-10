@@ -124,7 +124,7 @@ fun FeedbackCard() {
                             dialogKind = null
                             if (ok) {
                                 status = "Sent. Thank you!"
-                                if (kind == "Crash") { runCatching { crashSource().delete() }; hasCrash = false } else message = ""
+                                if (kind == "Crash") { runCatching { File(context.filesDir, com.example.util.CrashAutoSender.PENDING_FILE).delete(); File(context.filesDir, com.example.util.CrashAutoSender.LAST_FILE).delete() }; hasCrash = false } else message = ""
                             } else {
                                 status = "Could not send right now (check your internet)."
                                 failedPayload = payload
