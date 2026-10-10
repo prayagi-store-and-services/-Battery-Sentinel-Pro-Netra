@@ -301,7 +301,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
 
         if (settings?.screenOffNetworkOptEnabled != false) {
             val threshold = settings?.networkTrafficThresholdBytesPerSec ?: 2_097_152L
-            if (isConfirmedOff && !wasConfirmedOff) {
+            if (isConfirmedOff && !wasConfirmedOff && !DrivingFlag.isDriving(com.example.NetraApplication.instance)) {
                 networkOptimizationEngine?.onScreenTurnedOff(
                     thresholdBytesPerSec = threshold
                 )
