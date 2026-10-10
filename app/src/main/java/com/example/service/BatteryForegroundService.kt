@@ -307,7 +307,7 @@ class BatteryForegroundService : Service() {
          * battery percentage, temperature, and charging status.
          */
         fun buildTrackingNotification(context: Context, state: BatteryTrackState): Notification {
-            val contentIntent = Intent(context, MainActivity::class.java).apply {
+            val contentIntent = com.example.Brand.launchIntent(context).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             }
             val pendingIntent = PendingIntent.getActivity(
