@@ -126,7 +126,7 @@ fun PowerPreferencesBody() {
         }
         PrefRow(
             "Active Power Saving",
-            "Forced from 11 PM to 7 AM, and after the screen has been off 15 minutes. Dims, 15 s screen timeout, auto-sync off; restores (brightness back to automatic) at 7 AM or when the screen turns on. Android does not let apps switch off Wi-Fi, Bluetooth, mobile data or the network type, so this lowers drain but cannot promise a fixed figure. " + com.example.service.ActivePowerSaver.statusText(context),
+            "Forced from 11 PM to 7 AM, and after the screen has been off 15 minutes. Dims, 15 s screen timeout, auto-sync off; restores (brightness back to automatic) at 7 AM or when the screen turns on. Android does not let apps switch off Wi-Fi, Bluetooth, mobile data or the network type, so this lowers drain but cannot promise a fixed figure. If Netra Hub (same phone, offline) says you are driving, this pauses; thermal protection and the charge alarm stay on. " + com.example.service.ActivePowerSaver.statusText(context),
             com.example.service.ActivePowerSaver.isEnabled(context), canWrite
         ) { on -> com.example.service.ActivePowerSaver.setEnabled(context, on); tick++ }
         PrefRow(
