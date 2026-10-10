@@ -1028,7 +1028,8 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 val oldDevice = oldState.bluetoothDevices.find { (it.address.ifBlank { it.name }) == deviceKey }
 
                 // Carry forward last valid battery level if temporarily null
-                val mergedBattery = device.batteryPercent ?: oldDevice?.batteryPercent
+                // Only carry the last battery reading while the device stays connected; a reconnect must not reuse an old session's value
+                val mergedBattery = device.batteryPercent ?: oldDevice?.takeIf { it.isConnected }?.batteryPercent
                 device.copy(batteryPercent = mergedBattery)
             }
 
@@ -1037,7 +1038,8 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 val deviceKey = device.address.ifBlank { device.name }
                 val oldDevice = oldState.bluetoothDevices.find { (it.address.ifBlank { it.name }) == deviceKey }
 
-                if (device.isConnected && (oldDevice == null || !oldDevice.isConnected)) {
+                val justConnected = device.isConnected && (oldDevice == null || !oldDevice.isConnected)
+                if (justConnected) {
                     eventsToEmit.add(
                         NetraCentralEvent(
                             eventId = "event_bt_conn_${deviceKey}_$now",
@@ -1054,7 +1056,8 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 if (device.isConnected && device.batteryPercent != null) {
                     val currentPercent = device.batteryPercent
                     val oldPercent = oldDevice?.batteryPercent
-                    if (currentPercent % 10 == 0 && (oldPercent == null || oldPercent != currentPercent)) {
+                    // No separate boundary line on the same tick as the connect line (it would announce the percent twice)
+                    if (!justConnected && currentPercent % 10 == 0 && (oldPercent == null || oldPercent != currentPercent)) {
                         eventsToEmit.add(
                             NetraCentralEvent(
                                 eventId = "event_bt_bat_${deviceKey}_${currentPercent}_$now",
