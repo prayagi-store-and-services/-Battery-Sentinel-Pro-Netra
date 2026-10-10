@@ -540,7 +540,8 @@ fun SettingsScreen(
                 dotState = DotState.CONNECTED,
                 accentColor = NetraCyan
             ) {
-                Text(text = "App Name: Battery Sentinel Pro Netra", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(text = "App Name: ${com.example.Brand.name}", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                com.example.Brand.rePinNote(System.currentTimeMillis())?.let { Text(text = it, fontSize = 11.sp) }
                 Text(text = "Version: ${com.example.BuildConfig.VERSION_NAME} Pro • Autonomous Engine", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(text = "Monitoring: reacts to Android battery events and re-checks every 45 seconds (every 15 minutes in the ideal charge state) while the monitor runs", fontSize = 11.sp, color = NetraEmerald)
             }
