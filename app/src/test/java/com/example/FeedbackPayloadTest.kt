@@ -20,6 +20,18 @@ class FeedbackPayloadTest {
         assertFalse(f.containsKey("message"))
     }
 
+    @Test fun crashUsesVersionFromTheTraceNotTheInstalledOne() {
+        val p = FeedbackBuilder.crash("m", "14", "2.1.1", FeedbackBuilder.stamp("2.0.11", "java.lang.Boom\n  at a.B.c(B.kt:1)"))
+        assertEquals("2.0.11", p.appVersion)
+        assertTrue(p.stackTrace!!.startsWith("[captured on app version 2.0.11]"))
+    }
+
+    @Test fun unstampedTraceIsLabelledUnknownVersion() {
+        val p = FeedbackBuilder.crash("m", "14", "2.1.1", "java.lang.Boom\n  at a.B.c(B.kt:1)")
+        assertEquals(FeedbackBuilder.UNKNOWN_VERSION, p.appVersion)
+        assertTrue(p.stackTrace!!.startsWith(FeedbackBuilder.UNKNOWN_LABEL))
+    }
+
     @Test fun stackTraceDropsExceptionMessages() {
         val t = IllegalStateException("secret user text 12345", RuntimeException("inner secret"))
         val s = FeedbackBuilder.sanitizeStackTrace(t)
