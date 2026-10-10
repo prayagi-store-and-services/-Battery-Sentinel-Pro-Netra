@@ -112,7 +112,7 @@ object BatteryCsvExporter {
                 type = "text/csv"
                 putExtra(Intent.EXTRA_STREAM, uri)
                 putExtra(Intent.EXTRA_SUBJECT, "Netra Battery Telemetry CSV (${file.name})")
-                putExtra(Intent.EXTRA_TEXT, "Exported battery health and usage telemetry dataset from Battery Sentinel Pro Netra.")
+                putExtra(Intent.EXTRA_TEXT, "Exported battery health and usage telemetry dataset from ${com.example.Brand.name}.")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
