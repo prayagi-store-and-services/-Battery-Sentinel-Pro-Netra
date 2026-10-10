@@ -79,13 +79,13 @@ class UpdateCheckWorker(appContext: Context, params: WorkerParameters) : Corouti
             nm.createNotificationChannel(NotificationChannel(CHANNEL_ID, "App updates", NotificationManager.IMPORTANCE_DEFAULT))
         }
         val open = PendingIntent.getActivity(
-            c, 0, Intent(c, com.example.MainActivity::class.java).putExtra(EXTRA_AUTO_UPDATE, true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+            c, 0, com.example.Brand.launchIntent(c).putExtra(EXTRA_AUTO_UPDATE, true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val n = NotificationCompat.Builder(c, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
             .setContentTitle("Update available")
-            .setContentText("A new Battery Sentinel Pro Netra is out. Tap to update.")
+            .setContentText("A new ${com.example.Brand.name} is out. Tap to update.")
             .setContentIntent(open)
             .setAutoCancel(true)
             .build()
