@@ -167,7 +167,7 @@ class NetraBatteryWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_eta, m.eta)
             views.setTextViewText(R.id.widget_updated, m.updated)
 
-            val intent = Intent(context, MainActivity::class.java).apply {
+            val intent = com.example.Brand.launchIntent(context).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             val pendingIntent = PendingIntent.getActivity(
