@@ -5,6 +5,7 @@ All user-facing release notes are maintained here. The guarded release workflow 
 ## [Unreleased]
 
 - Fixed: Bluetooth announcements. When a device disconnects, the app now says only its name and "disconnected", with no battery percent. When it connects, it says its name and "connected", and the battery percent only if the phone reports one.
+- Fixed: a Bluetooth device that reconnects no longer announces its battery percent from the earlier session, and no longer announces the same percent twice when it connects.
 - Improved: general improvements and bug fixes.
 
 ## [2.1.4]
