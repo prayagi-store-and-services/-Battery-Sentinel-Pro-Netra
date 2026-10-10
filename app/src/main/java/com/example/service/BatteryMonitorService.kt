@@ -475,7 +475,7 @@ class BatteryMonitorService : Service() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
         // Open App Intent
-        val openAppIntent = Intent(this, MainActivity::class.java).apply {
+        val openAppIntent = com.example.Brand.launchIntent(this).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val pendingOpenApp = PendingIntent.getActivity(
@@ -520,7 +520,7 @@ class BatteryMonitorService : Service() {
 
     private fun sendOverheatNotification(temp: Float) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val intent = Intent(this, MainActivity::class.java)
+        val intent = com.example.Brand.launchIntent(this)
         val pendingIntent = PendingIntent.getActivity(
             this, 102, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -540,7 +540,7 @@ class BatteryMonitorService : Service() {
 
     private fun sendThermalThresholdNotification(temp: Float, threshold: Float) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val intent = Intent(this, MainActivity::class.java)
+        val intent = com.example.Brand.launchIntent(this)
         val pendingIntent = PendingIntent.getActivity(
             this, 103, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -586,7 +586,7 @@ class BatteryMonitorService : Service() {
     }
 
     private fun buildSentinelNotification(t: NetraCentralState): Notification {
-        val intent = Intent(this, MainActivity::class.java)
+        val intent = com.example.Brand.launchIntent(this)
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
