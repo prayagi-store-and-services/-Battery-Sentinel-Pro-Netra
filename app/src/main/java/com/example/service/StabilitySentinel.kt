@@ -80,7 +80,7 @@ class StabilitySentinel(private val app: NetraApplication) {
         // Stack trace only (class names and code locations, no exception messages), kept locally so the
         // user can choose to send it from Settings. Nothing is sent automatically.
         runCatching {
-            com.example.util.FeedbackBuilder.sanitizeStackTrace(throwable).let { t -> File(app.filesDir, "pending_crash_report.txt").writeText(t); File(app.filesDir, "last_crash_report.txt").writeText(t) }
+            com.example.util.FeedbackBuilder.stamp(BuildConfig.VERSION_NAME, com.example.util.FeedbackBuilder.sanitizeStackTrace(throwable)).let { t -> File(app.filesDir, "pending_crash_report.txt").writeText(t); File(app.filesDir, "last_crash_report.txt").writeText(t) }
         }
         val report = baseReport("CRASH", "runtime")
             .put("exceptionClass", throwable.javaClass.name.take(300))
