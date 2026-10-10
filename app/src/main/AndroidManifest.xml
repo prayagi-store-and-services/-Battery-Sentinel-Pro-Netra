@@ -32,6 +32,8 @@
 
     <!-- Saver: lets us list launchable apps (not hidden ones) so we can decide which background apps to close. -->
     <queries>
+        <!-- Netra Hub's read-only driving flag (yes/no only). -->
+        <provider android:authorities="com.aistudio.netrasensorhub.kxmpzq.driving" />
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
