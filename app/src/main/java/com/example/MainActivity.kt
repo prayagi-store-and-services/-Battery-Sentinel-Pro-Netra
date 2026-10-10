@@ -74,7 +74,7 @@ import com.example.viewmodel.NetraViewModel
 import com.example.update.GitHubReleaseUpdater
 import com.example.update.UpdateUiState
 
-class MainActivity : ComponentActivity() {
+open class MainActivity : ComponentActivity() {
 
     private val viewModel: NetraViewModel by viewModels()
 
@@ -194,7 +194,7 @@ fun MainAppContent(viewModel: NetraViewModel) {
             title = { Text("Update available: " + availableUpdate.versionName) },
             text = {
                 Column {
-                    Text("A newer Battery Sentinel Pro Netra release is available.")
+                    Text("A newer ${com.example.Brand.name} release is available.")
                     Spacer(modifier = Modifier.size(8.dp))
                     Text("What's new", fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.size(4.dp))
@@ -245,7 +245,7 @@ fun MainAppContent(viewModel: NetraViewModel) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text(text = "Battery Sentinel Pro Netra", fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = "${com.example.Brand.name}", fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1, color = MaterialTheme.colorScheme.onSurface)
                     Text(text = "v" + ownVersion, fontSize = 12.sp, maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Text(text = java.text.SimpleDateFormat("EEE d MMM, HH:mm", java.util.Locale.getDefault()).format(clockNow), fontSize = 12.sp, maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant)
