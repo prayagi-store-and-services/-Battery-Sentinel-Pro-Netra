@@ -49,7 +49,7 @@ class BatteryForegroundService : Service() {
                 try { ActivePowerSaver.onScreenOff(this@BatteryForegroundService) } catch (_: Exception) {}
                 // Screen turned off (idle timeout or lock) while the charger is connected: bring the charging screen back. It stays dark and shows when the phone is next woken.
                 val sticky = try { registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
-                if ((sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0) {
+                if ((sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0 && com.example.ui.components.ChargingScreenGuard.Mode.load(this@BatteryForegroundService) == com.example.ui.components.ChargingScreenGuard.Mode.ON) {
                     openChargingScreenIfAllowed(wake = false)
                 }
             }
@@ -64,7 +64,7 @@ class BatteryForegroundService : Service() {
             val enabled = getSharedPreferences(com.example.ui.components.CHARGING_SCREEN_PREFS, Context.MODE_PRIVATE)
                 .getBoolean(com.example.ui.components.KEY_SCREEN_ENABLED, true)
             val live = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-            if (enabled && on && android.provider.Settings.canDrawOverlays(this) && com.example.ui.components.ChargingScreenGuard.keepAwakeAllowed(live)) {
+            if (enabled && on && android.provider.Settings.canDrawOverlays(this) && com.example.ui.components.ChargingScreenGuard.holdAllowed(com.example.ui.components.ChargingScreenGuard.Mode.load(this), live, com.example.ui.components.ChargingScreenGuard.isPhoneLocked(this))) {
                 startActivity(Intent(this, com.example.ui.ChargingScreenActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra(com.example.ui.ChargingScreenActivity.EXTRA_WAKE, wake))
             }
         } catch (e: Exception) {
