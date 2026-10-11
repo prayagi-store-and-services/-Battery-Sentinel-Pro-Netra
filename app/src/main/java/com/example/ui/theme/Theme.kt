@@ -89,7 +89,7 @@ fun MyApplicationTheme(
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = com.example.festival.festiveScheme(colorScheme),
         typography = Typography,
         content = content
     )
