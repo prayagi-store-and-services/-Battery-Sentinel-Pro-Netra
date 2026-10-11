@@ -99,7 +99,7 @@ fun ChargingScreenCard() {
         val obs = LifecycleEventObserver { _, e ->
             if (e == Lifecycle.Event.ON_START && enabled && auto && !bg && receiver == null) {
                 receiver = object : BroadcastReceiver() {
-                    override fun onReceive(context: Context, intent: Intent) { previewMode = false; show = true }
+                    override fun onReceive(context: Context, intent: Intent) { if (ChargingScreenGuard.Mode.load(c) != ChargingScreenGuard.Mode.OFF) { previewMode = false; show = true } }
                 }
                 c.registerReceiver(receiver, IntentFilter(Intent.ACTION_POWER_CONNECTED))
             } else if (e == Lifecycle.Event.ON_STOP) {
@@ -138,10 +138,25 @@ fun ChargingScreenCard() {
             })
         }
         bgNote?.let { Text(it, fontSize = 12.sp) }
+        var aoMode by remember { mutableStateOf(ChargingScreenGuard.Mode.load(c)) }
+        Text("Always-on screen", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf(ChargingScreenGuard.Mode.ON to "ON", ChargingScreenGuard.Mode.LOCK to "LOCK", ChargingScreenGuard.Mode.OFF to "OFF").forEach { (m, label) ->
+                val sel = aoMode == m
+                (if (sel) Button(onClick = {}, modifier = Modifier.weight(1f)) { Text(label) } else androidx.compose.material3.OutlinedButton(onClick = { aoMode = m; prefs.edit().putString(ChargingScreenGuard.Mode.KEY, m.name).apply() }, modifier = Modifier.weight(1f)) { Text(label) })
+            }
+        }
+        Text(
+            when (aoMode) {
+                ChargingScreenGuard.Mode.ON -> "ON: the always-on screen comes on by itself when the charger is connected, and stays only while charging."
+                ChargingScreenGuard.Mode.LOCK -> "LOCK: it stays only while the phone is unlocked. When the phone locks, the screen goes off."
+                ChargingScreenGuard.Mode.OFF -> "OFF: it never comes on by itself, not when the charger is connected and not when the phone locks. Preview still works."
+            }, fontSize = 12.sp
+        )
         ChargingDesignSettings()
         Button(onClick = {
             val live = try { c.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
-            previewMode = !ChargingScreenGuard.keepAwakeAllowed(live); show = true
+            previewMode = !ChargingScreenGuard.holdAllowed(ChargingScreenGuard.Mode.load(c), live, ChargingScreenGuard.isPhoneLocked(c)); show = true
         }, modifier = Modifier.fillMaxWidth()) { Text("Open charging screen now") }
         androidx.compose.material3.OutlinedButton(onClick = { previewMode = true; show = true }, modifier = Modifier.fillMaxWidth()) { Text("Preview the charging screen (does not keep the screen on)") }
         Text(
@@ -184,16 +199,18 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true, pre
     // (unplugged, halted, any not-charging state) the hold is released and the screen closes; a preview never holds the screen.
     DisposableEffect(Unit) {
         fun apply(i: Intent?) {
-            val ok = ChargingScreenGuard.keepAwakeAllowed(i)
+            val ok = ChargingScreenGuard.holdAllowed(ChargingScreenGuard.Mode.load(c), i, ChargingScreenGuard.isPhoneLocked(c))
             view.keepScreenOn = keepScreenOn && ok && !preview
             if (!ok && !preview) { view.keepScreenOn = false; onClose() }
         }
         val r = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                if (intent.action == Intent.ACTION_POWER_DISCONNECTED) { view.keepScreenOn = false; if (!preview) onClose() } else apply(intent)
+                if (intent.action == Intent.ACTION_POWER_DISCONNECTED) { view.keepScreenOn = false; if (!preview) onClose() }
+                else if (intent.action == Intent.ACTION_SCREEN_OFF) { if (!preview && ChargingScreenGuard.Mode.load(c) != ChargingScreenGuard.Mode.ON) { view.keepScreenOn = false; onClose() } }
+                else apply(c.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)))
             }
         }
-        val f = IntentFilter(Intent.ACTION_BATTERY_CHANGED).apply { addAction(Intent.ACTION_POWER_DISCONNECTED) }
+        val f = IntentFilter(Intent.ACTION_BATTERY_CHANGED).apply { addAction(Intent.ACTION_POWER_DISCONNECTED); addAction(Intent.ACTION_SCREEN_OFF) }
         val sticky = try { c.registerReceiver(r, f) } catch (_: Exception) { null }
         apply(sticky)
         onDispose { view.keepScreenOn = false; try { c.unregisterReceiver(r) } catch (_: Exception) {} }
