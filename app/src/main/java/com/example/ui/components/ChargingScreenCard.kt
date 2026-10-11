@@ -76,6 +76,7 @@ fun ChargingScreenCard() {
     var enabled by remember { mutableStateOf(prefs.getBoolean(KEY_SCREEN_ENABLED, true)) }
     var auto by remember { mutableStateOf(prefs.getBoolean(KEY_AUTO, true)) }
     var show by remember { mutableStateOf(false) }
+    var previewMode by remember { mutableStateOf(false) }
     var bg by remember { mutableStateOf(prefs.getBoolean(KEY_BACKGROUND, true) && android.provider.Settings.canDrawOverlays(c)) }
     var bgNote by remember { mutableStateOf<String?>(null) }
     // Coming back from Android's "Display over other apps" screen: turn it on only if the permission was really granted.
@@ -98,7 +99,7 @@ fun ChargingScreenCard() {
         val obs = LifecycleEventObserver { _, e ->
             if (e == Lifecycle.Event.ON_START && enabled && auto && !bg && receiver == null) {
                 receiver = object : BroadcastReceiver() {
-                    override fun onReceive(context: Context, intent: Intent) { show = true }
+                    override fun onReceive(context: Context, intent: Intent) { previewMode = false; show = true }
                 }
                 c.registerReceiver(receiver, IntentFilter(Intent.ACTION_POWER_CONNECTED))
             } else if (e == Lifecycle.Event.ON_STOP) {
@@ -138,27 +139,31 @@ fun ChargingScreenCard() {
         }
         bgNote?.let { Text(it, fontSize = 12.sp) }
         ChargingDesignSettings()
-        Button(onClick = { show = true }, modifier = Modifier.fillMaxWidth()) { Text("Open charging screen now") }
+        Button(onClick = {
+            val live = try { c.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
+            previewMode = !ChargingScreenGuard.keepAwakeAllowed(live); show = true
+        }, modifier = Modifier.fillMaxWidth()) { Text("Open charging screen now") }
+        androidx.compose.material3.OutlinedButton(onClick = { previewMode = true; show = true }, modifier = Modifier.fillMaxWidth()) { Text("Preview the charging screen (does not keep the screen on)") }
         Text(
-            "A black screen with the live battery values from this phone. It keeps the screen on while it is open (dimmed after 15 seconds), so close it with a double tap. Both switches are on by default; you can turn them off. After 15 seconds without a touch the screen dims to 10% brightness; a touch brings normal brightness back, and so does unplugging. " +
+            "A black screen with the live battery values from this phone. It keeps the screen on only while the phone is really charging (dimmed after 15 seconds); the moment charging stops, for any reason, it lets go and closes, and your phone's own screen timeout applies again. Close it with a double tap. Preview shows the same screen without keeping the display on. Both switches are on by default; you can turn them off. After 15 seconds without a touch the screen dims to 10% brightness; a touch brings normal brightness back, and so does unplugging. " +
                 "The background option uses the charger-connected event the app already listens for (no extra polling) and Android's Display over other apps permission, which only you can grant. It cannot open over a locked screen.",
             fontSize = 10.sp, color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 
-    if (show) ChargingScreenDialog { show = false }
+    if (show) ChargingScreenDialog(previewMode) { show = false }
 }
 
 @Composable
-private fun ChargingScreenDialog(onClose: () -> Unit) {
+private fun ChargingScreenDialog(preview: Boolean, onClose: () -> Unit) {
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
-        ChargingScreenContent(onClose)
+        ChargingScreenContent(onClose, preview = preview)
     }
 }
 
 /** The black screen itself. Used by the in-app dialog and by ChargingScreenActivity (opened from the background). */
 @Composable
-fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
+fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true, preview: Boolean = false) {
     val c = LocalContext.current
     val owner = LocalLifecycleOwner.current
     val st = remember { ChargingStyleSettings.load(c) }
@@ -175,9 +180,23 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
         }
     }
     val view = LocalView.current
+    // Hard rule: the screen is held awake only while the battery is really charging. The moment charging stops
+    // (unplugged, halted, any not-charging state) the hold is released and the screen closes; a preview never holds the screen.
     DisposableEffect(Unit) {
-        view.keepScreenOn = keepScreenOn
-        onDispose { view.keepScreenOn = false }
+        fun apply(i: Intent?) {
+            val ok = ChargingScreenGuard.keepAwakeAllowed(i)
+            view.keepScreenOn = keepScreenOn && ok && !preview
+            if (!ok && !preview) { view.keepScreenOn = false; onClose() }
+        }
+        val r = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action == Intent.ACTION_POWER_DISCONNECTED) { view.keepScreenOn = false; if (!preview) onClose() } else apply(intent)
+            }
+        }
+        val f = IntentFilter(Intent.ACTION_BATTERY_CHANGED).apply { addAction(Intent.ACTION_POWER_DISCONNECTED) }
+        val sticky = try { c.registerReceiver(r, f) } catch (_: Exception) { null }
+        apply(sticky)
+        onDispose { view.keepScreenOn = false; try { c.unregisterReceiver(r) } catch (_: Exception) {} }
     }
     // Dim to the chosen level (10% unless changed) after 15 seconds without a touch; a touch or closing the screen restores normal brightness.
     var lastTouchMs by remember { mutableStateOf(SystemClock.elapsedRealtime()) }
@@ -231,6 +250,7 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true) {
                 }
             }
             ChargingDetailsBlock(st.details, entries)
+            if (preview) Text("PREVIEW - this is how the charging screen looks. It does not keep the screen on. Double tap to close.", color = Color(0xFFFFB300), fontSize = 12.sp, textAlign = TextAlign.Center)
             Text("Power is battery-side (voltage x current), not wall-adapter wattage. Double tap to close.", color = Color(0xFF757575), fontSize = 10.sp, textAlign = TextAlign.Center)
         }
     }
