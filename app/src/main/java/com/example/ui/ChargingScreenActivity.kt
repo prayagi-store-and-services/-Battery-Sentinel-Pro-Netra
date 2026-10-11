@@ -22,12 +22,16 @@ class ChargingScreenActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
+            val live = try { registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
+            if (!com.example.ui.components.ChargingScreenGuard.keepAwakeAllowed(live)) { finish(); return }
             if (intent?.getBooleanExtra(EXTRA_WAKE, false) == true) setTurnScreenOn(true)
         }
         unplugReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) { finish() }
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action == Intent.ACTION_POWER_DISCONNECTED || !com.example.ui.components.ChargingScreenGuard.keepAwakeAllowed(intent)) finish()
+            }
         }
-        registerReceiver(unplugReceiver, IntentFilter(Intent.ACTION_POWER_DISCONNECTED))
+        registerReceiver(unplugReceiver, IntentFilter(Intent.ACTION_POWER_DISCONNECTED).apply { addAction(Intent.ACTION_BATTERY_CHANGED) })
         setContent { ChargingScreenContent(onClose = { finish() }, keepScreenOn = false) }
     }
 
