@@ -16,6 +16,7 @@ import com.example.ui.components.ChargingScreenContent
  * It closes by itself when the charger is unplugged.
  */
 private typealias G = com.example.ui.components.ChargingScreenGuard
+private typealias GMode = com.example.ui.components.ChargingScreenGuard.Mode
 
 class ChargingScreenActivity : ComponentActivity() {
     private var unplugReceiver: BroadcastReceiver? = null
@@ -25,14 +26,14 @@ class ChargingScreenActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             val live = try { registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
-            if (!G.holdAllowed(G.Mode.load(this), live, G.isPhoneLocked(this))) { finish(); return }
+            if (!G.holdAllowed(GMode.load(this), live, G.isPhoneLocked(this))) { finish(); return }
             if (intent?.getBooleanExtra(EXTRA_WAKE, false) == true) setTurnScreenOn(true)
         }
         unplugReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 if (intent.action == Intent.ACTION_POWER_DISCONNECTED || !G.keepAwakeAllowed(intent)) { finish(); return }
-                if (intent.action == Intent.ACTION_SCREEN_OFF && G.Mode.load(context) != G.Mode.ON) finish()
-                if (G.Mode.load(context) == G.Mode.OFF) finish()
+                if (intent.action == Intent.ACTION_SCREEN_OFF && GMode.load(context) != GMode.ON) finish()
+                if (GMode.load(context) == GMode.OFF) finish()
             }
         }
         registerReceiver(unplugReceiver, IntentFilter(Intent.ACTION_POWER_DISCONNECTED).apply { addAction(Intent.ACTION_BATTERY_CHANGED); addAction(Intent.ACTION_SCREEN_OFF) })
