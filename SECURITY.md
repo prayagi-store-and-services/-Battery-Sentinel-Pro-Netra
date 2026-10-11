@@ -1,5 +1,8 @@
 # Security Policy
 
+## Charging screen stops holding the display (2.1.8)
+- The charging screen can keep the display awake only while the phone is really charging. It reads the live plug and charging state from Android (no saved flag). When charging stops for any reason it releases the hold and closes, and the phone's own screen timeout applies. A new Preview shows the same screen and never holds the display. No new permission, library, network call or stored data. Android does not let an app force the display off, so the screen goes off by the phone's normal timeout.
+
 ## Region guard (2.1.4)
 - The app refuses to open when the phone's SIM or network country is on a built-in block list (PK, BD, AF, CN, KP). The check runs only on the phone, uses no permission, no network call and no IP lookup, and nothing is stored or sent. With no signal, or an Indian SIM, it never blocks. It is a deterrent, not foolproof: removing the SIM or changing the language region bypasses it.
 
