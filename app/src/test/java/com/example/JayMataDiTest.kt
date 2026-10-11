@@ -14,4 +14,11 @@ class JayMataDiTest {
     @Test fun onlyOnce() = assertFalse(JayMataDi.due(at(2026, Calendar.OCTOBER, 12), true))
     @Test fun stillGreetsLateInTheWindow() = assertTrue(JayMataDi.due(at(2026, Calendar.OCTOBER, 20, 22), false))
     @Test fun neverAfterTheWindow() = assertFalse(JayMataDi.due(at(2026, Calendar.OCTOBER, 21, 0), false))
+    @Test fun windowMatchesDue() { assertTrue(JayMataDi.inWindow(at(2026, Calendar.OCTOBER, 15))); assertFalse(JayMataDi.inWindow(at(2026, Calendar.OCTOBER, 25))) }
+    @Test fun speaksOnlyWhenAudible() {
+        assertTrue(JayMataDi.audible(true, 5, false))
+        assertFalse(JayMataDi.audible(false, 5, false))
+        assertFalse(JayMataDi.audible(true, 0, false))
+        assertFalse(JayMataDi.audible(true, 5, true))
+    }
 }
