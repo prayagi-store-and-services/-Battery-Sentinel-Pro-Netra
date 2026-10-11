@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Netra Battery Sentinel Pro - honest battery monitoring for Android</title>
+<title>Netra Battery Sentinel Pro - Monitor, Protect, Save, Stay Cool</title>
 <meta name="description" content="Netra Battery Sentinel Pro watches your phone's battery, charging and temperature using only what Android actually reports. Free APK download.">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <style>
@@ -67,6 +67,23 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 .rv .top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:14px}.rv .st{color:var(--warn);letter-spacing:2px}.rv .dv{color:var(--mute);font-size:13px}.rv p{margin:6px 0 0;color:var(--text);font-size:15px;word-break:break-word}.rv button.rp{margin-left:auto;background:none;border:0;color:var(--mute);font-size:12px;cursor:pointer;text-decoration:underline}
 .festbar{padding:10px 16px;text-align:center;font-weight:600;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#04101a}.festbar.sorrow{background:#000;color:#e4e4e7;border-bottom:3px solid #e4e4e7}.festbar.soon{opacity:.92;font-weight:500}.clockbar{text-align:center;font-size:13px;color:var(--mute);padding:6px 12px;border-bottom:1px solid var(--line)}#whatsnew-list h3{margin:14px 0 4px}#whatsnew-list ul{margin:4px 0 10px 20px}
 .gh{margin:28px 0 10px}.shots{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x mandatory}.shots a{flex:0 0 auto;scroll-snap-align:start}.shots img{height:440px;width:auto;border:3px solid #2a3a5c;border-radius:22px;background:#0e1729;display:block}
+
+/* 11 Oct 2026 redesign layer: mockup-style look, same content */
+:root{--bg:#06101c;--card:#0e1f35;--card2:#132a47;--line:#1c3a5e;--accent:#2fe08f;--accent2:#35b8ff}
+body{background:radial-gradient(1100px 520px at 75% -8%,#0e4a45 0%,transparent 60%),radial-gradient(800px 400px at 0% 20%,#0c2c4e 0%,transparent 60%),var(--bg)}
+nav{background:rgba(6,16,28,.92)}nav a{padding:6px 12px;border-radius:9px}nav a:hover{background:var(--card2);box-shadow:inset 0 0 0 1px var(--accent)}
+nav a[href="#download"]{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04210f;font-weight:700}
+.hero h1{font-size:clamp(34px,6vw,58px)}.hero h1 em{font-style:normal;color:var(--accent)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}.chips span{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13px}
+.btn{background:linear-gradient(135deg,#ff7a1a,#ff9a2e);color:#1a0b00;box-shadow:0 6px 24px rgba(255,122,26,.3)}
+.btn.alt{background:transparent;color:var(--text);border:1px solid var(--accent);box-shadow:none}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.stats div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+.card{background:linear-gradient(180deg,var(--card),#0b1a2e);transition:transform .15s,box-shadow .15s}.card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(53,184,255,.12)}
+h2{display:flex;align-items:center;gap:10px}h2:before{content:"";width:5px;height:26px;border-radius:3px;background:var(--accent);flex:none}
+.phone{border-color:#2d5a8a;background:linear-gradient(180deg,#0c2540,#07111f);box-shadow:0 20px 60px rgba(47,224,143,.14)}
+.phone .gauge{border-top-color:var(--accent);border-right-color:var(--accent2)}
+.shots img{border-color:#2d5a8a}
+section{border-top:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -79,12 +96,13 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 
 <header class="hero"><div class="wrap">
 <div>
-<h1>Know what your battery is really doing.</h1>
+<h1>Know what your battery is <em>really doing.</em></h1>
+<div class="chips"><span>&#9889; Live charging telemetry</span><span>&#127777; Temperature awareness</span><span>&#128267; Which apps use power</span><span>&#128225; Bluetooth device battery</span></div>
 <p class="lead">Netra Battery Sentinel Pro watches your phone's battery, charging and temperature using only what Android actually reports. If a reading is not available, it says so. No made-up numbers.</p>
 <a class="btn" id="dl-main" href="https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/latest/download/app-release.apk">Download latest APK</a>
 <a class="btn alt" href="#features">See what it does</a>
 <div class="stats"><div><b id="visits2">...</b>visits</div><div><b id="dls">...</b>downloads (all releases, from GitHub)</div></div>
-<div class="meta" id="latest-meta">Always the newest release. Free. Android only.</div>
+<div class="meta" id="latest-meta">Always the newest release. Free. Android 7.0 or newer.</div>
 <div class="note"><b>Install tip:</b> if the install fails, first download the APK again and check that it finished. The APK is signed by the project; Android refuses an update when the signing key differs from the installed copy (for example one installed from a different source). Only in that case an uninstall is needed, as a last resort. <b>Dhyan dein:</b> uninstall karne par app ka local data (history aur settings) phone se hat jata hai.</div>
 </div>
 <div>
@@ -232,7 +250,7 @@ fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(functi
  var meta=document.getElementById("latest-meta");
  if(rel.length){var la=(rel[0].assets||[]).filter(function(a){return /\.apk$/i.test(a.name)});var named=la.filter(function(a){return a.name!=="app-release.apk"})[0];
   if(named){document.querySelectorAll("a[href$='/releases/latest/download/app-release.apk']").forEach(function(a){a.href=named.browser_download_url})}}
- if(rel.length&&meta){meta.textContent="Latest: "+rel[0].tag_name+" - released "+fmt(rel[0].published_at)+". Free. Android only."}
+ if(rel.length&&meta){meta.textContent="Latest: "+rel[0].tag_name+" - released "+fmt(rel[0].published_at)+". Free. Android 7.0 or newer."}
  var box=document.getElementById("old-list");
  if(!rel.length){box.innerHTML="<p class='sub'>No releases yet.</p>";return}
  var html="<table><thead><tr><th>Version</th><th>Released</th><th>Download</th><th>Downloads</th></tr></thead><tbody>";
