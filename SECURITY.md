@@ -1,5 +1,9 @@
 # Security Policy
 
+## Battery check is on-device only (v2.1.12)
+
+The Status screen card said it was backed by Gemini AI, but release builds carry no key and the tips were always calculated on the phone. The cloud path is now switched off in code (a constant), so battery readings, battery history and typed questions can never be sent to Google AI (the Status "Battery check" and the "Battery History Insights" card), even if a key or Firebase setup is added to a build. The card is renamed "Battery check" with honest wording, and a few unproven claims in the tips (for example 3x faster wear, doubling cycle life) were replaced with cautious wording. No new permission, library or network address.
+
 ## Weather lookup sends an approximate location (v2.1.11)
 
 The weather card asks Open-Meteo for the current weather. It now sends the phone position rounded to 2 decimals (about 1 km) instead of the exact last-known position. Nothing else is sent. No new permission, library or network address.
