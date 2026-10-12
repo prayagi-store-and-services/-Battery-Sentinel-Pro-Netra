@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit
 
 object GeminiAiService {
     private const val TAG = "GeminiAiService"
+    /** Privacy: battery data is never sent to a cloud AI. The tips are calculated on the phone only. */
+    private const val CLOUD_AI_ENABLED = false
     private const val BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/"
 
     // Required models according to instructions:
@@ -41,7 +43,7 @@ object GeminiAiService {
         val prompt = buildTriagePrompt(telemetry)
         val apiKey = BuildConfig.GEMINI_API_KEY
 
-        if (apiKey.isNullOrBlank() || apiKey == "MY_GEMINI_API_KEY") {
+        if (!CLOUD_AI_ENABLED || apiKey.isNullOrBlank() || apiKey == "MY_GEMINI_API_KEY") {
             // Local fallback diagnostic
             return@withContext Result.success(generateLocalFallback(telemetry, isThinking = false))
         }
@@ -96,7 +98,7 @@ object GeminiAiService {
         val prompt = buildDeepThinkingPrompt(telemetry, historySummary, recentSessionsSummary)
         val apiKey = BuildConfig.GEMINI_API_KEY
 
-        if (apiKey.isNullOrBlank() || apiKey == "MY_GEMINI_API_KEY") {
+        if (!CLOUD_AI_ENABLED || apiKey.isNullOrBlank() || apiKey == "MY_GEMINI_API_KEY") {
             return@withContext Result.success(generateLocalFallback(telemetry, isThinking = true))
         }
 
@@ -241,10 +243,10 @@ object GeminiAiService {
 
     private fun generateLocalFallback(t: BatteryTelemetry, isThinking: Boolean): AiDiagnosticResult {
         val thermalStatus = when {
-            t.temperature > 45f -> "CRITICAL OVERHEAT (${t.temperature}°C). Severe electrochemical stress. Disconnect charger immediately."
-            t.temperature > 40f -> "Thermal Throttling Zone (${t.temperature}°C). High heat degrades anode SEI layer 3x faster."
-            t.temperature > 35f -> "Elevated Temperature (${t.temperature}°C). Normal under fast charging, but monitor closely."
-            else -> "Optimal Thermal Envelope (${t.temperature}°C). Excellent condition for lithium chemistry."
+            t.temperature > 45f -> "CRITICAL OVERHEAT (${t.temperature}°C). Very hot for a battery. Unplug the charger and let the phone cool."
+            t.temperature > 40f -> "Thermal Throttling Zone (${t.temperature}°C). Heat makes batteries wear faster."
+            t.temperature > 35f -> "Elevated Temperature (${t.temperature}°C). Common while fast charging, keep an eye on it."
+            else -> "Optimal Thermal Envelope (${t.temperature}°C). Temperature is in a normal range."
         }
 
         val degradation = when {
@@ -256,13 +258,13 @@ object GeminiAiService {
 
         val advice = if (t.isCharging) {
             if (t.level >= 80) "Battery is at ${t.level}%. Disconnecting now prevents high voltage dwell stress (4.35V+)."
-            else "Charging actively at ${String.format("%.2f", t.powerWatts ?: 0f)}W. Target 80% SoC for optimal lifespan."
+            else "Charging actively at ${String.format("%.2f", t.powerWatts ?: 0f)}W. Stopping near 80% is easier on the battery."
         } else {
             "Discharging at ~${String.format("%.2f", kotlin.math.abs(t.powerWatts ?: 0f))}W. Recharge before dipping below 20%."
         }
 
         val actions = mutableListOf(
-            "Maintain 80% charging cutoff to double cycle life.",
+            "Stopping the charge near 80% is generally easier on a lithium battery.",
             "Avoid high-CPU gaming or streaming while connected to fast charger.",
             if (t.temperature > 38f) "Remove protective phone case temporarily to dissipate heat." else "Sentinel 24/7 background guard active with zero wake-lock overhead."
         )
