@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: the app usage screen no longer shows two boxes that always said Unavailable (per-app energy and high-drain apps). Android does not give apps that data. The real count of listed apps stays, and only when Usage Access is on.
+
+## [2.1.12]
+
 - Fixed: the battery check no longer says it is powered by Gemini AI. The tips are worked out on your phone, nothing is sent anywhere, and a few over-strong claims in the tips were toned down. The battery history insights are also worked out on your phone only.
 
 ## [2.1.11]
