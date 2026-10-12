@@ -1,5 +1,8 @@
 # Security Policy
 
+## Battery Health card (2.1.9)
+- New card that shows the cycle count, design capacity and full-charge capacity only when the phone shares them (Android 14 cycle count, readable battery files, or an estimate from the charge counter, labelled). It is read on the phone, hidden when the phone shares nothing, and nothing is stored or sent. No new permission, library or network call.
+
 ## Charging screen stops holding the display (2.1.8)
 - The charging screen can keep the display awake only while the phone is really charging. It reads the live plug and charging state from Android (no saved flag). When charging stops for any reason it releases the hold and closes, and the phone's own screen timeout applies. A new Preview shows the same screen and never holds the display. No new permission, library, network call or stored data. Android does not let an app force the display off, so the screen goes off by the phone's normal timeout.
 
