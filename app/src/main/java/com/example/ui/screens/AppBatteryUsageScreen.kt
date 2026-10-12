@@ -204,14 +204,14 @@ internal fun AppForegroundUsageContent(
         }
 
         // Energy KPI Summary Banner
-        item {
+        // Android gives apps usage TIME, not measured battery per app, so the old "per-app energy" and "high drain" boxes
+        // (always Unavailable) are gone. Only the real count is shown, and only when Usage Access is granted.
+        if (hasUsagePermission) item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                AppKpiBox("PER-APP ENERGY", "Unavailable", NetraCyan, Modifier.weight(1f))
-                AppKpiBox("TRACKED APPS", if (hasUsagePermission) "${appUsageList.size} listed" else "Unavailable", NetraEmerald, Modifier.weight(1f))
-                AppKpiBox("HIGH DRAIN APPS", "Unavailable", StatusAmber, Modifier.weight(1f))
+                AppKpiBox("TRACKED APPS", "${appUsageList.size} listed", NetraEmerald, Modifier.weight(1f))
             }
         }
 
