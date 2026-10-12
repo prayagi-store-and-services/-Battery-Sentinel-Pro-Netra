@@ -1,5 +1,9 @@
 # Security Policy
 
+## Weather lookup sends an approximate location (v2.1.11)
+
+The weather card asks Open-Meteo for the current weather. It now sends the phone position rounded to 2 decimals (about 1 km) instead of the exact last-known position. Nothing else is sent. No new permission, library or network address.
+
 ## Usage count is opt-in (v2.1.10)
 
 The anonymous daily usage counter (adds 1 to a public counter, no ID, no location, no app data) used to be on by default. It is now OFF by default: nothing is sent until the user turns it on in Settings. People who never touched the switch are therefore no longer counted. This follows the privacy-first and DPDP consent rule. No new permission, library or network address.
