@@ -205,13 +205,13 @@ fun StatusScreen(
 
         // Gemini AI Battery & Thermal Diagnostic Intelligence
         SentinelCard(
-            title = "Netra AI Battery Intelligence",
+            title = "Battery check",
             icon = Icons.Default.AutoAwesome,
             dotState = DotState.CONNECTED,
             accentColor = NetraCyan
         ) {
             Text(
-                text = "Live electrochemical triage & thermal degradation forecasting backed by Gemini AI.",
+                text = "Simple battery and temperature tips worked out on your phone from its live readings. Nothing is sent anywhere.",
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -233,7 +233,7 @@ fun StatusScreen(
                     } else {
                         Icon(imageVector = Icons.Default.Bolt, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Quick Triage", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("Quick check", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -248,7 +248,7 @@ fun StatusScreen(
                     } else {
                         Icon(imageVector = Icons.Default.Psychology, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Deep Analysis", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("Full check", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
