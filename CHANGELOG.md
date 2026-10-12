@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Added: a Battery Health card. It shows charge cycles and battery capacity (design and full-charge) when your phone shares them, and a clearly labelled estimate otherwise. It stays hidden if your phone shares nothing.
+- Added: the always-on charging control now has ON, LOCK and OFF modes.
+
+## [2.1.8]
 - Fixed: the charging screen now turns off when charging stops. It keeps your phone awake only while the phone is really charging. When you unplug, or charging stops for any reason (including full), it lets go and closes, and your phone's own screen timeout works again.
 - Added: a Preview button next to the charging screen setting. It shows how the charging screen looks without turning anything on and without keeping the screen awake.
 
