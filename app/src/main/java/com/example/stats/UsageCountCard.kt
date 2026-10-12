@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/** Settings switch for the anonymous usage count (on by default), with a plain-words explanation. */
+/** Settings switch for the anonymous usage count (off by default), with a plain-words explanation. */
 @Composable
 fun UsageCountCard(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -34,7 +34,7 @@ fun UsageCountCard(modifier: Modifier = Modifier) {
             }
             Text(
                 text = "Once a day the app adds 1 to a public counter so the Netra Eco website can show how many people use it. " +
-                    "Nothing else is sent: no name, no device or install ID, no location, no battery or app data. You can turn this off any time.",
+                    "Nothing else is sent: no name, no device or install ID, no location, no battery or app data. This is off by default and nothing is sent unless you turn it on. You can change it any time.",
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
