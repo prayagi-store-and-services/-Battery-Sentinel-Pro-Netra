@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: the battery check no longer says it is powered by Gemini AI. The tips are worked out on your phone, nothing is sent anywhere, and a few over-strong claims in the tips were toned down. The battery history insights are also worked out on your phone only.
+
+## [2.1.11]
+
 - Fixed: the weather lookup now sends only an approximate location (about 1 km), never your exact position.
 
 ## [2.1.10]
