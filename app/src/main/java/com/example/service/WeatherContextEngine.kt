@@ -86,7 +86,7 @@ class WeatherContextEngine(private val context: Context) {
 
         // 3. Fetch from Open-Meteo REST API
         try {
-            val urlString = "https://api.open-meteo.com/v1/forecast?latitude=$latitude&longitude=$longitude&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m"
+            val urlString = "https://api.open-meteo.com/v1/forecast?latitude=${roundedCoord(latitude)}&longitude=${roundedCoord(longitude)}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m"
             val url = URL(urlString)
             val connection = (url.openConnection() as HttpURLConnection).apply {
                 connectTimeout = 4000
@@ -180,4 +180,7 @@ class WeatherContextEngine(private val context: Context) {
             else -> Pair(WeatherCondition.UNKNOWN, "Unavailable")
         }
     }
+
+    /** Privacy: only a rounded position (2 decimals, about 1 km) is sent for the weather lookup, never the exact location. */
+    private fun roundedCoord(v: Double): String = String.format(java.util.Locale.US, "%.2f", v)
 }
