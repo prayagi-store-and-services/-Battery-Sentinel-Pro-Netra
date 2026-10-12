@@ -1,5 +1,9 @@
 # Security Policy
 
+## Usage count is opt-in (v2.1.10)
+
+The anonymous daily usage counter (adds 1 to a public counter, no ID, no location, no app data) used to be on by default. It is now OFF by default: nothing is sent until the user turns it on in Settings. People who never touched the switch are therefore no longer counted. This follows the privacy-first and DPDP consent rule. No new permission, library or network address.
+
 ## Battery Health card (2.1.9)
 - New card that shows the cycle count, design capacity and full-charge capacity only when the phone shares them (Android 14 cycle count, readable battery files, or an estimate from the charge counter, labelled). It is read on the phone, hidden when the phone shares nothing, and nothing is stored or sent. No new permission, library or network call.
 
