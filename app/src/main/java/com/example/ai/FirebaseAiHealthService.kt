@@ -29,6 +29,8 @@ data class ConversationalLongevityInsight(
 
 object FirebaseAiHealthService {
     private const val TAG = "FirebaseAiHealthService"
+    /** Privacy: battery history and typed questions are never sent to a cloud AI. Answers are worked out on the phone only. */
+    private const val CLOUD_AI_ENABLED = false
     private const val REST_MODEL_NAME = "gemini-3.1-flash-lite-preview"
     // Quota rotation order for the REST path: each model has its own quota.
     private val REST_MODELS = listOf(REST_MODEL_NAME, "gemini-2.5-flash-lite", "gemini-3.1-pro-preview")
@@ -58,7 +60,7 @@ object FirebaseAiHealthService {
         sessions: List<ChargingSession>,
         degradationReport: DegradationReport
     ): ConversationalLongevityInsight = withContext(Dispatchers.IO) {
-        if (degradationReport.estimatedCapacityHealthPercent == null) {
+        if (!CLOUD_AI_ENABLED || degradationReport.estimatedCapacityHealthPercent == null) {
             return@withContext generateLocalLongevityFallback(degradationReport)
         }
         val prompt = buildLongevityPrompt(records, sessions, degradationReport)
@@ -138,7 +140,7 @@ object FirebaseAiHealthService {
         sessions: List<ChargingSession>,
         report: DegradationReport
     ): String = withContext(Dispatchers.IO) {
-        if (report.estimatedCapacityHealthPercent == null) {
+        if (!CLOUD_AI_ENABLED || report.estimatedCapacityHealthPercent == null) {
             return@withContext generateConversationalFallbackAnswer(query, report)
         }
         val prompt = """
