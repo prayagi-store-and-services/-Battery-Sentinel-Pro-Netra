@@ -1,5 +1,9 @@
 # Security Policy
 
+## Empty boxes removed from the app usage screen (v2.1.13)
+
+Two summary boxes on the app usage screen were always Unavailable because Android gives apps usage time, not measured battery per app. They are removed. No new permission, library or network address, and nothing is sent anywhere.
+
 ## Battery check is on-device only (v2.1.12)
 
 The Status screen card said it was backed by Gemini AI, but release builds carry no key and the tips were always calculated on the phone. The cloud path is now switched off in code (a constant), so battery readings, battery history and typed questions can never be sent to Google AI (the Status "Battery check" and the "Battery History Insights" card), even if a key or Firebase setup is added to a build. The card is renamed "Battery check" with honest wording, and a few unproven claims in the tips (for example 3x faster wear, doubling cycle life) were replaced with cautious wording. No new permission, library or network address.
