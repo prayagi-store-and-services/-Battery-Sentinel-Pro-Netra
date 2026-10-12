@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: the weather lookup now sends only an approximate location (about 1 km), never your exact position.
+
+## [2.1.10]
+
 - Fixed: the anonymous usage count is now off by default. Nothing is sent until you turn it on in Settings.
 
 ## [2.1.9]
