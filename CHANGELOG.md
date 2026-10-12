@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: the anonymous usage count is now off by default. Nothing is sent until you turn it on in Settings.
+
+## [2.1.9]
+
 - Added: a Battery Health card. It shows charge cycles and battery capacity (design and full-charge) when your phone shares them, and a clearly labelled estimate otherwise. It stays hidden if your phone shares nothing.
 - Added: the always-on charging control now has ON, LOCK and OFF modes.
 
