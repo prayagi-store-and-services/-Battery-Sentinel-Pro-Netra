@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Improved: when an update is available and your phone is on Wi-Fi or mobile data (under about 100 MB, not roaming, Data Saver off, battery 20% or more or charging), the update is now downloaded in the background and checked. You get a notice to tap to install, and Android asks you to confirm the install.
+
+## [2.1.13]
+
 - Fixed: the app usage screen no longer shows two boxes that always said Unavailable (per-app energy and high-drain apps). Android does not give apps that data. The real count of listed apps stays, and only when Usage Access is on.
 
 ## [2.1.12]
