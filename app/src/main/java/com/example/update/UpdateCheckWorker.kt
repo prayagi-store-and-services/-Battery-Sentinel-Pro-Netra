@@ -17,6 +17,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.example.BuildConfig
+import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -41,7 +42,7 @@ internal object UpdateNotifyPolicy {
 /**
  * Once a day (network required, WorkManager decides the exact time, so it respects Doze and uses no exact alarms)
  * asks GitHub whether a newer stable release exists. If so, posts one status-bar notification per version.
- * Tapping it opens the app (explicit intent), whose in-app updater offers the verified download. Nothing is downloaded or installed automatically.
+ * When the connection allows it (see PreDownload) the verified build is also saved, so the tap installs it at once. Android still asks to confirm the install.
  */
 class UpdateCheckWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
 
@@ -59,14 +60,24 @@ class UpdateCheckWorker(appContext: Context, params: WorkerParameters) : Corouti
                 conn.disconnect()
             }
             val candidate = GitHubReleasePolicy.parse(body, BuildConfig.VERSION_CODE.toLong())
-            if (candidate != null) notifyIfNew(applicationContext, candidate)
+            if (candidate != null) {
+                // Save the verified update now when the connection allows it, so one tap installs it. Nothing is sent anywhere.
+                val updater = GitHubReleaseUpdater.shared(applicationContext)
+                val info = GitHubReleaseInfo(
+                    tagName = JSONObject(body).getString("tag_name"), versionName = JSONObject(body).getString("tag_name").removePrefix("v"),
+                    versionCode = candidate.versionCode, notes = "", apkUrl = candidate.url, sha256 = candidate.sha256, sizeBytes = candidate.size
+                )
+                var saved = updater.savedApk(info) != null
+                if (!saved && PreDownload.allowedNow(applicationContext, false, candidate.size)) saved = updater.saveInBackground(info)
+                notifyIfNew(applicationContext, candidate, saved)
+            }
         } catch (_: Exception) {
             // Try again at the next daily run; never hammer the API.
         }
         Result.success()
     }
 
-    private fun notifyIfNew(c: Context, candidate: GitHubReleasePolicy.Candidate) {
+    private fun notifyIfNew(c: Context, candidate: GitHubReleasePolicy.Candidate, downloaded: Boolean) {
         val prefs = c.getSharedPreferences("netra_release_update_cache", Context.MODE_PRIVATE)
         val last = prefs.getLong("notified_version_code", 0L)
         if (!UpdateNotifyPolicy.shouldNotify(last, candidate.versionCode, BuildConfig.VERSION_CODE.toLong())) return
@@ -85,7 +96,7 @@ class UpdateCheckWorker(appContext: Context, params: WorkerParameters) : Corouti
         val n = NotificationCompat.Builder(c, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
             .setContentTitle("Update available")
-            .setContentText("A new ${com.example.Brand.name} is out. Tap to update.")
+            .setContentText(if (downloaded) "A new ${com.example.Brand.name} is downloaded. Tap to install." else "A new ${com.example.Brand.name} is out. Tap to update.")
             .setContentIntent(open)
             .setAutoCancel(true)
             .build()
