@@ -207,12 +207,30 @@ class GitHubReleaseUpdater(context: Context) {
         _state.value = UpdateUiState.Available(release)
     }
 
-    private fun downloadApk(release: GitHubReleaseInfo): File {
+    /** The installer already saved in the background for this release, re-verified (size, sha256, package, version, signer), or null. */
+    fun savedApk(release: GitHubReleaseInfo): File? {
+        return try {
+            val target = File(File(appContext.cacheDir, "updates"), "battery-sentinel-pro-netra-" + release.versionCode + ".apk")
+            val expected = release.sha256
+            if (!target.exists() || target.length() != release.sizeBytes || expected == null || !sha256(target).equals(expected, ignoreCase = true)) return null
+            verifyApk(target, release)
+            target
+        } catch (_: Exception) { null }
+    }
+
+    /** Background save (no UI state change). Returns true when a verified installer is on disk afterwards. */
+    fun saveInBackground(release: GitHubReleaseInfo): Boolean = try {
+        savedApk(release) != null || downloadApk(release, report = false).exists()
+    } catch (_: Exception) { false }
+
+    private fun downloadApk(release: GitHubReleaseInfo, report: Boolean = true): File {
         require(release.versionCode > BuildConfig.VERSION_CODE && release.sizeBytes in 1..GitHubReleasePolicy.MAX_APK_BYTES)
         require(Regex("v[0-9]+\\.[0-9]+\\.[0-9]+").matches(release.tagName))
         require(release.apkUrl == "https://github.com/${GitHubReleasePolicy.OWNER}/${GitHubReleasePolicy.REPO}/releases/download/${release.tagName}/app-release.apk")
         val dir = File(appContext.cacheDir, "updates").apply { mkdirs() }
         val target = File(dir, "battery-sentinel-pro-netra-" + release.versionCode + ".apk")
+        if (report) savedApk(release)?.let { return it }
+        dir.listFiles()?.filter { it.name != target.name }?.forEach { it.delete() }
         val request = Request.Builder()
             .url(release.apkUrl)
             .header("User-Agent", "Battery-Sentinel-Pro-Netra/" + BuildConfig.VERSION_NAME)
@@ -233,7 +251,7 @@ class GitHubReleaseUpdater(context: Context) {
                         require(total <= release.sizeBytes && total <= GitHubReleasePolicy.MAX_APK_BYTES) { "APK is too large." }
                         output.write(buffer, 0, count)
                         val now = System.currentTimeMillis()
-                        if (now - lastReport >= 250L) {
+                        if (report && now - lastReport >= 250L) {
                             lastReport = now
                             _state.value = UpdateUiState.Downloading(release, meter.line(total, release.sizeBytes, now), DownloadMeter.fraction(total, release.sizeBytes))
                         }
