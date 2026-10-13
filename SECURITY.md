@@ -45,6 +45,11 @@ Two new on-phone settings (screen brightness level and an on/off switch) saved i
 
 Only the app window brightness override changed (no system setting, no new permission). It now lifts on touch and when the protection ends.
 
+## Update saved in the background (2.1.14)
+- The existing 6-hourly update check now also saves the verified installer, so installing is one tap. It saves on Wi-Fi at any size, or on mobile data only when not roaming and the file is 100 MB or smaller. It never saves offline, with Data Saver on, or below 20% battery unless charging, and only once per version.
+- The saved file passes the same size, SHA-256, package, version and signing-certificate checks before it is ever offered. It stays in the app's private cache and is deleted after the update installs. Android still asks you to confirm the install.
+- Nothing is sent from your phone; only the public release file is fetched. No new permission or library.
+
 ## Update alert tap installs (2.0.3)
 
 The existing update notification now opens the app with a flag that runs the existing verified download and install flow (same SHA-256 and signature checks). No new permission, library or server. The check runs every 6 hours instead of 24.
