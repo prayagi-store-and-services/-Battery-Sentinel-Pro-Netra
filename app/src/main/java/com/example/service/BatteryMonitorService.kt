@@ -387,13 +387,14 @@ class BatteryMonitorService : Service() {
         val targetPercent = TargetAlarmRepeat.sessionTarget ?: settings.chargeTargetPercent
 
         // 80% (or user target) Unplug Alert
-        if (settings.unplugAlarmEnabled && state.isCharging == true && state.batteryLevel != null && state.batteryLevel >= targetPercent) {
+        if (settings.unplugAlarmEnabled && TargetAlert.eligible(state.isCharging, state.isChargerConnected, state.batteryLevel, targetPercent)) {
             // Re-arm when the user picks a different target while charging, so the new level also speaks.
             if (!lastNotified80PercentSession || lastNotifiedTargetValue != targetPercent) {
                 lastNotified80PercentSession = true
                 lastNotifiedTargetValue = targetPercent
                 lastTargetAlarmAt = now
                 TargetAlarmRepeat.muted = false
+                TargetAlert.markFired(now, requireNotNull(state.batteryLevel), targetPercent)
                 try {
                     NetraApplication.instance.announcementEngine.enqueue(
                         AnnouncementItem(
