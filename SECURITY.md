@@ -1,5 +1,9 @@
 # Security Policy
 
+## Optional screen lock uses Device Admin, force-lock only (v2.1.18)
+
+A new opt-in setting (off by default) locks the screen when charging stops while the charging screen is showing. It asks Android for the Device Admin permission with one policy, force-lock: the app can lock the screen and cannot read, change, wipe or reset anything. The app explains this before asking, and the permission can be removed in the app or in Android Settings, Security, Device admin apps (Android blocks uninstalling while it is on). The lock decision is made on the phone; nothing is stored or sent. No new library or network address.
+
 ## Charge target alert fix and test button (v2.1.17)
 
 The charge target alert now also fires when the charger is connected but the phone reports not charging. A Test alert button posts one local notification and one spoken line on the phone. No new permission, library or network address, and nothing is sent anywhere.
