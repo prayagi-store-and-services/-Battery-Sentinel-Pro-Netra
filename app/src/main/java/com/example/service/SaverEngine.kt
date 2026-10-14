@@ -36,6 +36,11 @@ object SaverEngine {
     private const val KEY_ACTIVE = "saver_active"
     private const val KEY_REASON_HEAT = "saver_reason_heat"
     private const val KEY_REASON_LOW = "saver_reason_low"
+    private const val KEY_REASON_RISE = "saver_reason_rise"
+    private const val KEY_EARLY_NOTE = "saver_early_note"
+    private const val KEY_ACTIVE_SINCE = "saver_active_since_ms"
+    private const val RISE_MIN_HOLD_MS = 5 * 60_000L
+    private val rise = RiseDetector()
     private const val KEY_PREV_BRIGHTNESS = "saver_prev_brightness"
     private const val KEY_PREV_MODE = "saver_prev_mode"
     private const val KEY_PREV_TIMEOUT = "saver_prev_timeout"
@@ -74,10 +79,17 @@ object SaverEngine {
         if (!active && p.getBoolean(KEY_DISPLAY_CHANGED, false)) restoreDisplay(app)
         if (!enabled && !active && !journeyOn) return
         val temp = tempC?.takeIf { it > 0f }
+        val nowMs = System.currentTimeMillis()
+        rise.add(nowMs, temp, charging)
+        // Early start only when the user turned the Saver on (not for Journey alone) and the heat reason is wanted.
+        val rapid = enabled && rise.rapid()
+        val reasonRise = active && p.getBoolean(KEY_REASON_RISE, false)
+        val riseCalm = rise.calm() && nowMs - p.getLong(KEY_ACTIVE_SINCE, nowMs) >= RISE_MIN_HOLD_MS
         val decision = SaverPolicy.decide(
             enabled, active, temp, level, charging,
             p.getFloat(KEY_TEMP, SaverPolicy.DEFAULT_TEMP_C), p.getInt(KEY_LEVEL, SaverPolicy.DEFAULT_LEVEL), journeyOn,
-            p.getBoolean(KEY_REASON_HEAT, true), p.getBoolean(KEY_REASON_LOW, true)
+            p.getBoolean(KEY_REASON_HEAT, true), p.getBoolean(KEY_REASON_LOW, true),
+            rapid, reasonRise, riseCalm
         )
         when (decision) {
             SaverDecision.APPLY -> {
@@ -85,7 +97,13 @@ object SaverEngine {
                 val ll = p.getInt(KEY_LEVEL, SaverPolicy.DEFAULT_LEVEL)
                 val hot = temp != null && temp >= tl
                 val low = !charging && (journeyOn || level <= ll)
-                p.edit().putBoolean(KEY_REASON_HEAT, hot).putBoolean(KEY_REASON_LOW, low).apply()
+                val early = rapid && !hot && !low
+                p.edit().putBoolean(KEY_REASON_HEAT, hot).putBoolean(KEY_REASON_LOW, low)
+                    .putBoolean(KEY_REASON_RISE, early).putLong(KEY_ACTIVE_SINCE, nowMs).apply()
+                val r = rise.riseC(); val rt = rise.ratePerMin()
+                val note = if (early && r != null && rt != null) "Started early: temperature rose " + String.format(java.util.Locale.US, "%.1f", r) +
+                    " C at " + String.format(java.util.Locale.US, "%.1f", rt) + " C per minute, before reaching the limit. " else ""
+                p.edit().putString(KEY_EARLY_NOTE, note).apply()
                 apply(app)
             }
             SaverDecision.RESTORE -> restore(app)
@@ -105,9 +123,9 @@ object SaverEngine {
             else if (SaverNotificationListener.clearAll()) "notifications cleared" else "notifications: listener not connected")
         }
         if (p.getBoolean(KEY_ACT_KILL, true)) {
-            scope.launch { notes.add(closeBackgroundApps(app, p)); p.edit().putString(KEY_RESULT, "Last run: " + notes.joinToString("; ")).apply() }
+            scope.launch { notes.add(closeBackgroundApps(app, p)); p.edit().putString(KEY_RESULT, (p.getString(KEY_EARLY_NOTE, "") ?: "") + "Last run: " + notes.joinToString("; ")).apply() }
         } else {
-            p.edit().putString(KEY_RESULT, "Last run: " + notes.joinToString("; ")).apply()
+            p.edit().putString(KEY_RESULT, (p.getString(KEY_EARLY_NOTE, "") ?: "") + "Last run: " + notes.joinToString("; ")).apply()
         }
     }
 
