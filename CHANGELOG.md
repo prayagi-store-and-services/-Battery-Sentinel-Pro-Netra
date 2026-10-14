@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- New: the Saver can now start early. If the battery temperature rises fast (at least 1.2 C within about 3 minutes, from 33 C up, not charging), it starts before the temperature limit is reached. The rule is shown in the Saver settings. It only reads the battery temperature and cannot cool the phone itself.
+
+## [2.1.15]
+
 - New: when your phone is warm (40 C or more) and Usage Access is on, the Status screen lists the apps you had open in the last 30 minutes. This is an estimate only: Android does not report heat per app, and heat from background apps is not shown.
 
 ## [2.1.14]
