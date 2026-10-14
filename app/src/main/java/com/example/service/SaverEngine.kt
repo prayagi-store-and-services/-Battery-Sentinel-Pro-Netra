@@ -36,6 +36,9 @@ object SaverEngine {
     private const val KEY_ACTIVE = "saver_active"
     private const val KEY_REASON_HEAT = "saver_reason_heat"
     private const val KEY_REASON_LOW = "saver_reason_low"
+    const val KEY_RISE_ON = "saver_rise_on"
+    const val KEY_RISE_C = "saver_rise_c"
+    const val KEY_RISE_MIN_TEMP = "saver_rise_min_temp"
     private const val KEY_REASON_RISE = "saver_reason_rise"
     private const val KEY_EARLY_NOTE = "saver_early_note"
     private const val KEY_ACTIVE_SINCE = "saver_active_since_ms"
@@ -82,7 +85,9 @@ object SaverEngine {
         val nowMs = System.currentTimeMillis()
         rise.add(nowMs, temp, charging)
         // Early start only when the user turned the Saver on (not for Journey alone) and the heat reason is wanted.
-        val rapid = enabled && rise.rapid()
+        rise.minRiseC = SaverPolicy.clampRise(p.getFloat(KEY_RISE_C, SaverPolicy.DEFAULT_RISE_C))
+        rise.minTempC = SaverPolicy.clampRiseMinTemp(p.getFloat(KEY_RISE_MIN_TEMP, SaverPolicy.DEFAULT_RISE_MIN_TEMP_C))
+        val rapid = enabled && p.getBoolean(KEY_RISE_ON, true) && rise.rapid()
         val reasonRise = active && p.getBoolean(KEY_REASON_RISE, false)
         val riseCalm = rise.calm() && nowMs - p.getLong(KEY_ACTIVE_SINCE, nowMs) >= RISE_MIN_HOLD_MS
         val decision = SaverPolicy.decide(
@@ -102,7 +107,10 @@ object SaverEngine {
                     .putBoolean(KEY_REASON_RISE, early).putLong(KEY_ACTIVE_SINCE, nowMs).apply()
                 val r = rise.riseC(); val rt = rise.ratePerMin()
                 val note = if (early && r != null && rt != null) "Started early: temperature rose " + String.format(java.util.Locale.US, "%.1f", r) +
-                    " C at " + String.format(java.util.Locale.US, "%.1f", rt) + " C per minute, before reaching the limit. " else ""
+                    " C at " + String.format(java.util.Locale.US, "%.1f", rt) + " C per minute, before reaching the limit." +
+                    com.example.util.HeatSuspects.find(app, temp, nowMs, requireHot = false).let { l ->
+                        if (l.isEmpty()) " " else " Apps in use meanwhile (estimate, not measured heat): " + l.joinToString(", ") { it.appName } + ". "
+                    } else ""
                 p.edit().putString(KEY_EARLY_NOTE, note).apply()
                 apply(app)
             }
