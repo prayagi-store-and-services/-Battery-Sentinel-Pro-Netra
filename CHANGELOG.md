@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- New: optional "Lock the screen when charging stops" (Settings, off by default). If you switch it on and allow Android's Device Admin permission, the phone locks and the screen goes off at once when charging stops while the charging screen is showing. The permission only allows locking the screen, and you can remove it in the app or in Android Settings.
+
+## [2.1.17]
+
 - Fixed: the charge target alert (80, 85, 90, 95%) now also fires when the phone says it is plugged in but not charging at that level, which some phones do near a limit. Settings now shows whether the alert is armed or when it last fired, and a Test alert button checks that the notification and voice line can reach you.
 
 ## [2.1.16]
