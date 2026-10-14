@@ -143,8 +143,12 @@ object SaverEngine {
                 .apply()
             Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
             Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS, LOW_BRIGHTNESS)
-            Settings.System.putInt(cr, Settings.System.SCREEN_OFF_TIMEOUT, MIN_TIMEOUT_MS)
-            "brightness 10% and 15 s screen timeout"
+            // An early start (temperature rising fast) happens while the phone is in use, so the screen timeout is left alone.
+            if (p.getBoolean(KEY_REASON_RISE, false)) "brightness 10%, screen timeout unchanged"
+            else {
+                Settings.System.putInt(cr, Settings.System.SCREEN_OFF_TIMEOUT, MIN_TIMEOUT_MS)
+                "brightness 10% and 15 s screen timeout"
+            }
         } catch (e: Exception) {
             Log.w(TAG, "display change failed", e)
             restoreDisplay(app)
@@ -162,11 +166,16 @@ object SaverEngine {
             val before = freeRamMb(am)
             val pm = app.packageManager
             val protectedPkgs = protectedPackages(app)
+            // Never close an app the user has used in the last 15 minutes (for example a video editor next to Instagram).
+            // Without Usage Access the engine cannot know which apps are in use, so it closes nothing.
+            val recent = com.example.util.HeatSuspects.recentPackages(app)
+                ?: return "apps: skipped (Usage Access is needed to know which apps you are using)"
+
             val launchable = pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER), 0)
                 .map { it.activityInfo.packageName }.distinct()
             var count = 0
             for (pkg in launchable) {
-                if (pkg in protectedPkgs || SaverPolicy.isNetraPackage(pkg) || pkg == app.packageName) continue
+                if (pkg in protectedPkgs || pkg in recent || SaverPolicy.isNetraPackage(pkg) || pkg == app.packageName) continue
                 val flags = try { pm.getApplicationInfo(pkg, 0).flags } catch (e: Exception) { continue }
                 if (flags and ApplicationInfo.FLAG_SYSTEM != 0) continue
                 am.killBackgroundProcesses(pkg)
