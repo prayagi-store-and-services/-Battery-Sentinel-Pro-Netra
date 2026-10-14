@@ -67,4 +67,9 @@ class RiseDetectorTest {
     @Test fun riseStartStaysWhileNearTheLimit() {
         assertEquals(SaverDecision.NONE, SaverPolicy.decide(true, true, 39f, 80, false, 40f, 35, reasonHeat = false, reasonLow = false, reasonRise = true, riseCalm = true))
     }
+    @Test fun recentPackagesListsAppsWithEventsInWindowOnly() {
+        val ev = listOf(Triple("editor", 1, 100L), Triple("insta", 1, 200L), Triple("old", 2, 5L), Triple("", 1, 150L), Triple("x", 7, 160L))
+        val seen = com.example.util.HeatSuspects.packagesSeen(ev, 50L, 300L)
+        assertEquals(setOf("editor", "insta"), seen)
+    }
 }
