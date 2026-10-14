@@ -62,8 +62,8 @@ object HeatSuspects {
         ms.filter { it.value >= MIN_MS && it.key !in exclude }.entries
             .sortedByDescending { it.value }.take(limit).map { it.key to it.value }
 
-    fun find(context: Context, tempCelsius: Float?, now: Long = System.currentTimeMillis()): List<HeatSuspect> {
-        if (!isHot(tempCelsius)) return emptyList()
+    fun find(context: Context, tempCelsius: Float?, now: Long = System.currentTimeMillis(), requireHot: Boolean = true): List<HeatSuspect> {
+        if (requireHot && !isHot(tempCelsius)) return emptyList()
         return try {
             if (!PermissionHelper.isUsageAccessGranted(context)) return emptyList()
             val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager ?: return emptyList()
