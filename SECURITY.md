@@ -1,5 +1,9 @@
 # Security Policy
 
+## Charge target alert fix and test button (v2.1.17)
+
+The charge target alert now also fires when the charger is connected but the phone reports not charging. A Test alert button posts one local notification and one spoken line on the phone. No new permission, library or network address, and nothing is sent anywhere.
+
 ## Empty boxes removed from the app usage screen (v2.1.13)
 
 Two summary boxes on the app usage screen were always Unavailable because Android gives apps usage time, not measured battery per app. They are removed. No new permission, library or network address, and nothing is sent anywhere.
