@@ -72,4 +72,15 @@ class RiseDetectorTest {
         val seen = com.example.util.HeatSuspects.packagesSeen(ev, 50L, 300L)
         assertEquals(setOf("editor", "insta"), seen)
     }
+    @Test fun adjustableThresholdsChangeDetection() {
+        val d = RiseDetector(); feed(d, listOf(33.0f, 33.4f, 33.9f, 34.4f))
+        assertTrue(d.rapid())
+        d.minRiseC = 2.0f
+        assertFalse(d.rapid())
+        d.minRiseC = 1.0f; d.minTempC = 36f
+        assertFalse(d.rapid())
+        assertEquals(0.6f, SaverPolicy.clampRise(0.1f), 0f)
+        assertEquals(3.0f, SaverPolicy.clampRise(9f), 0f)
+        assertEquals(28f, SaverPolicy.clampRiseMinTemp(10f), 0f)
+    }
 }
