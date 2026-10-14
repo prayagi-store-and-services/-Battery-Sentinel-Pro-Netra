@@ -39,6 +39,9 @@ fun SaverCard() {
     var actDisplay by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_ACT_DISPLAY, true)) }
     var actKill by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_ACT_KILL, true)) }
     var actNotif by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_ACT_NOTIF, true)) }
+    var riseOn by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_RISE_ON, true)) }
+    var riseC by remember { mutableFloatStateOf(SaverPolicy.clampRise(prefs.getFloat(SaverEngine.KEY_RISE_C, SaverPolicy.DEFAULT_RISE_C))) }
+    var riseMin by remember { mutableFloatStateOf(SaverPolicy.clampRiseMinTemp(prefs.getFloat(SaverEngine.KEY_RISE_MIN_TEMP, SaverPolicy.DEFAULT_RISE_MIN_TEMP_C))) }
     var journey by remember { mutableStateOf(SaverEngine.isJourneyOn(c)) }
     val canWrite = Settings.System.canWrite(c)
     val notifAccess = SaverEngine.hasNotificationAccess(c)
@@ -65,7 +68,27 @@ fun SaverCard() {
                 OutlinedButton(onClick = { temp = SaverPolicy.clampTemp(temp + 1f); prefs.edit().putFloat(SaverEngine.KEY_TEMP, temp).apply() }) { Text("+") }
             }
         }
-        Text("Early start: the Saver also starts before the limit if the battery temperature rises fast. Rule: not charging, at least 33 °C, and a rise of at least 1.2 °C within about 3 minutes (at least 0.4 °C per minute) in the battery readings of this phone. It ends when the temperature stops rising, 5 minutes have passed and it is below the limit. Plugging in a charger never counts as a rise. This only reads the battery temperature; it cannot cool the phone itself.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("Early start on fast temperature rise", fontSize = 13.sp)
+            Switch(checked = riseOn, onCheckedChange = { riseOn = it; prefs.edit().putBoolean(SaverEngine.KEY_RISE_ON, it).apply() })
+        }
+        if (riseOn) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Rise of ${String.format(java.util.Locale.US, "%.1f", riseC)} °C within about 3 minutes", fontSize = 13.sp)
+                Row {
+                    OutlinedButton(onClick = { riseC = SaverPolicy.clampRise(riseC - 0.2f); prefs.edit().putFloat(SaverEngine.KEY_RISE_C, riseC).apply() }) { Text("-") }
+                    OutlinedButton(onClick = { riseC = SaverPolicy.clampRise(riseC + 0.2f); prefs.edit().putFloat(SaverEngine.KEY_RISE_C, riseC).apply() }) { Text("+") }
+                }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Only from ${riseMin.toInt()} °C up", fontSize = 13.sp)
+                Row {
+                    OutlinedButton(onClick = { riseMin = SaverPolicy.clampRiseMinTemp(riseMin - 1f); prefs.edit().putFloat(SaverEngine.KEY_RISE_MIN_TEMP, riseMin).apply() }) { Text("-") }
+                    OutlinedButton(onClick = { riseMin = SaverPolicy.clampRiseMinTemp(riseMin + 1f); prefs.edit().putFloat(SaverEngine.KEY_RISE_MIN_TEMP, riseMin).apply() }) { Text("+") }
+                }
+            }
+        }
+        Text("Early start: the Saver also starts before the limit if the battery temperature rises fast, using the two values above, only when not charging, in this phone's own battery readings. It ends when the temperature stops rising, 5 minutes have passed and it is below the limit. Plugging in a charger never counts as a rise. It never closes an app you used in the last 15 minutes (it needs Usage Access to know) and leaves your screen timeout alone. Android cannot tell which app makes the heat, so the apps listed in the result are estimates from usage. It only reads the battery temperature; it cannot cool the phone itself.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Battery level: $level% or less (not charging)", fontSize = 13.sp)
             Row {
