@@ -65,6 +65,7 @@ fun SaverCard() {
                 OutlinedButton(onClick = { temp = SaverPolicy.clampTemp(temp + 1f); prefs.edit().putFloat(SaverEngine.KEY_TEMP, temp).apply() }) { Text("+") }
             }
         }
+        Text("Early start: the Saver also starts before the limit if the battery temperature rises fast. Rule: not charging, at least 33 °C, and a rise of at least 1.2 °C within about 3 minutes (at least 0.4 °C per minute) in the battery readings of this phone. It ends when the temperature stops rising, 5 minutes have passed and it is below the limit. Plugging in a charger never counts as a rise. This only reads the battery temperature; it cannot cool the phone itself.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("Battery level: $level% or less (not charging)", fontSize = 13.sp)
             Row {
