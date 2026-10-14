@@ -131,6 +131,17 @@
         <!-- Explicit internal notification actions; never exported to other apps. -->
         <receiver android:name=".receiver.AlarmActionReceiver" android:exported="false" />
 
+        <!-- Optional Device Admin with the force-lock policy only; used to lock the screen when charging stops, off by default. -->
+        <receiver
+            android:name=".receiver.NetraDeviceAdmin"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin" android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
         <!-- Boot receiver for 24/7 reliability and state restoration -->
         <receiver
             android:name=".receiver.BootCompletedReceiver"
