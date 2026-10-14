@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- New: when your phone is warm (40 C or more) and Usage Access is on, the Status screen lists the apps you had open in the last 30 minutes. This is an estimate only: Android does not report heat per app, and heat from background apps is not shown.
+
+## [2.1.14]
+
 - Improved: when an update is available and your phone is on Wi-Fi or mobile data (under about 100 MB, not roaming, Data Saver off, battery 20% or more or charging), the update is now downloaded in the background and checked. You get a notice to tap to install, and Android asks you to confirm the install.
 
 ## [2.1.13]
