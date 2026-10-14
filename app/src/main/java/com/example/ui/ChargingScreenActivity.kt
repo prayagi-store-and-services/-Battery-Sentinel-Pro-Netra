@@ -31,7 +31,7 @@ class ChargingScreenActivity : ComponentActivity() {
         }
         unplugReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                if (intent.action == Intent.ACTION_POWER_DISCONNECTED || !G.keepAwakeAllowed(intent)) { finish(); return }
+                if (intent.action == Intent.ACTION_POWER_DISCONNECTED || !G.keepAwakeAllowed(intent)) { com.example.service.ScreenLock.lockIfAllowed(applicationContext, true); finish(); return }
                 if (intent.action == Intent.ACTION_SCREEN_OFF && GMode.load(context) != GMode.ON) finish()
                 if (GMode.load(context) == GMode.OFF) finish()
             }
