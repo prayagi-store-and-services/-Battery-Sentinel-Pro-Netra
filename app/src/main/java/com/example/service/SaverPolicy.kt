@@ -52,6 +52,10 @@ object SaverPolicy {
     fun journeyActive(untilMs: Long, nowMs: Long): Boolean = untilMs > nowMs
 
     fun clampTemp(v: Float): Float = v.coerceIn(25f, 45f)
+    const val DEFAULT_RISE_C = 1.2f
+    const val DEFAULT_RISE_MIN_TEMP_C = 33f
+    fun clampRise(v: Float): Float = (Math.round(v.coerceIn(0.6f, 3.0f) * 10f) / 10f)
+    fun clampRiseMinTemp(v: Float): Float = v.coerceIn(28f, 40f)
     fun clampLevel(v: Int): Int = v.coerceIn(5, 60)
 
     /** Apps we never close: the Netra apps, and these well known categories handled by the engine. */
@@ -77,6 +81,10 @@ class RiseDetector {
         const val MIN_TEMP_C = 33f
         const val CALM_RATE_C_PER_MIN = 0.1f
     }
+
+    /** Adjustable by the user (Saver settings). Rate needed = minRiseC over the 3 minute window. */
+    var minRiseC: Float = MIN_RISE_C
+    var minTempC: Float = MIN_TEMP_C
 
     private data class S(val t: Long, val c: Float)
     private val samples = ArrayDeque<S>()
@@ -112,7 +120,7 @@ class RiseDetector {
         val rate = ratePerMin() ?: return false
         val last = samples.last()
         val rise = riseC() ?: return false
-        return rise >= MIN_RISE_C && rate >= MIN_RATE_C_PER_MIN && last.c >= MIN_TEMP_C
+        return rise >= minRiseC && rate >= minRiseC / 3f && last.c >= minTempC
     }
 
     /** True when there is no rise to speak of (flat or falling, or not enough data). */
