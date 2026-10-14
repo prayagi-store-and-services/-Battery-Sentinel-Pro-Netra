@@ -600,6 +600,34 @@ fun StatusScreen(
             }
         }
 
+        // Heat suspects: only when the phone is warm, Usage Access is on and real apps were used
+        val heatSuspects = remember(telemetry.temperature, permissions.isUsageStatsGranted, System.currentTimeMillis() / 300_000L) {
+            com.example.util.HeatSuspects.find(context, telemetry.temperature)
+        }
+        if (heatSuspects.isNotEmpty()) {
+            SentinelCard(
+                title = "Apps used while the phone is warm",
+                icon = Icons.Default.Security,
+                dotState = DotState.THROTTLED,
+                accentColor = StatusAmber
+            ) {
+                heatSuspects.forEach { h ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = h.appName, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = "${h.foregroundMinutes} min in the last 30 min", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                Text(
+                    text = "Estimate only. Android does not report heat per app, so this lists apps you had open in the last 30 minutes. Heat from apps running in the background is not shown.",
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
         // F. Application Monitor Preview
         SentinelCard(
             title = "Application Monitor Preview",
