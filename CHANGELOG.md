@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: the charge target alert (80, 85, 90, 95%) now also fires when the phone says it is plugged in but not charging at that level, which some phones do near a limit. Settings now shows whether the alert is armed or when it last fired, and a Test alert button checks that the notification and voice line can reach you.
+
+## [2.1.16]
+
 - New: the Saver can now start early. If the battery temperature rises fast (at least 1.2 C within about 3 minutes, from 33 C up, not charging), it starts before the temperature limit is reached. The rule is shown in the Saver settings, where you can switch it off or change the rise and the starting temperature. It only reads the battery temperature and cannot cool the phone itself.
 - Changed: the Saver no longer closes apps you used in the last 15 minutes (it needs Usage Access to know; without it, it closes nothing), and an early start keeps your screen timeout as it is, so it does not disturb an app you are working in.
 
