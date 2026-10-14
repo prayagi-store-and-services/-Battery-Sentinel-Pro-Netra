@@ -182,6 +182,7 @@ fun SettingsScreen(
         }
 
         item { com.example.ui.components.TargetAlertStatusCard() }
+        item { com.example.ui.components.ScreenLockCard() }
 
         // 2. Low-Battery Protection Threshold (5% to 30%)
         item {
