@@ -38,6 +38,26 @@ object HeatSuspects {
         return total
     }
 
+    /** Packages that had any foreground or background event in the window (apps the user has been using). */
+    internal fun packagesSeen(events: List<Triple<String, Int, Long>>, start: Long, end: Long): Set<String> =
+        events.filter { it.first.isNotBlank() && it.third in start..end && (it.second == FG || it.second == BG) }.map { it.first }.toSet()
+
+    /** Apps used in the last [windowMs]. Null when Usage Access is missing or unreadable, so callers must then be careful. */
+    fun recentPackages(context: Context, windowMs: Long = 15 * 60_000L, now: Long = System.currentTimeMillis()): Set<String>? {
+        return try {
+            if (!PermissionHelper.isUsageAccessGranted(context)) return null
+            val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager ?: return null
+            val start = now - windowMs
+            val ev = usm.queryEvents(start, now) ?: return null
+            val list = ArrayList<Triple<String, Int, Long>>()
+            val e = UsageEvents.Event()
+            while (ev.hasNextEvent()) { ev.getNextEvent(e); list.add(Triple(e.packageName ?: "", e.eventType, e.timeStamp)) }
+            packagesSeen(list, start, now)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     internal fun rank(ms: Map<String, Long>, exclude: Set<String>, limit: Int = 3): List<Pair<String, Long>> =
         ms.filter { it.value >= MIN_MS && it.key !in exclude }.entries
             .sortedByDescending { it.value }.take(limit).map { it.key to it.value }
