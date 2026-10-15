@@ -67,33 +67,43 @@ fun LivePowerCard() {
             }
         }
     }
-    val u = ui
-    SentinelCard(title = "Live Power (updates every second)", icon = Icons.Default.Bolt, dotState = DotState.CONNECTED, accentColor = NetraCyan) {
-        if (u == null) {
-            Text("Calculating...", fontSize = 14.sp)
-            return@SentinelCard
+    ui?.let { LivePowerContent(it) }
+}
+
+/** Production content also used by screenshot tests; no hardware or invented readings in previews. */
+@Composable
+fun LivePowerContent(u: LivePowerUi) {
+    SentinelCard(title = if (u.current != LivePowerTelemetry.UNAVAILABLE) "Live battery current" else "Live battery readings", icon = Icons.Default.Bolt, dotState = DotState.CONNECTED, accentColor = NetraCyan) {
+        val currentAvailable = u.current != LivePowerTelemetry.UNAVAILABLE
+        if (currentAvailable) {
+            Text(u.current, fontSize = 32.sp, fontWeight = FontWeight.Bold)
         }
-        Text(
-            text = when (u.mode) {
-                PowerMode.CHARGING -> "Charging: "
-                PowerMode.DISCHARGING -> "Discharging: "
-                PowerMode.FULL -> "Full: "
-                PowerMode.NOT_CHARGING -> "Not charging: "
-                PowerMode.UNKNOWN -> "Status unknown: "
-            } + u.power,
-            fontSize = 28.sp, fontWeight = FontWeight.Bold
-        )
-        // Fields Android does not report are hidden instead of showing "Unavailable".
-        PowerRow("Voltage", u.voltage, "Current", u.current)
+        Text(when (u.mode) {
+            PowerMode.CHARGING -> "Charging"
+            PowerMode.DISCHARGING -> "Discharging"
+            PowerMode.FULL -> "Full"
+            PowerMode.NOT_CHARGING -> "Not charging"
+            PowerMode.UNKNOWN -> "Status unknown"
+        }, fontSize = 16.sp)
+        if (currentAvailable) u.currentStats?.let { stats ->
+            Text("Observed samples: ${stats.samples}", fontSize = 12.sp)
+            Text("Min ${formatMa(stats.minimumMa)}  |  Max ${formatMa(stats.maximumMa)}", fontSize = 13.sp)
+            Text("Sample average ${formatMa(stats.averageMa)}", fontSize = 13.sp)
+        }
+        PowerRow("Voltage", u.voltage, "Battery-side power", u.power)
         PowerRow("Temperature", u.temperature, "Battery", u.percentage)
         PowerRow("Session Duration", u.sessionDuration, u.estimateLabel ?: "Estimate", u.estimate ?: "Unavailable")
         Text(
-            "Wattage is calculated battery-side power (voltage x current), not wall-adapter wattage. Current is shown as a magnitude because phones differ in sign. " +
-                "The session timer starts when this screen first sees the current mode, so it restarts after the app is killed. Estimates use the last 10 minutes of percentage progress.",
+            "Current updates every second while this screen is visible. Values are Android-reported battery current, not charger output. " +
+                "Magnitude is shown because phones differ in sign. Min, max and average describe observed samples only; they reset on a mode change, missing reading or sampling gap over 5 seconds. " +
+                "OEM current reporting can be inaccurate. Battery-side watts are calculated from voltage x current, not wall-adapter watts. " +
+                "Session time starts when this screen sees the mode. Estimates use the last 10 minutes of battery percentage progress.",
             fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
+
+private fun formatMa(ma: Double): String = String.format(java.util.Locale.US, "%.2f mA", ma)
 
 @Composable
 private fun PowerRow(a: String, av: String, b: String, bv: String) {
