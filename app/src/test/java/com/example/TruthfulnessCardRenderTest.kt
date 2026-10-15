@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.unit.dp
 import com.example.ai.BatteryDegradationPredictor
 import com.example.ui.components.GeminiHealthInsightsContent
@@ -238,6 +239,45 @@ class TruthfulnessCardRenderTest {
             }
         }
         captureCard("truthfulness-unavailable-cards.png")
+    }
+
+    @Test
+    fun renderLiveCurrentCharging() {
+        val telemetry = com.example.service.LivePowerTelemetry()
+        val snapshot = com.example.service.BatterySnapshot(android.os.BatteryManager.BATTERY_STATUS_CHARGING, 1, 50, 100, 4200, 305, 1500000)
+        telemetry.update(snapshot, 0L)
+        val ui = telemetry.update(snapshot.copy(rawCurrentMicroAmps = 2500000), 1000L)
+        compose.setContent { MyApplicationTheme { androidx.compose.material3.Surface { Column(Modifier.width(360.dp).padding(16.dp)) {
+            com.example.ui.components.LivePowerContent(ui)
+        } } } }
+        compose.onNodeWithText("2500.00 mA").assertIsDisplayed()
+        compose.onNodeWithText("Sample average 2000.00 mA").assertIsDisplayed()
+        captureCard("live-current-charging.png")
+    }
+
+    @Test
+    fun renderLiveCurrentDischarging() {
+        val ui = com.example.service.LivePowerTelemetry().update(com.example.service.BatterySnapshot(
+            android.os.BatteryManager.BATTERY_STATUS_DISCHARGING, 0, 50, 100, 3900, 300, -500000), 0L)
+        compose.setContent { MyApplicationTheme { androidx.compose.material3.Surface { Column(Modifier.width(360.dp).padding(16.dp)) {
+            com.example.ui.components.LivePowerContent(ui)
+        } } } }
+        compose.onNodeWithText("500.00 mA").assertIsDisplayed()
+        compose.onNodeWithText("Discharging").assertIsDisplayed()
+        captureCard("live-current-discharging.png")
+    }
+
+    @Test
+    fun missingCurrentHidesReadoutAndStatistics() {
+        val ui = com.example.service.LivePowerTelemetry().update(com.example.service.BatterySnapshot(
+            android.os.BatteryManager.BATTERY_STATUS_CHARGING, 1, 50, 100, 4000, 300, null), 0L)
+        compose.setContent { MyApplicationTheme { androidx.compose.material3.Surface { Column(Modifier.width(360.dp).padding(16.dp)) {
+            com.example.ui.components.LivePowerContent(ui)
+        } } } }
+        compose.onNodeWithText("Live battery current").assertDoesNotExist()
+        compose.onNodeWithText("Observed samples:", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Unavailable", substring = true).assertDoesNotExist()
+        captureCard("live-current-missing-hidden.png")
     }
 
     private fun captureCard(filename: String) {
