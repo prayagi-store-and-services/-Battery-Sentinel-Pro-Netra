@@ -4,7 +4,11 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-- New: optional "Lock the screen when charging stops" (Settings, off by default). If you switch it on and allow Android's Device Admin permission, the phone locks and the screen goes off at once when charging stops while the charging screen is showing. The permission only allows locking the screen, and you can remove it in the app or in Android Settings.
+- Improvements and bug fixes.
+
+## [2.1.18]
+
+- New: optional "Lock the screen when charging stops" (Settings, off by default). Existing release details retained below.
 
 ## [2.1.17]
 
