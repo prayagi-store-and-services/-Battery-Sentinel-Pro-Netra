@@ -109,4 +109,29 @@ class LivePowerTelemetryTest {
     @Test fun formatDurationClampsNegative() {
         assertEquals("00:00:00", LivePowerTelemetry.formatDuration(-5))
     }
+    @Test fun smallMicroampsAreNeverGuessedAsMilliamps() {
+        assertEquals("5.00 mA", LivePowerTelemetry().update(snap(raw = 5000), 0L).current)
+        assertEquals("0.50 mA", LivePowerTelemetry().update(snap(raw = -500), 0L).current)
+    }
+    @Test fun sampleStatsOnlyUseCurrentForegroundRun() {
+        val t = LivePowerTelemetry()
+        t.update(snap(raw = 1000000), 0L)
+        val two = t.update(snap(raw = 3000000), 1000L).currentStats!!
+        assertEquals(2L, two.samples)
+        assertEquals(1000.0, two.minimumMa, 0.001)
+        assertEquals(3000.0, two.maximumMa, 0.001)
+        assertEquals(2000.0, two.averageMa, 0.001)
+        assertEquals(1L, t.update(snap(raw = 4000000), 7000L).currentStats!!.samples)
+        assertNull(t.update(snap(raw = null), 8000L).currentStats)
+        assertEquals(1L, t.update(snap(raw = 2000000), 9000L).currentStats!!.samples)
+        assertEquals(1L, t.update(snap(BatteryManager.BATTERY_STATUS_DISCHARGING, 0, raw = -500000), 10000L).currentStats!!.samples)
+    }
+    @Test fun missingAndSentinelCurrentNeverEnterStatistics() {
+        for (raw in listOf(null, 0, Int.MIN_VALUE, Int.MAX_VALUE, 40000000)) {
+            val u = LivePowerTelemetry().update(snap(raw = raw), 0L)
+            assertEquals("Unavailable", u.current)
+            assertNull(u.currentStats)
+        }
+    }
+
 }
