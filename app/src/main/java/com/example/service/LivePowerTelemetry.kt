@@ -27,8 +27,12 @@ data class LivePowerUi(
     val percentage: String,
     val sessionDuration: String,
     val estimateLabel: String?,
-    val estimate: String?
+    val estimate: String?,
+    val currentStats: CurrentSampleStats? = null
 )
+
+/** Foreground sample statistics only, never adapter capability or a time-weighted average. */
+data class CurrentSampleStats(val minimumMa: Double, val maximumMa: Double, val averageMa: Double, val samples: Long)
 
 /**
  * Pure logic for the Live Power card. The clock is passed in (use SystemClock.elapsedRealtime()),
@@ -41,6 +45,30 @@ class LivePowerTelemetry {
     private var sessionMode: PowerMode? = null
     private var sessionStartMs = 0L
     private val window = ArrayDeque<Point>()
+    private var currentMode: PowerMode? = null
+    private var lastCurrentAt: Long? = null
+    private var currentMin = 0.0
+    private var currentMax = 0.0
+    private var currentMean = 0.0
+    private var currentCount = 0L
+
+    private fun clearCurrentSamples() { currentMode = null; lastCurrentAt = null; currentCount = 0L }
+    private fun observeCurrent(mode: PowerMode, ma: Double?, nowMs: Long): CurrentSampleStats? {
+        if (ma == null || (mode != PowerMode.CHARGING && mode != PowerMode.DISCHARGING)) {
+            clearCurrentSamples(); return null
+        }
+        val previousAt = lastCurrentAt
+        if (mode != currentMode || previousAt == null || nowMs <= previousAt || nowMs - previousAt > 5_000L) {
+            clearCurrentSamples()
+        }
+        val magnitude = abs(ma)
+        if (currentCount == 0L) { currentMin = magnitude; currentMax = magnitude; currentMean = magnitude }
+        else { currentMin = minOf(currentMin, magnitude); currentMax = maxOf(currentMax, magnitude) }
+        currentCount++
+        currentMean += (magnitude - currentMean) / currentCount
+        currentMode = mode; lastCurrentAt = nowMs
+        return CurrentSampleStats(currentMin, currentMax, currentMean, currentCount)
+    }
 
     /** Charge level the estimate counts down to (the user's target, 100 when not set). */
     var targetPercent: Int = 100
@@ -50,7 +78,7 @@ class LivePowerTelemetry {
     private var anchorFinishMs: Long? = null
     private var anchorPercent: Double? = null
 
-    fun reset() { sessionMode = null; window.clear(); anchorFinishMs = null; anchorPercent = null }
+    fun reset() { clearCurrentSamples(); sessionMode = null; window.clear(); anchorFinishMs = null; anchorPercent = null }
 
     fun update(s: BatterySnapshot, nowMs: Long): LivePowerUi {
         val mode = classify(s)
@@ -100,7 +128,8 @@ class LivePowerTelemetry {
             percentage = percent?.let { String.format(Locale.US, "%.2f%%", it) } ?: UNAVAILABLE,
             sessionDuration = duration,
             estimateLabel = label,
-            estimate = estimate
+            estimate = estimate,
+            currentStats = observeCurrent(mode, currentMa, nowMs)
         )
     }
 
@@ -157,7 +186,8 @@ class LivePowerTelemetry {
         fun currentMa(s: BatterySnapshot): Double? {
             val raw = s.rawCurrentMicroAmps ?: return null
             if (raw == Int.MIN_VALUE || raw == Int.MAX_VALUE || raw == 0) return null
-            val ma = ChargingSpeedEngine().normalizeToMilliAmps(raw, true).toDouble()
+            // Follow the Android API unit, not magnitude guesses (5000 microamps is 5 mA, not 5000 mA).
+            val ma = raw.toDouble() / 1000.0
             return if (abs(ma) <= 30_000.0) ma else null
         }
 
