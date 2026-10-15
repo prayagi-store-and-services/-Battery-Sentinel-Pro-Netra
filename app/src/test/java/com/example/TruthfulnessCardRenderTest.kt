@@ -280,6 +280,15 @@ class TruthfulnessCardRenderTest {
         captureCard("live-current-missing-hidden.png")
     }
 
+    @Test
+    fun renderEcosystemVersionHeader() {
+        compose.setContent { MyApplicationTheme { androidx.compose.material3.Surface {
+            NetraVersionHeader("2.1.19", java.util.Date(1792067400000L))
+        } } }
+        compose.onNodeWithText("v2.1.19 | Netra Ecosystem").assertIsDisplayed()
+        captureCard("ecosystem-version-header.png")
+    }
+
     private fun captureCard(filename: String) {
         compose.waitForIdle()
         // WindowCapture's PixelCopy/redraw wait is not supported reliably by Robolectric.
