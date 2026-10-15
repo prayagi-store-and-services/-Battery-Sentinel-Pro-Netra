@@ -328,3 +328,8 @@ The header is the Netra standard: 56 dp, only the app name, the installed versio
 - If you changed brightness or screen timeout yourself while the saver was on, your value is kept.
 - Closing background apps asks Android to end only background processes of non-system apps (KILL_BACKGROUND_PROCESSES, a normal permission). Android decides what actually stops; apps with a foreground service or that restart themselves can come back. The card reports RAM before and after instead of a promise. Cleared notifications and closed apps cannot be brought back.
 - No new permission or library.
+
+
+## Live battery current view (2.1.19)
+
+The existing foreground-only Live Power view now emphasizes real Android-reported mA, with minimum, maximum and sample average from the current uninterrupted observation run. Missing, zero and unsupported/sentinel readings never enter statistics and the current readout/stats are hidden when unavailable. Statistics reset on mode change, missing current, non-increasing time or sampling gaps over five seconds. Current uses Android's documented microamp unit without magnitude-based unit guessing, retaining fractional mA. OEM reporting may still be wrong. No charger-output/capacity inference, new permissions, background sampler, third-party app code or extra network transfer. Existing unrelated canonical engine/alarm normalization is unchanged. This is an existing-feature improvement, not a security vulnerability claim. Phone calibration/testing remains required.
