@@ -6,7 +6,7 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.SystemClock
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
@@ -110,7 +110,7 @@ private fun PowerRow(a: String, av: String, b: String, bv: String) {
     val showA = av != "Unavailable"
     val showB = bv != "Unavailable"
     if (!showA && !showB) return
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (showA && showB) Arrangement.SpaceBetween else Arrangement.Start) {
+    Column(Modifier.fillMaxWidth()) {
         if (showA) Text("$a: $av", fontSize = 14.sp)
         if (showB) Text("$b: $bv", fontSize = 14.sp)
     }
