@@ -276,6 +276,10 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
         settingsRepository.setUnplugAlarmEnabled(enabled)
     }
 
+    fun setContinuousChargeAlertEnabled(enabled: Boolean) {
+        settingsRepository.setContinuousChargeAlertEnabled(enabled)
+    }
+
     fun setPowerSaverEnabled(enabled: Boolean) {
         settingsRepository.setPowerSaverEnabled(enabled)
     }
