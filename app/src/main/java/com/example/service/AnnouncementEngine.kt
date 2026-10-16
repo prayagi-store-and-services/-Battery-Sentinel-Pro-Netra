@@ -550,7 +550,8 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         // 3b. One central ledger for every announcement type: the same words are never spoken twice
         // within DEDUPE_WINDOW_MS, whatever path produced them (event, state change, test).
         // A late announcement is fine; a repeat is not. Manual previews are exempt.
-        if (item.category != "DIRECT_TEST") {
+        // The continuous charge alert repeats the same line on purpose until the charger is unplugged.
+        if (item.category != "DIRECT_TEST" && item.category != ContinuousChargeAlert.CATEGORY) {
             val nowMs = System.currentTimeMillis()
             if (isRecentDuplicate(recentSpoken, item.text, nowMs, DEDUPE_WINDOW_MS)) {
                 Log.d(TAG, "Repeat announcement suppressed by central ledger -> ${item.text}")

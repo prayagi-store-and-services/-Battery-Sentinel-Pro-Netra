@@ -178,6 +178,25 @@ fun SettingsScreen(
                         modifier = Modifier.testTag("unplug_alarm_toggle_settings")
                     )
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = "Continuous Unplug Alert (80/85/90/95/100%)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = "Ringtone + voice repeat until the charger is unplugged", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(
+                        checked = settings.continuousChargeAlertEnabled,
+                        onCheckedChange = { viewModel.setContinuousChargeAlertEnabled(it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = NetraCyan, checkedTrackColor = NetraCyan.copy(alpha = 0.3f)),
+                        modifier = Modifier.testTag("continuous_charge_alert_toggle")
+                    )
+                }
             }
         }
 

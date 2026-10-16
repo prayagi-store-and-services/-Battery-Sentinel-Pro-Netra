@@ -36,7 +36,8 @@ data class SentinelSettings(
     val audioRoutingPolicy: com.example.model.AudioRoutingPolicy = com.example.model.AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK,
     val screenOffNetworkOptEnabled: Boolean = true,
     val announcementMutedUntilMs: Long = 0L, // 0 = not muted; critical alerts always play
-    val networkTrafficThresholdBytesPerSec: Long = 2_097_152L // 2 MB/s
+    val networkTrafficThresholdBytesPerSec: Long = 2_097_152L, // 2 MB/s
+    val continuousChargeAlertEnabled: Boolean = true // 80/85/90/95/100% ringtone + repeating voice line until unplug
 )
 
 class SettingsRepository(context: Context) {
@@ -82,7 +83,8 @@ class SettingsRepository(context: Context) {
             audioRoutingPolicy = policy,
             screenOffNetworkOptEnabled = prefs.getBoolean("screen_off_network_opt_enabled", true),
             announcementMutedUntilMs = prefs.getLong("announcement_muted_until", 0L),
-            networkTrafficThresholdBytesPerSec = prefs.getLong("network_traffic_threshold", 2_097_152L)
+            networkTrafficThresholdBytesPerSec = prefs.getLong("network_traffic_threshold", 2_097_152L),
+            continuousChargeAlertEnabled = prefs.getBoolean("continuous_charge_alert_enabled", true)
         )
     }
 
@@ -99,6 +101,11 @@ class SettingsRepository(context: Context) {
     fun setUnplugAlarmEnabled(enabled: Boolean) {
         prefs.edit().putBoolean("unplug_alarm_enabled", enabled).apply()
         _settings.value = _settings.value.copy(unplugAlarmEnabled = enabled)
+    }
+
+    fun setContinuousChargeAlertEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("continuous_charge_alert_enabled", enabled).apply()
+        _settings.value = _settings.value.copy(continuousChargeAlertEnabled = enabled)
     }
 
     fun setPowerSaverEnabled(enabled: Boolean) {
