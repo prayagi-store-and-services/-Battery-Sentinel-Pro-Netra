@@ -4,7 +4,7 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-- Improvements and bug fixes.
+- New: continuous unplug alert. When the battery reaches 80, 85, 90, 95 or 100 percent while a charger is connected, the phone's ringtone plays and the spoken level alert repeats about every 10 seconds until the charger is unplugged. Unplugging is the only way to stop it; there is no dismiss or snooze. It follows the master announcements switch and has its own switch in Settings. Nothing new is stored or sent.
 
 ## [2.1.18]
 
