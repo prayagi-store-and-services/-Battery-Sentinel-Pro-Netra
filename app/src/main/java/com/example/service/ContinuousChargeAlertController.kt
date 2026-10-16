@@ -12,10 +12,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Runs the continuous high-charge unplug alert: the phone's ringtone loops and the spoken level
- * line repeats about every 10 seconds until the charger is unplugged. Unplugging is the only stop
- * (the service stopping also ends it). Nothing is persisted, so a reboot can never leave it stuck
- * on; after a restart it runs only while the phone really is connected at or above 80 percent.
+ * Runs the continuous unplug alert at the user's charge target: once the battery reaches the
+ * user-selected target the phone's ringtone loops and the spoken level line repeats about every
+ * 10 seconds until the charger is unplugged. It never starts below the target. Unplugging is the
+ * only stop (the service stopping also ends it). Nothing is persisted, so a reboot can never leave
+ * it stuck on; after a restart it runs only while the phone really is connected at or above the
+ * target.
  */
 class ContinuousChargeAlertController(
     private val context: Context,
@@ -33,7 +35,8 @@ class ContinuousChargeAlertController(
         } catch (_: Exception) { null } ?: return
         val should = ContinuousChargeAlert.shouldAlert(
             level, isCharging, isConnected,
-            settings.continuousChargeAlertEnabled && settings.announcementsMasterEnabled
+            settings.continuousChargeAlertEnabled && settings.announcementsMasterEnabled,
+            settings.chargeTargetPercent
         )
         if (should && !running) {
             start()
