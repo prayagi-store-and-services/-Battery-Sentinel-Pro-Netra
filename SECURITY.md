@@ -1,5 +1,9 @@
 # Security Policy
 
+## Continuous unplug alert (v2.1.20)
+
+At 80, 85, 90, 95 or 100 percent with a charger attached, the phone's ringtone loops and a spoken line repeats until the charger is unplugged. It plays only on the phone: no new permission (the ringtone plays through the alarm audio usage, no audio or file permission), no new library, no network address, and nothing is stored or sent. The alert state lives only in memory, so a reboot or app restart can never leave it stuck on; it runs again only while the phone really is connected at or above 80 percent. It follows the master announcements switch and has its own switch in Settings.
+
 ## Optional screen lock uses Device Admin, force-lock only (v2.1.18)
 
 A new opt-in setting (off by default) locks the screen when charging stops while the charging screen is showing. It asks Android for the Device Admin permission with one policy, force-lock: the app can lock the screen and cannot read, change, wipe or reset anything. The app explains this before asking, and the permission can be removed in the app or in Android Settings, Security, Device admin apps (Android blocks uninstalling while it is on). The lock decision is made on the phone; nothing is stored or sent. No new library or network address.
