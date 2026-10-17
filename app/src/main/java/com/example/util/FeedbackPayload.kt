@@ -2,8 +2,9 @@ package com.example.util
 
 /**
  * The complete, exact content of an in-app feedback or crash report.
- * Only these fields are ever sent: phone model, Android version, app version, and either the
- * message the user typed (feedback) or the technical stack trace (crash report). Nothing else.
+ * Only these fields are ever sent: the app name (fixed, so every mail says which app sent it),
+ * phone model, Android version, app version, and either the message the user typed (feedback)
+ * or the technical stack trace (crash report). Nothing else.
  */
 data class FeedbackPayload(
     val kind: String,
@@ -19,6 +20,7 @@ data class FeedbackPayload(
             "_subject" to "[Netra] In-app $kind",
             "_captcha" to "false",
             "_template" to "table",
+            "app" to "Battery Sentinel Pro Netra",
             "device" to deviceModel,
             "android_version" to androidVersion,
             "app_version" to appVersion
@@ -31,6 +33,7 @@ data class FeedbackPayload(
     /** Plain-language list shown to the user before they agree to send. */
     fun disclosure(): String = buildString {
         append("This will be emailed to the developer:\n")
+        append("- App: Battery Sentinel Pro Netra\n")
         append("- Phone model: ").append(deviceModel).append('\n')
         append("- Android version: ").append(androidVersion).append('\n')
         append("- App version: ").append(appVersion).append('\n')
