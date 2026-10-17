@@ -4,6 +4,11 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- New: "Battery Drop Suspects" on the per-app battery usage screen. Pick a window (1, 3 or 12 hours) and see which apps were actually active - on screen or running a background service - while the battery fell, so a fast drain can be matched to whoever was busy during it. Android does not give any app per-app battery numbers (mAh or percent), so these are activity times, never battery share; the phone's own battery usage screen opens with one button. If a fast-drop window shows no active app at all, the list says so plainly, which points at the battery or phone instead of an app.
+- New: "Battery Hardware Facts" on the same screen: the battery's own health self-report, real temperature, voltage and level, plus an honest note that Android exposes no capacity (mAh) or cycle count, so a worn replacement battery cannot be told apart from an app by software.
+
+## [2.1.21]
+
 - Fixed: the continuous unplug alert now starts only when the battery reaches the charge target you picked (80, 85, 90, 95 or 100 percent) and repeats at the steps at or above it. Before, it could already start at 80 percent while charging even when a higher target was set. Levels you did not select never ring.
 
 ## [2.1.20]
