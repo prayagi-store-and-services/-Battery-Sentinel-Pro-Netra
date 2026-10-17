@@ -405,6 +405,38 @@ fun SettingsScreen(
             }
         }
 
+        // 4b. OEM auto-launch switch (realme UI / ColorOS / MIUI / FuntouchOS / EMUI kill 24/7 apps otherwise)
+        if (com.example.util.OemAutostartHelper.needsAttention(android.os.Build.MANUFACTURER)) item {
+            val autostartIntent = androidx.compose.runtime.remember { com.example.util.OemAutostartHelper.resolveIntent(context) }
+            SentinelCard(
+                title = "Auto-Launch (this phone brand)",
+                icon = Icons.Default.Shield,
+                dotState = DotState.THROTTLED,
+                accentColor = StatusAmber
+            ) {
+                Text(
+                    text = "This phone brand (realme / Oppo / OnePlus / Xiaomi / vivo / Huawei family) also has its own auto-launch switch. Without it the phone can stop 24/7 monitoring even after the battery exemption above is allowed.",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                if (autostartIntent != null) {
+                    OutlinedButton(
+                        onClick = { try { context.startActivity(autostartIntent) } catch (_: Exception) {} },
+                        modifier = Modifier.fillMaxWidth().testTag("open_autostart_button")
+                    ) {
+                        Text("Open auto-launch settings", fontSize = 12.sp)
+                    }
+                } else {
+                    Text(
+                        text = "Unavailable - this phone has none of the known auto-launch screens. Open Settings > Apps > Battery Sentinel Pro Netra and allow auto-launch / background activity manually.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
         // 5. Automated Daily PDF Report Generator (Room Telemetry to Local PDF)
         item {
             var isGeneratingPdf by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }

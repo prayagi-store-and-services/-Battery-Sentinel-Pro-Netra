@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- New: Settings now shows an Auto-Launch card on realme, Oppo, OnePlus, Xiaomi, vivo and Huawei phones. These brands stop 24/7 background monitoring with their own auto-launch switch even after Android's battery exemption is allowed; the card opens the phone's own auto-launch screen when the phone has one, and says Unavailable with manual steps when it does not.
+
 - Fixed: every feedback and crash report now names the app ("Battery Sentinel Pro Netra") in its own field, so a mail can never arrive with an empty app field. The pre-send screen shows the same line.
 
 - New: "Battery Drop Suspects" on the per-app battery usage screen. Pick a window (1, 3 or 12 hours) and see which apps were actually active - on screen or running a background service - while the battery fell, so a fast drain can be matched to whoever was busy during it. Android does not give any app per-app battery numbers (mAh or percent), so these are activity times, never battery share; the phone's own battery usage screen opens with one button. If a fast-drop window shows no active app at all, the list says so plainly, which points at the battery or phone instead of an app.
