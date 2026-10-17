@@ -9,7 +9,8 @@ import org.junit.Test
 class FeedbackPayloadTest {
     @Test fun feedbackCarriesOnlyTheAllowedFields() {
         val f = FeedbackBuilder.feedback("Model X", "14", "1.1.2", "  hello  ").fields()
-        assertEquals(setOf("_subject", "_captcha", "_template", "device", "android_version", "app_version", "message"), f.keys)
+        assertEquals(setOf("_subject", "_captcha", "_template", "app", "device", "android_version", "app_version", "message"), f.keys)
+        assertEquals("Battery Sentinel Pro Netra", f["app"])
         assertEquals("hello", f["message"])
         assertEquals("[Netra] In-app Feedback", f["_subject"])
     }
