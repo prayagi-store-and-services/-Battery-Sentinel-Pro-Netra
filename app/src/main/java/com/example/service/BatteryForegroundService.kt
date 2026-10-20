@@ -298,7 +298,15 @@ class BatteryForegroundService : Service() {
          * BatteryMonitorService posts; [state] keeps the caller signature stable.
          */
         fun buildTrackingNotification(context: Context, state: BatteryTrackState): Notification {
-            val central = com.example.NetraApplication.instance.centralDataCenter.centralState.value
+            // Build from the passed snapshot (the service always passes its freshest one);
+            // reading the live central state here would make this function lie about its input.
+            val central = com.example.model.NetraCentralState(
+                batteryLevel = state.percentage,
+                temperatureCelsius = state.temperatureCelsius,
+                isCharging = state.isCharging,
+                isChargerConnected = state.isCharging || state.pluggedSource != "Unplugged",
+                isDataFresh = true
+            )
             return SentinelStatusNotification.build(context, central)
         }
 
