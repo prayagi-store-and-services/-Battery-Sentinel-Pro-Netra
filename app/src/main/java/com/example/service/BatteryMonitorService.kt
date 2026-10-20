@@ -279,6 +279,14 @@ class BatteryMonitorService : Service() {
         // Time to Full / Remaining discharge estimate
         val timeToFullMinutes: Int? = canonical.chargingEtaMinutes
         val estimatedDischargeHours: Float? = canonical.dischargingEtaMinutes?.let { it / 60.0f }
+        // Learned minutes to the charge target; null until the curve has real data for it
+        val targetPercent = try {
+            NetraApplication.instance.settingsRepository.settings.value.chargeTargetPercent
+        } catch (_: Exception) { -1 }
+        val timeToTargetMinutes: Int? = if (isCharging && targetPercent in (batteryPct + 1)..100) {
+            ChargeCurveLearner.init(applicationContext)
+            ChargeCurveLearner.estimateMinutes(batteryPct, targetPercent, true, canonical.temperatureCelsius)?.minutes
+        } else null
 
         val isOverheat = tempCelsius >= 40.0f
         val isCritical = tempCelsius >= 45.0f
@@ -303,6 +311,7 @@ class BatteryMonitorService : Service() {
             chargingSpeed = chargingSpeed,
             chargingSpeedLabel = speedLabel,
             timeToFullMinutes = timeToFullMinutes,
+            timeToTargetMinutes = timeToTargetMinutes,
             estimatedDischargeHours = estimatedDischargeHours,
             observedDischargeRatePerHour = 0f,
             distanceTo40C = distanceTo40C,
@@ -591,112 +600,8 @@ class BatteryMonitorService : Service() {
         }
     }
 
-    private fun buildSentinelNotification(t: NetraCentralState): Notification {
-        val intent = com.example.Brand.launchIntent(this)
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val levelStr = t.batteryLevel?.let { "$it%" } ?: "Unavailable"
-        val tempStr = t.temperatureCelsius?.let { String.format(java.util.Locale.US, "%.1f°C", it) }
-
-        val speedText = when (t.chargingSpeed) {
-            CanonicalChargingSpeed.SLOW -> "Slow Charging"
-            CanonicalChargingSpeed.NORMAL -> "Normal Charging"
-            CanonicalChargingSpeed.FAST -> "Fast Charging"
-            CanonicalChargingSpeed.SUPER_FAST -> "Super Fast Charging"
-            CanonicalChargingSpeed.ULTRA_FAST -> "Ultra Fast Charging"
-            CanonicalChargingSpeed.UNAVAILABLE -> ""
-        }
-
-        val rawPowerText = t.powerWatts?.let { String.format(java.util.Locale.US, "%.1fW", it) }
-        val speedDisplay = if (rawPowerText != null && speedText.isNotEmpty()) {
-            "$rawPowerText • $speedText"
-        } else if (rawPowerText != null) {
-            rawPowerText
-        } else if (speedText.isNotEmpty()) {
-            speedText
-        } else {
-            ""
-        }
-
-        val now = System.currentTimeMillis()
-        val title: String
-        val lines = mutableListOf<String>()
-
-        if (!t.isDataFresh) lines.add("Last-known battery data; live update unavailable")
-        if (t.fieldStates.powerStatus == com.example.model.FieldStatus.LAST_VALID) lines.add("Electrical power is last known, not a live reading")
-
-        if (t.isCriticalThermalActive) {
-            lines.add("⚠️ Critical Thermal Control Active")
-        }
-        if (t.isLowBatteryControlActive) {
-            lines.add("🔋 Low Battery Control Active")
-        }
-
-        if (t.canonicalChargerState == com.example.model.CanonicalChargerState.CHARGER_CONNECTED_NOT_CHARGING) {
-            title = "Charger connected • Charging stopped • $levelStr"
-            t.chargerConnectedAt?.let { at ->
-                val mins = ((now - at).coerceAtLeast(0L) / 60_000L)
-                lines.add(if (mins >= 60) "Connected ${mins / 60}h ${mins % 60}m" else "Connected $mins min")
-            }
-            tempStr?.let { lines.add(it) }
-        } else if (t.isCharging == true) {
-            title = "Charging • $levelStr"
-            if (speedDisplay.isNotEmpty()) {
-                lines.add(speedDisplay)
-            }
-            t.chargingEtaMinutes?.let { eta ->
-                lines.add(if (eta >= 60) "ETA ${eta / 60}h ${eta % 60}m" else "ETA $eta min")
-            }
-            t.chargingStartedAt?.let { at ->
-                val mins = ((now - at).coerceAtLeast(0L) / 60_000L)
-                lines.add(if (mins >= 60) "Charging ${mins / 60}h ${mins % 60}m" else "Charging $mins min")
-            }
-            tempStr?.let { lines.add(it) }
-        } else if (t.isChargerConnected == false || t.isCharging == false) {
-            if (t.isChargerConnected == true) {
-                title = "Connected, not charging • $levelStr"
-                t.chargerConnectedAt?.let { at ->
-                    val mins = ((now - at).coerceAtLeast(0L) / 60_000L)
-                    lines.add(if (mins >= 60) "Connected ${mins / 60}h ${mins % 60}m" else "Connected $mins min")
-                }
-                tempStr?.let { lines.add(it) }
-            } else {
-                title = "Battery • $levelStr"
-                val drainPower = t.consumptionPowerWatts ?: t.powerWatts?.let { if (it < 0) abs(it) else null }
-                drainPower?.let {
-                    lines.add(String.format(java.util.Locale.US, "Drain %.1fW", it))
-                }
-                t.dischargingEtaMinutes?.let { eta ->
-                    lines.add(if (eta >= 60) "ETA ${eta / 60}h ${eta % 60}m" else "ETA $eta min")
-                }
-                t.dischargingStartedAt?.let { at ->
-                    val mins = ((now - at).coerceAtLeast(0L) / 60_000L)
-                    lines.add(if (mins >= 60) "On battery ${mins / 60}h ${mins % 60}m" else "On battery $mins min")
-                }
-                tempStr?.let { lines.add(it) }
-            }
-        } else {
-            title = "Battery • $levelStr"
-            lines.add("Idle")
-            tempStr?.let { lines.add(it) }
-        }
-
-        val contentText = lines.firstOrNull() ?: (tempStr ?: "Monitoring active")
-        val bigText = lines.joinToString(" • ")
-
-        return NotificationCompat.Builder(this, CHANNEL_SERVICE_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(title)
-            .setContentText(bigText.ifEmpty { contentText })
-            .setStyle(NotificationCompat.BigTextStyle().bigText(bigText.ifEmpty { contentText }))
-            .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setContentIntent(pendingIntent)
-            .build()
-    }
+    private fun buildSentinelNotification(t: NetraCentralState): Notification =
+        SentinelStatusNotification.build(this, t)
 
     private fun updateForegroundNotification(t: NetraCentralState) {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -734,9 +639,9 @@ class BatteryMonitorService : Service() {
 
         const val ACTION_DISMISS_ALARM = "com.example.ACTION_DISMISS_ALARM"
         const val ACTION_SET_TARGET_100 = "com.example.ACTION_SET_TARGET_100"
-        const val CHANNEL_SERVICE_ID = "netra_service_channel"
+        const val CHANNEL_SERVICE_ID = SentinelStatusNotification.CHANNEL_ID
         const val CHANNEL_ALERTS_ID = "netra_alerts_channel"
-        const val NOTIFICATION_ID = 2001
+        const val NOTIFICATION_ID = SentinelStatusNotification.NOTIFICATION_ID
         const val NOTIFICATION_ALARM_ID = 2002
         const val NOTIFICATION_OVERHEAT_ID = 2003
         const val NOTIFICATION_THRESHOLD_ID = 2004

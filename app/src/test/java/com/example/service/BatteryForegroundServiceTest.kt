@@ -117,10 +117,12 @@ class BatteryForegroundServiceTest {
         val contentTitle = shadowNotification.contentTitle.toString()
         val contentText = shadowNotification.contentText.toString()
 
-        assertTrue("Title should contain percentage", contentTitle.contains("88%"))
-        assertTrue("Title should contain status", contentTitle.contains("Charging"))
-        assertTrue("Text should contain temperature", contentText.contains("29.5°C"))
-        assertTrue("Text should contain status", contentText.contains("Charging"))
+        // Unified status notification (v2.1.25): the title is the app name and the single
+        // status line carries percentage, temperature and the charging state.
+        assertEquals(com.example.Brand.name, contentTitle)
+        assertTrue("Line should contain percentage", contentText.contains("88%"))
+        assertTrue("Line should contain temperature", contentText.contains("29.5°C"))
+        assertTrue("Line should state the charging estimate honestly", contentText.contains("learning your phone's pattern"))
         assertTrue("Notification should be ongoing", (notification.flags and android.app.Notification.FLAG_ONGOING_EVENT) != 0)
     }
 

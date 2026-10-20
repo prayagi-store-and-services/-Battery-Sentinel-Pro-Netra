@@ -58,6 +58,7 @@ class Part20FinalProtectionIntegrationTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
+        com.example.service.ChargeCurveLearner.resetForTesting(context, "part20_test_curve")
         dataCenter = NetraCentralDataCenter()
     }
 

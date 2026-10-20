@@ -291,6 +291,9 @@ data class NetraCentralState(
     // ETAs (null if unavailable)
     val chargingEtaMinutes: Int? = null,
     val dischargingEtaMinutes: Int? = null,
+    // True only when the ETA above comes from the confident learned charge curve
+    val chargingEtaConfident: Boolean = false,
+    val dischargingEtaConfident: Boolean = false,
     // Media Playback State Integration
     val mediaState: CanonicalMediaState = CanonicalMediaState.UNKNOWN,
     val isMediaControlAvailable: Boolean = true,

@@ -30,6 +30,8 @@ data class BatteryTelemetry(
     val chargingSpeed: ChargerSpeed = ChargerSpeed.UNKNOWN,
     val chargingSpeedLabel: String = "Unavailable",
     val timeToFullMinutes: Int? = null,
+    // Learned minutes from the current level to the charge target; null while the curve has no data
+    val timeToTargetMinutes: Int? = null,
     val estimatedDischargeHours: Float? = null,
     val observedDischargeRatePerHour: Float = 0f, // % / hr
     val distanceTo40C: Float = 0f, // 40 - currentTemp

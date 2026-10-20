@@ -1,5 +1,9 @@
 # Security Policy
 
+## Learned charge curve, one status notification, and media pausing for announcements (v2.1.25)
+
+The charge-time and time-remaining estimates now learn the phone's own seconds-per-percent curve from real battery level changes on the phone, kept per level, separately for charging and discharging, and split into three temperature bands. The curve is stored only on the phone in an app-private SharedPreferences file (a small JSON of numbers); it is never sent anywhere and no account or identifier is attached to it. Until the curve is confident the app says it is still learning instead of showing a made-up number, and the charge-target timer now uses the same learned curve instead of stretching the linear estimate. The two ongoing foreground notifications are merged into one single-line notification (same id and channel, built from the same state). Spoken announcements now take transient audio focus so other media pauses while a voice line plays and resumes when it ends; a watchdog releases the focus even if the speech engine never calls back. No new permission, no new library, no network address.
+
 ## Continuous unplug alert follows the user's charge target (v2.1.21)
 
 Bug fix: the continuous unplug alert (ringtone + repeating spoken line) used to start at the lowest fixed step, 80 percent, whatever target the user had picked. It now starts only when the battery reaches the user-selected target (80/85/90/95/100) and repeats at the fixed steps at or above that target, never before it. On-device decision only: no new permission, no new library, no network address, and nothing is stored or sent.

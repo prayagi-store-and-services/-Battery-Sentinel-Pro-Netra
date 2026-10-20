@@ -631,9 +631,24 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
 
             // Only raw valid levels/status may establish current-session progression.
             // Invalid input clears ETA evidence while last-valid display telemetry stays intact.
+            // The learned charge curve (phone's own history, temperature-banded) wins when it
+            // has data; the single-session linear estimate remains the honest fallback.
+            ChargeCurveLearner.init(com.example.NetraApplication.instance)
+            ChargeCurveLearner.observeTransition(validatedLevel, status, plugged, mergedTempCelsius, now)
+            val learnedCharge = if (mergedIsCharging == true && validatedLevel != null) {
+                ChargeCurveLearner.estimateMinutes(validatedLevel, 100, true, mergedTempCelsius)
+            } else null
+            val learnedDischarge = if (isDischarging && validatedLevel != null) {
+                ChargeCurveLearner.estimateMinutes(validatedLevel, 0, false, mergedTempCelsius)
+            } else null
             val eta = sessionEtaEstimator.observe(validatedLevel, status, plugged, now)
-            val mergedChargingEta = eta.chargingMinutes
-            val mergedDischargingEta = eta.dischargingMinutes
+            // A learned estimate replaces the session-linear one only once the curve is
+            // confident (most of the range observed at least twice); until then the honest
+            // fallback stays in place and the confidence flag says "still learning".
+            val mergedChargingEta = if (learnedCharge?.confident == true) learnedCharge.minutes else eta.chargingMinutes
+            val mergedDischargingEta = if (learnedDischarge?.confident == true) learnedDischarge.minutes else eta.dischargingMinutes
+            val chargingEtaConfidentNow = learnedCharge?.confident == true
+            val dischargingEtaConfidentNow = learnedDischarge?.confident == true
 
             // 2. Deduplication & Event Generation
             if (isConnected != null && isConnected != lastConnectedState) {
@@ -929,6 +944,8 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 capabilities = detectedCapabilities,
                 chargingEtaMinutes = mergedChargingEta,
                 dischargingEtaMinutes = mergedDischargingEta,
+                chargingEtaConfident = chargingEtaConfidentNow,
+                dischargingEtaConfident = dischargingEtaConfidentNow,
                 mediaState = oldState.mediaState,
                 isMediaControlAvailable = oldState.isMediaControlAvailable,
                 mediaPausedByNethra = oldState.mediaPausedByNethra,
@@ -1013,6 +1030,8 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             fieldStates = agedFields, isDataFresh = fresh, capabilities = agedCapabilities,
             chargingEtaMinutes = if (fresh) state.chargingEtaMinutes else null,
             dischargingEtaMinutes = if (fresh) state.dischargingEtaMinutes else null,
+            chargingEtaConfident = if (fresh) state.chargingEtaConfident else false,
+            dischargingEtaConfident = if (fresh) state.dischargingEtaConfident else false,
             announcementSpeed = if (agedFields.powerStatus == FieldStatus.LIVE) state.announcementSpeed else CanonicalChargingSpeed.UNAVAILABLE
         )
     }

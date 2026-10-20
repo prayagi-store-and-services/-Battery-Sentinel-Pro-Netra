@@ -236,9 +236,9 @@ fun ChargingScreen(
                     ) {
                         Text(
                             text = "Target ${settings.chargeTargetPercent}%: ${if (telemetry.level >= settings.chargeTargetPercent) "REACHED" else "ARMED"}" + (
-                                telemetry.timeToFullMinutes
+                                telemetry.timeToTargetMinutes
                                     ?.takeIf { telemetry.isCharging && it > 0 && telemetry.level in 1..99 && telemetry.level < settings.chargeTargetPercent }
-                                    ?.let { full -> " - about " + maxOf(1, full * (settings.chargeTargetPercent - telemetry.level) / (100 - telemetry.level)) + " min (estimate)" }
+                                    ?.let { mins -> " - about $mins min (learned estimate)" }
                                     ?: ""
                             ),
                             fontSize = 11.sp,
