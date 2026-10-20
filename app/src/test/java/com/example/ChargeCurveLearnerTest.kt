@@ -111,7 +111,7 @@ class ChargeCurveLearnerTest {
         ChargeCurveLearner.resetForTesting(context, prefsName)
         val eta = ChargeCurveLearner.estimateMinutes(50, 60, true, 25f)
         assertNotNull(eta)
-        assertEquals(10, eta!!.minutes)
+        assertEquals(5, eta!!.minutes) // 10 levels x 30s
         assertTrue(eta.confident)
     }
 
