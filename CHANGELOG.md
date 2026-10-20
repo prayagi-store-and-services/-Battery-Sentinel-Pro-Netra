@@ -4,6 +4,13 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- New: the charge and time-remaining estimates now learn this phone's own charging curve. The app remembers how many seconds each battery percent really takes on this phone, separately for charging and discharging and for cool, warm and hot batteries, so the 90 to 100 percent slow-down and heat throttling are measured, not guessed. Until enough real data exists the estimate says the app is still learning this phone's pattern instead of showing a number.
+- Fixed: the charge target timer used to stretch the linear full-charge estimate, which read far too low when the phone slows near full; it now uses the same learned curve to the chosen target.
+- Changed: the two ongoing background notifications are now one single-line notification: percent, temperature and the honest time estimate or learning state. Alert notifications are unchanged.
+- Changed: every spoken announcement now takes transient audio focus, so music and videos pause while the phone speaks and resume when it finishes.
+
+## [2.1.24]
+
 - New: Settings now shows an Auto-Launch card on realme, Oppo, OnePlus, Xiaomi, vivo and Huawei phones. These brands stop 24/7 background monitoring with their own auto-launch switch even after Android's battery exemption is allowed; the card opens the phone's own auto-launch screen when the phone has one, and says Unavailable with manual steps when it does not.
 
 - Fixed: every feedback and crash report now names the app ("Battery Sentinel Pro Netra") in its own field, so a mail can never arrive with an empty app field. The pre-send screen shows the same line.
