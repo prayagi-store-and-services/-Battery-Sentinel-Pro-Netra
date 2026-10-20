@@ -45,6 +45,9 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
     lateinit var announcementEngine: com.example.service.AnnouncementEngine
         private set
 
+    lateinit var thermalGuardianController: com.example.service.ThermalGuardianController
+        private set
+
     lateinit var telemetrySentinel: com.example.service.TelemetrySentinel
         private set
 
@@ -74,6 +77,10 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         centralDataCenter.initCapabilityRegistry(this, capabilityRegistry)
         storageCacheManager = com.example.data.repository.StorageCacheManager(this)
         announcementEngine = com.example.service.AnnouncementEngine(this)
+        thermalGuardianController = com.example.service.ThermalGuardianController(this)
+        if (settingsRepository.settings.value.thermalGuardianEnabled) {
+            try { thermalGuardianController.start() } catch (_: Exception) {}
+        }
         telemetrySentinel = com.example.service.TelemetrySentinel(this)
         stabilitySentinel = com.example.service.StabilitySentinel.installCrashHandler(this)
         // A crash report saved by the last crash is sent now, in the background, with no user action.

@@ -628,6 +628,13 @@ fun StatusScreen(
             }
         }
 
+        // Thermal Guardian + Emergency Saver (temperature control and low-battery planner)
+        com.example.ui.components.ThermalGuardianCard()
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        com.example.ui.components.EmergencySaverCard()
+
         // F. Application Monitor Preview
         SentinelCard(
             title = "Application Monitor Preview",
