@@ -66,6 +66,10 @@ data class AnnouncementItem(
  */
 class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitListener {
 
+    // Transient audio focus: other media pauses while an announcement speaks, resumes when it ends
+    private val ttsAudioFocus = TtsAudioFocusController(context)
+    private var focusWatchdogJob: kotlinx.coroutines.Job? = null
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
@@ -625,6 +629,18 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             val routingStatus = AudioRoutingInspector.inspectRouting(context, settings.audioRoutingPolicy)
             val isCritical = nextItem.priority == AnnouncementPriority.CRITICAL_THERMAL
 
+            // Pause other media with real transient audio focus for the whole utterance.
+            // Released in onSpeechFinished; the watchdog guarantees release even if TTS callbacks never arrive.
+            if (!ttsAudioFocus.acquire()) {
+                Log.w(TAG, "Audio focus not granted; announcement continues and media keeps playing")
+            }
+            focusWatchdogJob?.cancel()
+            focusWatchdogJob = scope.launch(Dispatchers.IO) {
+                kotlinx.coroutines.delay(FOCUS_WATCHDOG_MS)
+                Log.w(TAG, "TTS focus watchdog fired without an utterance callback; releasing audio focus")
+                ttsAudioFocus.release()
+            }
+
             // Fixed behaviour: the phone speaker always speaks first (notification stream).
             // If a Bluetooth device is connected, the same announcement is replayed there right after (see onDone).
             val params = Bundle().apply {
@@ -699,6 +715,8 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
      */
     private fun onSpeechFinished() {
         scope.launch(Dispatchers.IO) {
+            focusWatchdogJob?.cancel()
+            ttsAudioFocus.release()
             try {
                 val settings = getSettings()
                 if (settings.mediaPlaybackHandlingEnabled) {
@@ -779,6 +797,9 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 leastUrgent.speechState = AnnouncementSpeechState.CANCELLED
             }
         }
+
+        /** Longest an utterance may hold audio focus without a callback before the watchdog releases it. */
+        private const val FOCUS_WATCHDOG_MS = 90_000L
 
         /** The same announcement text is not spoken again within this window. */
         internal const val DEDUPE_WINDOW_MS = 20_000L
