@@ -642,8 +642,11 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 ChargeCurveLearner.estimateMinutes(validatedLevel, 0, false, mergedTempCelsius)
             } else null
             val eta = sessionEtaEstimator.observe(validatedLevel, status, plugged, now)
-            val mergedChargingEta = learnedCharge?.minutes ?: eta.chargingMinutes
-            val mergedDischargingEta = learnedDischarge?.minutes ?: eta.dischargingMinutes
+            // A learned estimate replaces the session-linear one only once the curve is
+            // confident (most of the range observed at least twice); until then the honest
+            // fallback stays in place and the confidence flag says "still learning".
+            val mergedChargingEta = if (learnedCharge?.confident == true) learnedCharge.minutes else eta.chargingMinutes
+            val mergedDischargingEta = if (learnedDischarge?.confident == true) learnedDischarge.minutes else eta.dischargingMinutes
             val chargingEtaConfidentNow = learnedCharge?.confident == true
             val dischargingEtaConfidentNow = learnedDischarge?.confident == true
 
