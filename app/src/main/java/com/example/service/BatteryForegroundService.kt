@@ -180,24 +180,13 @@ class BatteryForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Battery Background Tracker",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Monitors real-time battery percentage, temperature, and charging status in background"
-                setShowBadge(false)
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
+        SentinelStatusNotification.ensureChannel(this)
     }
 
     companion object {
         const val TAG = "BatteryForegroundService"
-        const val CHANNEL_ID = "battery_foreground_tracker_channel"
-        const val NOTIFICATION_ID = 4001
+        const val CHANNEL_ID = SentinelStatusNotification.CHANNEL_ID
+        const val NOTIFICATION_ID = SentinelStatusNotification.NOTIFICATION_ID
         const val ACTION_STOP_SERVICE = "com.example.service.ACTION_STOP_BATTERY_TRACKER"
 
         private val _batteryStateFlow = MutableStateFlow(BatteryTrackState())
@@ -304,39 +293,13 @@ class BatteryForegroundService : Service() {
         }
 
         /**
-         * Builds the ongoing foreground notification displaying real-time
-         * battery percentage, temperature, and charging status.
+         * Builds the one unified ongoing notification. Both foreground services use the
+         * same id, channel and central state, so this is identical to what
+         * BatteryMonitorService posts; [state] keeps the caller signature stable.
          */
         fun buildTrackingNotification(context: Context, state: BatteryTrackState): Notification {
-            val contentIntent = com.example.Brand.launchIntent(context).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            }
-            val pendingIntent = PendingIntent.getActivity(
-                context,
-                0,
-                contentIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val statusText = if (state.isCharging) {
-                "${state.status} (${state.pluggedSource})"
-            } else {
-                state.status
-            }
-
-            val title = "Battery: ${state.percentage}% • $statusText"
-            val tempFormatted = String.format(Locale.US, "%.1f°C", state.temperatureCelsius)
-            val subtext = "Temperature: $tempFormatted • $statusText"
-
-            return NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentTitle(title)
-                .setContentText(subtext)
-                .setStyle(NotificationCompat.BigTextStyle().bigText("Battery Level: ${state.percentage}%\nTemperature: $tempFormatted\nCharging Status: $statusText"))
-                .setOngoing(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setContentIntent(pendingIntent)
-                .build()
+            val central = com.example.NetraApplication.instance.centralDataCenter.centralState.value
+            return SentinelStatusNotification.build(context, central)
         }
 
         /**
