@@ -38,6 +38,10 @@ class NetraCentralDataCenterTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        com.example.service.ChargeCurveLearner.resetForTesting(
+            androidx.test.core.app.ApplicationProvider.getApplicationContext(),
+            "ncdc_test_curve"
+        )
         dataCenter = NetraCentralDataCenter()
     }
 
