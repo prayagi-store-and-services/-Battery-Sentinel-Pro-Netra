@@ -1,5 +1,9 @@
 # Security Policy
 
+## Thermal Guardian acts silently (v2.2.2)
+
+Behaviour change: Thermal Guardian's automatic runs no longer speak through the announcement engine and no longer post the ongoing warning notification; the controls (screen dimming under the existing Modify-system-settings switch, restore, heavy-app identification) run exactly as before and are still written to the on-device log. Only a run started by the user with the Test button may speak. Pure on-device decision logic: no new permission, no new library, no network address, nothing stored or sent.
+
 ## Thermal Guardian recovery waits for the manufacturer thermal status (v2.2.1)
 
 Safety fix: Thermal Guardian recovery (restoring screen brightness, clearing the warning notification and speaking "Phone cooled") used to depend only on the battery temperature staying at or below 37 degrees for a minute. If the phone's own thermal status (PowerManager) stayed at severe, critical or worse while the battery sensor read cool, the Guardian restored its controls anyway and then could not reapply them. Recovery now also requires that the manufacturer status is below severe, and the one-minute hold restarts whenever that status returns. Pure on-device decision logic: no new permission, no new library, no network address, nothing stored or sent.

@@ -35,8 +35,10 @@ import kotlinx.coroutines.launch
  *    identify window, and log writes happen only at phase changes;
  *  - names apps recently in the foreground (Usage Access) as suspects - an
  *    estimate, never per-app heat, because Android reports none;
- *  - speaks short warnings through the existing AnnouncementEngine (transient
- *    audio focus, watchdog) and posts one local notification;
+ *  - acts silently: the controls above run by themselves at the threshold, with no
+ *    spoken line and no notification (see [ThermalSilentPolicy]); every action is still
+ *    written to the thermal log. Only the user-tapped TEST button speaks, through the
+ *    existing AnnouncementEngine (transient audio focus, watchdog);
  *  - lifts every control it applied once the phone stays below 37 C for a minute.
  *
  * What it never does: force-stop other apps, change CPU frequency, toggle Battery
@@ -176,7 +178,7 @@ class ThermalGuardianController(private val app: Context) {
         for (d in directives) {
             when (d) {
                 is ThermalGuardianPolicy.Directive.SampleGap -> gap = d.gapMs
-                is ThermalGuardianPolicy.Directive.Speak -> speak(d.text, d.critical)
+                is ThermalGuardianPolicy.Directive.Speak -> if (ThermalSilentPolicy.mayAnnounce(test)) speak(d.text, d.critical)
                 is ThermalGuardianPolicy.Directive.LogEvent -> {
                     if (test) testEvents.add(d.event) else {
                         ThermalGuardianLog.addEvent(d.event)
@@ -199,7 +201,7 @@ class ThermalGuardianController(private val app: Context) {
                 is ThermalGuardianPolicy.Directive.ApplySevereControls -> if (!test) dimScreen(ACTIVE_BRIGHTNESS)
                 is ThermalGuardianPolicy.Directive.RestoreControls -> if (!test) restoreBrightnessIfOurs()
                 is ThermalGuardianPolicy.Directive.IdentifyHeavyApps -> identifyHeavyApps(test)
-                is ThermalGuardianPolicy.Directive.Notify -> postWarning(d.title, d.body, d.severe)
+                is ThermalGuardianPolicy.Directive.Notify -> if (ThermalSilentPolicy.mayAnnounce(test)) postWarning(d.title, d.body, d.severe)
                 is ThermalGuardianPolicy.Directive.ClearNotification -> clearWarning()
             }
         }
@@ -266,7 +268,7 @@ class ThermalGuardianController(private val app: Context) {
             testEvents.add("heavy_apps: $names")
         } else {
             ThermalGuardianLog.addEvent("heavy_apps: $names")
-            speak("Recently used while hot: $names. Closing them helps.", critical = false)
+            if (ThermalSilentPolicy.mayAnnounce(false)) speak("Recently used while hot: $names. Closing them helps.", critical = false)
         }
     }
 
