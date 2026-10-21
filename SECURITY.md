@@ -1,5 +1,13 @@
 # Security Policy
 
+## Exact 24-hour foreground time and own CPU meter (v2.2.3)
+
+The per-app foreground list now reads usage events (UsageStatsManager.queryEvents, same Usage Access permission already granted) and clips them to the last 24 hours instead of summing daily buckets. The app also reads its own process CPU time (android.os.Process) for a self-check line. Everything is computed on the phone and shown on screen; nothing is stored or sent. No new permission, no new library, no network address.
+
+## Phone-wide cache size and storage warning (v2.2.3)
+
+The app now reads the total cache size of all apps through Android's StorageStatsManager (queryStatsForUser). It uses the Usage Access permission the app already declares and the user already grants for the Saver and Thermal Guardian; with the permission off the size is shown as Unavailable and nothing is guessed. The size is kept in memory and in one app-private SharedPreferences file (last check time, last warning time and size); it is never sent anywhere. At 200 MB the app posts one local notification and opens Android's own storage settings on tap; it deletes nothing outside its own cache. No new permission, no new library, no network address.
+
 ## Thermal Guardian acts silently (v2.2.2)
 
 Behaviour change: Thermal Guardian's automatic runs no longer speak through the announcement engine and no longer post the ongoing warning notification; the controls (screen dimming under the existing Modify-system-settings switch, restore, heavy-app identification) run exactly as before and are still written to the on-device log. Only a run started by the user with the Test button may speak. Pure on-device decision logic: no new permission, no new library, no network address, nothing stored or sent.
