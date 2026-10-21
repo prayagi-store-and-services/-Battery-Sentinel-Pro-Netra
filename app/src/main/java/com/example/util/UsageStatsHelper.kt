@@ -24,17 +24,22 @@ object UsageStatsHelper {
             calendar.add(Calendar.DAY_OF_YEAR, -1)
             val startTime = calendar.timeInMillis
 
-            val usageStatsList: List<UsageStats> = usageStatsManager.queryUsageStats(
-                UsageStatsManager.INTERVAL_DAILY,
-                startTime,
-                endTime
-            ) ?: emptyList()
-
-            if (usageStatsList.isEmpty()) return emptyList()
+            // Exact last-24-hours foreground time from usage events, clipped to the window. The old
+            // INTERVAL_DAILY buckets each hold a whole calendar day, so adding them counted up to
+            // two days under a "last 24 hours" label.
+            val samples = mutableListOf<ForegroundWindow.Ev>()
+            val events = usageStatsManager.queryEvents(startTime, endTime)
+            val ev = android.app.usage.UsageEvents.Event()
+            while (events != null && events.hasNextEvent()) {
+                events.getNextEvent(ev)
+                samples.add(ForegroundWindow.Ev(ev.packageName ?: "", ev.eventType, ev.timeStamp))
+            }
+            val foregroundByPackage = ForegroundWindow.compute(samples, startTime, endTime)
+            if (foregroundByPackage.isEmpty()) return emptyList()
 
             val results = mutableListOf<AppUsageItem>()
 
-            for ((pkgName, foregroundMs) in aggregateForegroundTimes(usageStatsList.map { it.packageName to it.totalTimeInForeground })) {
+            for ((pkgName, foregroundMs) in foregroundByPackage) {
                 if (foregroundMs > 30_000) { // at least 30 seconds
                     var appName = pkgName.substringAfterLast('.')
                     var category = "Tools & Utilities"
