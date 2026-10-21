@@ -72,6 +72,7 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         database = NetraDatabase.getDatabase(this)
         settingsRepository = SettingsRepository(this)
         centralDataCenter = NetraCentralDataCenter()
+        centralDataCenter.sessionStore = com.example.service.PrefsSessionSnapshotStore(this)
         capabilityRegistry = com.example.service.CentralCapabilityRegistry(this)
         centralDataCenter.initPersistence(this)
         centralDataCenter.initCapabilityRegistry(this, capabilityRegistry)
