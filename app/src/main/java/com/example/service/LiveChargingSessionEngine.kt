@@ -136,7 +136,8 @@ class LiveChargingSessionEngine(
             System.currentTimeMillis()
         }
     },
-    private val pollingIntervalMs: Long = 1000L
+    private val pollingIntervalMs: Long = 1000L,
+    private val anchorStore: DischargeAnchorStore? = null
 ) {
     private val mutex = Mutex()
     private var refreshJob: Job? = null
@@ -232,7 +233,7 @@ class LiveChargingSessionEngine(
     /** Starts a fresh on-battery tracking window the first time the discharge flow begins. */
     private fun beginDischargeTrackingLocked() {
         if (dischargeStartElapsedRealtime == 0L) {
-            dischargeStartElapsedRealtime = elapsedRealtimeClock()
+            dischargeStartElapsedRealtime = DischargeAnchor.elapsedStart(anchorStore, clock(), elapsedRealtimeClock())
             dischargeHistoryBuffer.clear()
         }
         _sessionState.value = _sessionState.value.copy(
@@ -248,6 +249,7 @@ class LiveChargingSessionEngine(
     }
 
     private fun startNewSessionLocked() {
+        anchorStore?.clear()
         dischargeStartElapsedRealtime = 0L
         dischargeHistoryBuffer.clear()
         val now = clock()
@@ -317,7 +319,7 @@ class LiveChargingSessionEngine(
         rawCurrentMicroAmps: Int?
     ) {
         if (dischargeStartElapsedRealtime == 0L) {
-            dischargeStartElapsedRealtime = elapsedRealtimeClock()
+            dischargeStartElapsedRealtime = DischargeAnchor.elapsedStart(anchorStore, clock(), elapsedRealtimeClock())
         }
         val durationSeconds =
             (elapsedRealtimeClock() - dischargeStartElapsedRealtime).coerceAtLeast(0L) / 1000L
