@@ -378,6 +378,11 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
     private var dischargingStartedAt: Long? = null
     private var lastDischargingStatus = false
 
+    /** Saves the session time stamps so they survive an app update or restart (set at app start). */
+    @Volatile var sessionStore: SessionSnapshotStore? = null
+    private var sessionRestored = false
+    private var lastSavedSnapshot: SessionSnapshot? = null
+
     // ETA evidence is separate from retained display values and never survives a session boundary.
     private val sessionEtaEstimator = SessionEtaEstimator()
 
@@ -438,6 +443,21 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             if (lastConnectedState == null) lastConnectedState = oldState.isChargerConnected
             if (lastChargingState == null) lastChargingState = oldState.isCharging
             lastDischargingStatus = oldState.isCharging == false && (oldState.dischargingStartedAt != null)
+
+            if (!sessionRestored) {
+                sessionRestored = true
+                sessionStore?.load()?.let { saved ->
+                    chargerConnectedAt = saved.chargerConnectedAt
+                    chargerDisconnectedAt = saved.chargerDisconnectedAt
+                    chargingStartedAt = saved.chargingStartedAt
+                    chargingStoppedAt = saved.chargingStoppedAt
+                    dischargingStartedAt = saved.dischargingStartedAt
+                    lastConnectedState = saved.connected
+                    lastChargingState = saved.charging
+                    lastDischargingStatus = saved.discharging
+                    lastSavedSnapshot = saved
+                }
+            }
 
             // 1. Validation & Normalization (No fake fallbacks)
             val validatedLevel = if (level in 0..scale && scale > 0) (level.toLong() * 100 / scale).toInt() else null
@@ -628,6 +648,16 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 dischargingStartedAt = now
             }
             lastDischargingStatus = isDischarging
+            sessionStore?.let { store ->
+                val snap = SessionSnapshot(
+                    chargerConnectedAt, chargerDisconnectedAt, chargingStartedAt, chargingStoppedAt,
+                    dischargingStartedAt, mergedIsConnected ?: lastConnectedState, mergedIsCharging ?: lastChargingState, isDischarging
+                )
+                if (snap != lastSavedSnapshot) {
+                    lastSavedSnapshot = snap
+                    try { store.save(snap) } catch (_: Exception) { }
+                }
+            }
 
             // Only raw valid levels/status may establish current-session progression.
             // Invalid input clears ETA evidence while last-valid display telemetry stays intact.
