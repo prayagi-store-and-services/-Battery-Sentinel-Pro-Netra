@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Added: the Netra Ecosystem page link for this app (prayagi-store-and-services.github.io/netra-eco/app/bspn) can now open the installed app directly when Android verifies the link; otherwise it stays in the browser. Improvements and bug fixes.
+
+## [2.2.3]
+
 - Fixed: the app list on the App Drain tab added whole calendar-day totals, so it could show up to two days of on-screen time under a last-24-hours label (this app showed 247 min). It now counts exact on-screen time inside the last 24 hours from usage events, says plainly that it is screen time and not battery use, and shows this app's own measured CPU time since it started.
 
 - Fixed: junk and cache over 200 MB went unnoticed because the app only measured its own cache folders. It now reads the total cache of all apps (needs Usage Access; without it the screen says Unavailable and why). When it reaches 200 MB you get one warning with a button that opens Android storage settings, because Android does not let any app clear other apps' cache. It warns again after 12 hours or 500 MB more growth.
