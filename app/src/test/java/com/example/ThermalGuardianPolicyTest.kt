@@ -152,4 +152,68 @@ class ThermalGuardianPolicyTest {
         assertTrue(d.none { it is ThermalGuardianPolicy.Directive.ApplyLightControls })
         assertEquals(ThermalGuardianPolicy.Zone.COOL, p.zone)
     }
+
+    @Test
+    fun `persistent critical manufacturer status blocks recovery despite cool battery`() {
+        val p = ThermalGuardianPolicy()
+        p.onSample(0L, 36f, false, thermalStatus = 4) // CRITICAL with a cool battery
+        assertEquals(ThermalGuardianPolicy.Zone.SEVERE, p.zone)
+        val d = p.onSample(60_000L, 36f, false, thermalStatus = 4)
+        assertTrue(d.none { it is ThermalGuardianPolicy.Directive.RestoreControls })
+        assertTrue(d.none { it is ThermalGuardianPolicy.Directive.ClearNotification })
+        assertTrue(d.filterIsInstance<ThermalGuardianPolicy.Directive.Speak>().none { it.text.contains("cooled") })
+        assertTrue(p.controlsApplied)
+        assertEquals(ThermalGuardianPolicy.Zone.SEVERE, p.zone)
+        // still blocked a long time later
+        val d2 = p.onSample(300_000L, 36f, false, thermalStatus = 4)
+        assertTrue(d2.none { it is ThermalGuardianPolicy.Directive.RestoreControls })
+        assertTrue(p.controlsApplied)
+    }
+
+    @Test
+    fun `persistent severe status 3 also blocks recovery`() {
+        val p = ThermalGuardianPolicy()
+        p.onSample(0L, 36f, false, thermalStatus = 3)
+        val d = p.onSample(90_000L, 36f, false, thermalStatus = 3)
+        assertTrue(d.none { it is ThermalGuardianPolicy.Directive.RestoreControls })
+        assertTrue(p.controlsApplied)
+    }
+
+    @Test
+    fun `recovery happens after manufacturer status clears and cool hold is sustained`() {
+        val p = ThermalGuardianPolicy()
+        p.onSample(0L, 36f, false, thermalStatus = 4)
+        p.onSample(60_000L, 36f, false, thermalStatus = 4)
+        // status clears: the 60 s hold starts now, not from the earlier blocked readings
+        val d1 = p.onSample(70_000L, 36f, false, thermalStatus = 0)
+        assertTrue(d1.none { it is ThermalGuardianPolicy.Directive.RestoreControls })
+        val d2 = p.onSample(129_000L, 36f, false, thermalStatus = 0)
+        assertTrue(d2.none { it is ThermalGuardianPolicy.Directive.RestoreControls })
+        val d3 = p.onSample(130_000L, 36f, false, thermalStatus = 0)
+        assertTrue(d3.any { it is ThermalGuardianPolicy.Directive.RestoreControls })
+        assertTrue(d3.any { it is ThermalGuardianPolicy.Directive.ClearNotification })
+        assertFalse(p.controlsApplied)
+    }
+
+    @Test
+    fun `status flapping back to critical restarts the cool hold`() {
+        val p = ThermalGuardianPolicy()
+        p.onSample(0L, 41f, false)
+        p.onSample(10_000L, 36f, false, thermalStatus = 0)
+        p.onSample(50_000L, 36f, false, thermalStatus = 4) // blocked, timer reset
+        val d = p.onSample(75_000L, 36f, false, thermalStatus = 0) // timer restarts here
+        assertTrue(d.none { it is ThermalGuardianPolicy.Directive.RestoreControls })
+        val d2 = p.onSample(134_000L, 36f, false, thermalStatus = 0)
+        assertTrue(d2.none { it is ThermalGuardianPolicy.Directive.RestoreControls })
+    }
+
+    @Test
+    fun `no manufacturer status still recovers on cool battery alone`() {
+        val p = ThermalGuardianPolicy()
+        p.onSample(0L, 41f, false)
+        p.onSample(10_000L, 36f, false)
+        val d = p.onSample(70_000L, 36f, false)
+        assertTrue(d.any { it is ThermalGuardianPolicy.Directive.RestoreControls })
+        assertFalse(p.controlsApplied)
+    }
 }

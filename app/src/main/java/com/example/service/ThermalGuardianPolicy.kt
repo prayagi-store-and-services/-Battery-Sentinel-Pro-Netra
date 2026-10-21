@@ -201,7 +201,10 @@ class ThermalGuardianPolicy {
         }
 
         // --- recovery (phase D), sustained below 37 ---
-        if (controlsApplied && tempC != null && tempC <= RECOVER_C) {
+        // Recovery needs BOTH a sustained cool battery AND the manufacturer's own severe/critical
+        // status cleared (tsZone == null). While the phone's thermal status stays at 3 or above,
+        // controls stay applied and the hold timer restarts.
+        if (controlsApplied && tempC != null && tempC <= RECOVER_C && tsZone == null) {
             val since = belowRecoverSinceMs ?: nowMs.also { belowRecoverSinceMs = it }
             if (nowMs - since >= RECOVER_HOLD_MS) {
                 out.add(Directive.RestoreControls)
