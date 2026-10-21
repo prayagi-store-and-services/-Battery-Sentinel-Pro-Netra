@@ -243,6 +243,21 @@ private fun AppsTabContent(
                 }
             }
         }
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Last 24 hours of on-screen time, not battery use. Android gives apps no per-app battery numbers.",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "This app's own work: " + com.example.service.SelfMeter.describe(com.example.service.SelfMeter.read()),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
 
         if (!isUsageAccessGranted) {
             item {
@@ -539,7 +554,27 @@ private fun SystemTelemetryTabContent(
                         val formattedDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(cacheStats.lastCleanupTimestamp))
                         TelemetryRow("Last Cleaned", "$formattedDate (${cacheStats.lastFreedBytes / 1024} KB freed)")
                     }
-                    TelemetryRow("Cleanup scope", "Cache files only (the code never touches settings or saved data)")
+                    val junkCtx = androidx.compose.ui.platform.LocalContext.current
+                    val junk by com.example.service.JunkWatcher.reading.collectAsStateWithLifecycle()
+                    androidx.compose.runtime.LaunchedEffect(Unit) { com.example.service.JunkWatcher.refreshNow(junkCtx.applicationContext) }
+                    val junkBytes = junk.bytes
+                    TelemetryRow(
+                        "Phone-wide cache (all apps)",
+                        if (junkBytes != null) "${junkBytes / (1024 * 1024)} MB / 200 MB limit" else "Unavailable - ${junk.reason ?: "checking"}"
+                    )
+                    if (junkBytes == null && junk.reason == "Usage Access is off") {
+                        Button(onClick = { com.example.service.JunkWatcher.openUsageAccessSettings(junkCtx) }) { Text("Allow Usage Access to see it") }
+                    }
+                    if (junkBytes != null && junkBytes >= com.example.service.JunkPolicy.THRESHOLD_BYTES) {
+                        Text(
+                            text = "Other apps' cache is over 200 MB. Android does not let this app clear it, so open Android storage settings and clear it there.",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = StatusAmber
+                        )
+                        Button(onClick = { com.example.service.JunkWatcher.openStorageSettings(junkCtx) }) { Text("Open storage settings to clear") }
+                    }
+                    TelemetryRow("Cleanup scope", "This app's own cache only (the code never touches settings or saved data)")
 
                     if (cleanNotice != null) {
                         Text(
