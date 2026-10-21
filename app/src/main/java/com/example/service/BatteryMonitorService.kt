@@ -399,6 +399,7 @@ class BatteryMonitorService : Service() {
         val settings = NetraApplication.instance.settingsRepository.settings.value
         val now = System.currentTimeMillis()
         val targetPercent = TargetAlarmRepeat.sessionTarget ?: settings.chargeTargetPercent
+        DischargeAnchor.observe(PrefsDischargeAnchorStore(this), state.isChargerConnected, now)
 
         // 80% (or user target) Unplug Alert
         if (settings.unplugAlarmEnabled && TargetAlert.eligible(state.isCharging, state.isChargerConnected, state.batteryLevel, targetPercent)) {

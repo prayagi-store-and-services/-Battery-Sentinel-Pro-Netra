@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: after an app update the "On battery for" time restarted from zero. The time the charger was last removed is now saved on the phone and survives updates and restarts, so the count keeps running from the real unplug moment. (It cannot survive uninstalling the app or clearing its data; then it starts again from the next unplug the app sees.)
+
+## [2.2.4]
+
 - Added: the Netra Ecosystem page link for this app (prayagi-store-and-services.github.io/netra-eco/app/bspn) can now open the installed app directly when Android verifies the link; otherwise it stays in the browser. Improvements and bug fixes.
 
 ## [2.2.3]
