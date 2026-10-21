@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: "Session Started" and the charger connect and disconnect times on the Battery screen also restarted after an app update. They are now saved on the phone and keep their real time across updates and restarts. If the charger was plugged or unplugged while the app was not running, the new time starts from the first reading the app sees. (Uninstalling the app or clearing its data resets them.)
+
+## [2.2.5]
+
 - Fixed: after an app update the "On battery for" time restarted from zero. The time the charger was last removed is now saved on the phone and survives updates and restarts, so the count keeps running from the real unplug moment. (It cannot survive uninstalling the app or clearing its data; then it starts again from the next unplug the app sees.)
 
 ## [2.2.4]

@@ -1,5 +1,9 @@
 # Security Policy
 
+## Session times kept across updates (v2.2.6)
+
+The battery screen's charger connect and disconnect times, "Session Started" and on-battery start are now saved in the app's private storage (a few time stamps and two on/off flags) so an app update or restart does not reset them. Nothing is sent anywhere or backed up (backup is off for this app); uninstalling or clearing the app's data removes them. No new permission, library or server.
+
 ## On-battery start time kept across updates (v2.2.5)
 
 The moment the charger was last removed is now saved in the app's private storage (one number, a time stamp), so an app update or restart no longer resets the "On battery for" counter. It is cleared when a charger is connected. The file stays on the phone, is not sent anywhere, is not included in Android backup (backup is off for this app), and is removed by uninstalling or clearing the app's data. No new permission, library or server.
