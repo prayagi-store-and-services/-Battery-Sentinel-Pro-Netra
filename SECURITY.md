@@ -1,5 +1,9 @@
 # Security Policy
 
+## On-battery start time kept across updates (v2.2.5)
+
+The moment the charger was last removed is now saved in the app's private storage (one number, a time stamp), so an app update or restart no longer resets the "On battery for" counter. It is cleared when a charger is connected. The file stays on the phone, is not sent anywhere, is not included in Android backup (backup is off for this app), and is removed by uninstalling or clearing the app's data. No new permission, library or server.
+
 ## Verified web link (v2.2.4)
 
 The app now declares a verified web link for its own page, https://prayagi-store-and-services.github.io/netra-eco/app/bspn. Android opens the link in the app only when the website's assetlinks.json confirms this app's package and signing certificate; otherwise the link stays in the browser. The link is only an entry point: no screen reads data from it, nothing is stored or sent, and the app does not act on the link's content. No new permission, library or server.
