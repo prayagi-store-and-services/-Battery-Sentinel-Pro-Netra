@@ -4,6 +4,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Changed: Thermal Guardian now works on its own when the battery reaches its temperature thresholds. It no longer speaks or posts a notification while it dims the screen, lifts its controls or lists heavy apps; everything is still recorded in its log. Only the Test button speaks.
+
 - Fixed: Thermal Guardian could lift its screen dimming and say the phone had cooled while the phone's own thermal status still reported severe or critical, if the battery reading itself looked cool. It now needs both a cool battery held for a minute and the phone's own severe or critical status cleared before it restores anything. The phone's own thermal safety still always wins.
 
 ## [2.1.25]
