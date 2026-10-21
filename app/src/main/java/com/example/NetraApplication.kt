@@ -89,7 +89,8 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         idealStateEngine = com.example.service.IdealStateEngine(this)
         chargingOptimizationEngine = com.example.service.ChargingOptimizationEngine(this)
         liveChargingSessionEngine = com.example.service.LiveChargingSessionEngine(
-            hardwareProvider = com.example.service.AndroidBatteryHardwareProvider(this)
+            hardwareProvider = com.example.service.AndroidBatteryHardwareProvider(this),
+            anchorStore = com.example.service.PrefsDischargeAnchorStore(this)
         )
         com.example.service.StabilityHealthScheduler.schedule(this)
         com.example.update.UpdateCheckWorker.schedule(this)
