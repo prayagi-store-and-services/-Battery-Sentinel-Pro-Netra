@@ -374,6 +374,10 @@ class BatteryMonitorService : Service() {
             } catch (_: Exception) {}
 
             try {
+                JunkWatcher.checkIfDue(this@BatteryMonitorService)
+            } catch (_: Exception) {}
+
+            try {
                 val record = BatteryRecord(
                     timestamp = now,
                     level = batteryPct,

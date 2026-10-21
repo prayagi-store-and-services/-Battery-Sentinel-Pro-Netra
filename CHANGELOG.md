@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: the app list on the App Drain tab added whole calendar-day totals, so it could show up to two days of on-screen time under a last-24-hours label (this app showed 247 min). It now counts exact on-screen time inside the last 24 hours from usage events, says plainly that it is screen time and not battery use, and shows this app's own measured CPU time since it started.
+
+- Fixed: junk and cache over 200 MB went unnoticed because the app only measured its own cache folders. It now reads the total cache of all apps (needs Usage Access; without it the screen says Unavailable and why). When it reaches 200 MB you get one warning with a button that opens Android storage settings, because Android does not let any app clear other apps' cache. It warns again after 12 hours or 500 MB more growth.
+
 - Changed: Thermal Guardian now works on its own when the battery reaches its temperature thresholds. It no longer speaks or posts a notification while it dims the screen, lifts its controls or lists heavy apps; everything is still recorded in its log. Only the Test button speaks.
 
 - Fixed: Thermal Guardian could lift its screen dimming and say the phone had cooled while the phone's own thermal status still reported severe or critical, if the battery reading itself looked cool. It now needs both a cool battery held for a minute and the phone's own severe or critical status cleared before it restores anything. The phone's own thermal safety still always wins.
