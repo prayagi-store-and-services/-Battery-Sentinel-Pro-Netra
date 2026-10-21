@@ -1,5 +1,9 @@
 # Security Policy
 
+## Verified web link (v2.2.4)
+
+The app now declares a verified web link for its own page, https://prayagi-store-and-services.github.io/netra-eco/app/bspn. Android opens the link in the app only when the website's assetlinks.json confirms this app's package and signing certificate; otherwise the link stays in the browser. The link is only an entry point: no screen reads data from it, nothing is stored or sent, and the app does not act on the link's content. No new permission, library or server.
+
 ## Exact 24-hour foreground time and own CPU meter (v2.2.3)
 
 The per-app foreground list now reads usage events (UsageStatsManager.queryEvents, same Usage Access permission already granted) and clips them to the last 24 hours instead of summing daily buckets. The app also reads its own process CPU time (android.os.Process) for a self-check line. Everything is computed on the phone and shown on screen; nothing is stored or sent. No new permission, no new library, no network address.
