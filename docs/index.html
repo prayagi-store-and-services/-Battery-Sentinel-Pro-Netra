@@ -74,6 +74,7 @@ textarea{min-height:110px}button.btn{border:0;cursor:pointer}
 body{background:radial-gradient(1100px 520px at 75% -8%,#0e4a45 0%,transparent 60%),radial-gradient(800px 400px at 0% 20%,#0c2c4e 0%,transparent 60%),var(--bg)}
 nav{background:rgba(6,16,28,.92)}nav a{padding:6px 12px;border-radius:9px}nav a:hover{background:var(--card2);box-shadow:inset 0 0 0 1px var(--accent)}
 nav a[href="#download"]{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04210f;font-weight:700}
+nav.sections{position:static;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;padding:12px 16px}
 .hero h1{font-size:clamp(34px,6vw,58px)}.hero h1 em{font-style:normal;color:var(--accent)}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}.chips span{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13px}
 .btn{background:linear-gradient(135deg,#ff7a1a,#ff9a2e);color:#1a0b00;box-shadow:0 6px 24px rgba(255,122,26,.3)}
@@ -92,8 +93,10 @@ section{border-top:1px solid var(--line)}
 <section class="clockbar" id="liveclock" aria-live="off" aria-label="Current time"></section>
 <nav><div class="wrap">
 <img src="icon.svg" alt=""><b>Netra Battery Sentinel Pro</b>
-<a class="mother" href="https://prayagi-store-and-services.github.io/netra-eco/" style="font-weight:700">Netra Eco (mother website)</a><a class="hide" href="#features">Features</a><a class="hide" href="#benefits">Benefits</a><a class="hide" href="#soon">Roadmap</a><a class="hide" href="#feedback">Feedback</a><a href="#old">Old versions</a><a href="#download">Download</a>
 </div></nav>
+<nav class="sections" aria-label="Sections">
+<a class="mother" href="https://prayagi-store-and-services.github.io/netra-eco/" style="font-weight:700">Netra Ecosystem (mother website)</a><a class="hide" href="#features">Features</a><a class="hide" href="#benefits">Benefits</a><a class="hide" href="#soon">Roadmap</a><a class="hide" href="#feedback">Feedback</a><a href="#old">Old versions</a><a href="#download">Download</a>
+</nav>
 
 <header class="hero"><div class="wrap">
 <div>
@@ -103,7 +106,7 @@ section{border-top:1px solid var(--line)}
 <a class="btn" id="dl-main" href="https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/latest/download/app-release.apk">Download latest APK</a>
 <a class="btn alt" href="#features">See what it does</a>
 <div class="stats"><div><b id="visits2">...</b>visits</div><div><b id="dls">...</b>downloads (all releases, from GitHub)</div></div>
-<div class="meta" id="latest-meta">Always the newest release. Free. Android 7.0 or newer.</div>
+<div class="meta" id="latest-meta">Latest: the newest release on GitHub. Free. Android 7.0 or newer.</div>
 <div class="note"><b>Install tip:</b> if the install fails, first download the APK again and check that it finished. The APK is signed by the project; Android refuses an update when the signing key differs from the installed copy (for example one installed from a different source). Only in that case an uninstall is needed, as a last resort. <b>Dhyan dein:</b> uninstall karne par app ka local data (history aur settings) phone se hat jata hai.</div>
 </div>
 <div>
