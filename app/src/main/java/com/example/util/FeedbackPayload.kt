@@ -38,7 +38,7 @@ data class FeedbackPayload(
         append("- Android version: ").append(androidVersion).append('\n')
         append("- App version: ").append(appVersion).append('\n')
         if (!message.isNullOrBlank()) append("- Your message: ").append(message).append('\n')
-        if (!stackTrace.isNullOrBlank()) append("- Crash stack trace (code locations only):\n").append(stackTrace.take(MAX_TRACE)).append('\n')
+        if (!stackTrace.isNullOrBlank()) append("- Crash stack trace (code locations only):\n").append(stackTrace.take(FeedbackBuilder.MAX_TRACE)).append('\n')
         append("Nothing else is sent: no name, email, location, files, device IDs or battery history.")
     }
 }
