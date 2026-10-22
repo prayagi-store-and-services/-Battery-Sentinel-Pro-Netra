@@ -38,26 +38,28 @@ data class FeedbackPayload(
         append("- Android version: ").append(androidVersion).append('\n')
         append("- App version: ").append(appVersion).append('\n')
         if (!message.isNullOrBlank()) append("- Your message: ").append(message).append('\n')
-        if (!stackTrace.isNullOrBlank()) append("- Crash stack trace (code locations only):\n").append(stackTrace.take(600)).append('\n')
+        if (!stackTrace.isNullOrBlank()) append("- Crash stack trace (code locations only):\n").append(stackTrace.take(FeedbackBuilder.MAX_TRACE)).append('\n')
         append("Nothing else is sent: no name, email, location, files, device IDs or battery history.")
     }
 }
 
 object FeedbackBuilder {
     const val MAX_MESSAGE = 1000
-    const val MAX_TRACE = 3000
+    const val MAX_TRACE = 6000
     const val PRIVACY_URL = "https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/privacy.html"
 
     /** Exception class names and code locations only. Exception messages are dropped on purpose. */
     fun sanitizeStackTrace(t: Throwable): String {
-        val sb = StringBuilder()
+        // Wrapper exceptions come first and used to use up the size limit, so the root cause was cut off.
+        // Outer levels keep a few frames, the root cause keeps more.
+        val chain = ArrayList<Throwable>()
         var cur: Throwable? = t
-        var depth = 0
-        while (cur != null && depth < 5) {
-            sb.append(if (depth == 0) "" else "Caused by: ").append(cur.javaClass.name).append('\n')
-            for (frame in cur.stackTrace) sb.append("  at ").append(frame.toString()).append('\n')
-            cur = cur.cause
-            depth++
+        while (cur != null && chain.size < 6 && chain.none { it === cur }) { chain.add(cur); cur = cur.cause }
+        val sb = StringBuilder()
+        chain.forEachIndexed { i, e ->
+            val isRoot = i == chain.size - 1
+            sb.append(if (i == 0) "" else "Caused by: ").append(e.javaClass.name).append('\n')
+            for (frame in e.stackTrace.take(if (isRoot) 25 else 6)) sb.append("  at ").append(frame.toString()).append('\n')
         }
         return sb.toString().take(MAX_TRACE)
     }
