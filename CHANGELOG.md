@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: crash reports sent from this app were cut off before the real cause when the crash was wrapped in other errors. They now keep the root cause and a larger part of the trace. Reports still contain only class names and code locations, never messages.
+
+## [2.2.6]
+
 - Fixed: "Session Started" and the charger connect and disconnect times on the Battery screen also restarted after an app update. They are now saved on the phone and keep their real time across updates and restarts. If the charger was plugged or unplugged while the app was not running, the new time starts from the first reading the app sees. (Uninstalling the app or clearing its data resets them.)
 
 ## [2.2.5]
