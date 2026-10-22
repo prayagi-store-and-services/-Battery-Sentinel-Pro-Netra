@@ -107,7 +107,7 @@ section{border-top:1px solid var(--line)}
 <div class="note"><b>Install tip:</b> if the install fails, first download the APK again and check that it finished. The APK is signed by the project; Android refuses an update when the signing key differs from the installed copy (for example one installed from a different source). Only in that case an uninstall is needed, as a last resort. <b>Dhyan dein:</b> uninstall karne par app ka local data (history aur settings) phone se hat jata hai.</div>
 </div>
 <div>
-<div class="phone" aria-label="Illustrative layout preview">
+<div class="phone" role="img" aria-label="Illustrative layout preview">
 <div class="gauge"><div><b>Battery</b>live gauge</div></div>
 <div class="row"><span>Voltage</span><b>Unavailable until Android reports it</b></div>
 <div class="row"><span>Charging speed</span><b>Shown only while charging</b></div>
@@ -232,7 +232,7 @@ section{border-top:1px solid var(--line)}
 <div class="card"><h3>Suggestion box</h3><form class="fb" data-kind="Suggestion"><textarea name="message" required placeholder="What should we add or improve? (shown publicly, do not include personal details)" maxlength="1000"></textarea><input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send suggestion</button><div class="msg"></div></form></div>
 <div class="card"><h3>Complaint / problem report</h3><form class="fb" data-kind="Complaint">
 <div class="pick" data-pick><label>Your phone (Android 7.0 or newer)</label><input type="search" class="dsearch" list="devlist" placeholder="Type to search, e.g. Realme 9 Pro" autocomplete="off"><div class="two"><select class="dbrand" aria-label="Phone brand"><option value="">Brand</option></select><select class="dmodel" aria-label="Phone model" disabled><option value="">Model</option></select></div><input type="text" class="dother" placeholder="Type your phone brand and model" style="display:none" maxlength="60"></div>
-<input name="android_version" placeholder="Android version (optional)" maxlength="30"><textarea name="message" required placeholder="What went wrong? (shown publicly, do not include personal details)" maxlength="1000"></textarea>
+<input type="text" name="android_version" placeholder="Android version (optional)" maxlength="30"><textarea name="message" required placeholder="What went wrong? (shown publicly, do not include personal details)" maxlength="1000"></textarea>
 <div class="fileb"><label>Optional screenshot or video (max 2 MB)</label><input type="file" name="attachment" aria-label="Optional screenshot or video (max 2 MB)" accept="image/*,video/*"><small>Maximum 2 MB. Sent privately to the developer.</small></div>
 <input type="email" name="contact_email" placeholder="Email for a reply (optional)"><input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off"><button class="btn" type="submit">Send report</button><div class="msg"></div></form></div>
 </div>
