@@ -417,12 +417,12 @@ class BatteryMonitorService : Service() {
                             text = "${requireNotNull(state.batteryLevel)} percent. Target reached. Phone ko charger se hatao.",
                             priority = AnnouncementPriority.CHARGER_STATE,
                             category = "CHARGE_TARGET",
-                            isNightException = true
+                            isNightException = false
                         )
                     )
                 } catch (_: Exception) {}
-                sendUnplugAlarmNotification(requireNotNull(state.batteryLevel), targetPercent)
-                triggerVibrationAlert()
+                sendUnplugAlarmNotification(requireNotNull(state.batteryLevel), targetPercent, silent = !FullChargeSilence.soundAllowed(state.isNightProtectionActive))
+                if (FullChargeSilence.soundAllowed(state.isNightProtectionActive)) triggerVibrationAlert()
                 serviceScope.launch {
                     NetraApplication.instance.batteryRepository.logEvent(
                         title = "Target Charge Reached (${requireNotNull(state.batteryLevel)}%)",
@@ -435,8 +435,10 @@ class BatteryMonitorService : Service() {
             } else if (TargetAlarmRepeat.due(lastTargetAlarmAt, now, TargetAlarmRepeat.muted)) {
                 // Still charging at or above the target: repeat the alert every 2 minutes until unplug or Dismiss.
                 lastTargetAlarmAt = now
-                sendUnplugAlarmNotification(requireNotNull(state.batteryLevel), targetPercent)
-                triggerVibrationAlert()
+                if (FullChargeSilence.soundAllowed(state.isNightProtectionActive)) {
+                    sendUnplugAlarmNotification(requireNotNull(state.batteryLevel), targetPercent)
+                    triggerVibrationAlert()
+                }
             }
         }
 
@@ -491,7 +493,7 @@ class BatteryMonitorService : Service() {
         } catch (_: Exception) {}
     }
 
-    private fun sendUnplugAlarmNotification(level: Int, target: Int) {
+    private fun sendUnplugAlarmNotification(level: Int, target: Int, silent: Boolean = false) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
         // Open App Intent
@@ -528,6 +530,7 @@ class BatteryMonitorService : Service() {
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setSilent(silent)
             .setAutoCancel(true)
             .setContentIntent(pendingOpenApp)
             .addAction(R.drawable.ic_launcher_foreground, "Dismiss Alarm", pendingDismiss)

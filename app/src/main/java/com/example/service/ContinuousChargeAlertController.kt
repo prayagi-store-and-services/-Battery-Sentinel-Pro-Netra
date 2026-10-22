@@ -45,15 +45,26 @@ class ContinuousChargeAlertController(
         }
     }
 
+    /** True while the silent (Night Protection) window is active. Re-read from the clock every call. */
+    private fun silentWindowActive(): Boolean = try {
+        val dataCenter = NetraApplication.instance.centralDataCenter
+        dataCenter.refreshNightProtectionStateSynchronously()
+        !FullChargeSilence.soundAllowed(dataCenter.centralState.value.isNightProtectionActive)
+    } catch (_: Exception) { false }
+
     private fun start() {
         running = true
-        startRingtone()
+        if (!silentWindowActive()) startRingtone()
         repeatJob = scope.launch {
             while (true) {
                 val level = try {
                     NetraApplication.instance.centralDataCenter.centralState.value.batteryLevel
                 } catch (_: Exception) { null }
-                if (level != null) {
+                if (silentWindowActive()) {
+                    // Silent window: no ringtone, no spoken repeat. Resumes only after the window ends.
+                    if (ringPlayer != null) stopRingtone()
+                } else if (level != null) {
+                    if (ringPlayer == null) startRingtone()
                     try {
                         NetraApplication.instance.announcementEngine.enqueue(
                             AnnouncementItem(
@@ -61,7 +72,7 @@ class ContinuousChargeAlertController(
                                 text = "$level percent. Phone ko charger se hatao.",
                                 priority = AnnouncementPriority.CHARGER_STATE,
                                 category = ContinuousChargeAlert.CATEGORY,
-                                isNightException = true
+                                isNightException = false
                             )
                         )
                     } catch (_: Exception) {}
