@@ -4,6 +4,7 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: in the night (silent) window the full-charge alert no longer speaks, repeats, plays the ringtone loop or vibrates. It shows one silent notification instead. Outside the window nothing changes.
 - Improved: the Devices and Logs screens now use the same card spacing as every other screen.
 
 ## [2.2.7]
