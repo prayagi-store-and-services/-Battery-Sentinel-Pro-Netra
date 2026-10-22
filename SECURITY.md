@@ -1,5 +1,9 @@
 # Security Policy
 
+## Screen spacing (v2.2.8)
+
+Spacing on the Devices and Logs screens now matches the other screens. Layout only. No new permission, library or network. Not a vulnerability fix.
+
 ## Fuller crash reports (v2.2.7)
 
 Automatic crash reports used to be cut off before the root cause when an exception was wrapped in others. The report now keeps a few frames of each wrapper and more frames of the root cause, within a larger size limit (6000 characters). It still holds only class names and code locations, never exception messages. No new permission, library or server. Not a vulnerability fix.
