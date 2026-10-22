@@ -388,3 +388,5 @@ The existing foreground-only Live Power view now emphasizes real Android-reporte
 
 
 Visible version row now ends with " | Netra Ecosystem" per owner instruction. No permissions, identifiers, signing or data changes from this attribution. Header rendering is reviewed before release.
+
+2026-10-22 night-window full-charge alert (2.2.9): the charge-target and continuous charge alerts were allowed to bypass the silent (Night Protection) window, so they spoke, repeated, looped the ringtone and vibrated at night. They are now fully silent inside the window (one silent notification only). This is a behaviour fix with no permission, data or signing change; it is not a security vulnerability fix.
