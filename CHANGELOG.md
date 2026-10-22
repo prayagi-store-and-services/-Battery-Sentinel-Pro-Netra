@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Improved: the Devices and Logs screens now use the same card spacing as every other screen.
+
+## [2.2.7]
+
 - Fixed: crash reports sent from this app were cut off before the real cause when the crash was wrapped in other errors. They now keep the root cause and a larger part of the trace. Reports still contain only class names and code locations, never messages.
 
 ## [2.2.6]
