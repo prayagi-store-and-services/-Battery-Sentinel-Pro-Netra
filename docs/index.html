@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
-<head><script src="https://prayagi-store-and-services.github.io/netra-eco/geoblock.js"></script>
+<head><script src="counter.js"></script>
+<script src="https://prayagi-store-and-services.github.io/netra-eco/geoblock.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Netra Battery Sentinel Pro - Monitor, Protect, Save, Stay Cool</title>
@@ -267,9 +268,8 @@ fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(functi
  box.innerHTML=html+"</tbody></table>";
 }).catch(function(){var b=document.getElementById("old-list");if(b)b.innerHTML="<p class='sub'>Could not load the list right now.</p>"});
 
-var AB="https://abacus.jasoncameron.dev/";
 function setv(v){["visits","visits2"].forEach(function(i){var e=document.getElementById(i);if(e)e.textContent=v})}
-fetch(AB+(sessionStorage.getItem("netra_counted")?"get":"hit")+"/netra-pages/visits").then(function(r){return r.json()}).then(function(d){sessionStorage.setItem("netra_counted","1");setv(d.value!=null?Number(d.value).toLocaleString():"unavailable")}).catch(function(){setv("unavailable")});
+(function(){var k="visits-bspn",seen=sessionStorage.getItem("netra_counted");var p=seen?Promise.resolve(true):NetraCounter.hit(k).then(function(ok){if(ok)sessionStorage.setItem("netra_counted","1");return ok});p.then(function(){return NetraCounter.get(k)}).then(function(v){setv(typeof v==="number"?Number(v).toLocaleString():"unavailable")})})();
 fetch("https://api.github.com/repos/"+repo+"/releases?per_page=100").then(function(r){return r.json()}).then(function(rel){var t=0;rel.forEach(function(x){(x.assets||[]).forEach(function(a){t+=a.download_count||0})});document.getElementById("dls").textContent=t.toLocaleString()}).catch(function(){document.getElementById("dls").textContent="unavailable"});
 var DEV={
 "Samsung":["Galaxy S24 Ultra","Galaxy S24","Galaxy S23","Galaxy S22","Galaxy S21","Galaxy S20","Galaxy A55","Galaxy A54","Galaxy A35","Galaxy A34","Galaxy A25","Galaxy A15","Galaxy A14","Galaxy A13","Galaxy A12","Galaxy A52","Galaxy A51","Galaxy M34","Galaxy M14","Galaxy F14","Galaxy Z Flip5","Galaxy Z Fold5","Galaxy Note 20","Galaxy Note 10"],
