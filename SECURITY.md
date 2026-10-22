@@ -1,5 +1,9 @@
 # Security Policy
 
+## Fuller crash reports (v2.2.7)
+
+Automatic crash reports used to be cut off before the root cause when an exception was wrapped in others. The report now keeps a few frames of each wrapper and more frames of the root cause, within a larger size limit (6000 characters). It still holds only class names and code locations, never exception messages. No new permission, library or server. Not a vulnerability fix.
+
 ## Session times kept across updates (v2.2.6)
 
 The battery screen's charger connect and disconnect times, "Session Started" and on-battery start are now saved in the app's private storage (a few time stamps and two on/off flags) so an app update or restart does not reset them. Nothing is sent anywhere or backed up (backup is off for this app); uninstalling or clearing the app's data removes them. No new permission, library or server.
