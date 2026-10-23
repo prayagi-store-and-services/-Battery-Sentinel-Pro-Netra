@@ -1,0 +1,7 @@
+# Battery Sentinel Pro Netra
+
+> Free Android battery monitor by Prayagi Store and Services: charging alerts, temperature watch, battery health. On-device.
+
+## Pages
+- [Home](https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/): features and download.
+- [Privacy policy](https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/privacy.html)
