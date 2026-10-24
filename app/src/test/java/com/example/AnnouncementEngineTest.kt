@@ -42,6 +42,50 @@ class AnnouncementEngineTest {
     }
 
     @Test
+    fun `enqueue and queue drain retain the same instance monitor`() {
+        val enqueue = AnnouncementEngine::class.java.getDeclaredMethod("enqueue", AnnouncementItem::class.java)
+        val drain = AnnouncementEngine::class.java.getDeclaredMethod("processQueue")
+        assertTrue(java.lang.reflect.Modifier.isSynchronized(enqueue.modifiers))
+        assertTrue(java.lang.reflect.Modifier.isSynchronized(drain.modifiers))
+        assertFalse(java.lang.reflect.Modifier.isStatic(enqueue.modifiers))
+        assertFalse(java.lang.reflect.Modifier.isStatic(drain.modifiers))
+    }
+
+    @Test
+    fun `background enqueue waits for queue owner monitor`() {
+        val started = java.util.concurrent.CountDownLatch(1)
+        val finished = java.util.concurrent.CountDownLatch(1)
+        val failure = java.util.concurrent.atomic.AtomicReference<Throwable?>()
+        val worker = Thread {
+            started.countDown()
+            try {
+                engine.enqueue(AnnouncementItem("concurrent", "Concurrent queue test",
+                    AnnouncementPriority.PHONE_BATTERY, "DIRECT_TEST", isNightException = true))
+            } catch (error: Throwable) {
+                failure.set(error)
+            } finally {
+                finished.countDown()
+            }
+        }
+        try {
+            synchronized(engine) {
+                worker.start()
+                assertTrue(started.await(5, java.util.concurrent.TimeUnit.SECONDS))
+                val deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(5)
+                while (worker.state != Thread.State.BLOCKED && finished.count != 0L && System.nanoTime() < deadline) {
+                    Thread.yield()
+                }
+                assertEquals(Thread.State.BLOCKED, worker.state)
+                assertEquals(1L, finished.count)
+            }
+            assertTrue(finished.await(5, java.util.concurrent.TimeUnit.SECONDS))
+            assertEquals(null, failure.get())
+        } finally {
+            worker.join(5000)
+        }
+    }
+
+    @Test
     fun `overflow preserves critical alert against low priority arrival`() {
         val queue = java.util.PriorityQueue<AnnouncementItem>()
         val critical = AnnouncementItem("critical", "Critical", AnnouncementPriority.CRITICAL_THERMAL, "THERMAL", timestamp = 1L)
