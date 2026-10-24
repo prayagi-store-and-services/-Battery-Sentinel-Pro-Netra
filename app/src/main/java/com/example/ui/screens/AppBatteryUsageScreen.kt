@@ -330,7 +330,7 @@ internal fun AppForegroundUsageContent(
                     Text("Unavailable - the phone did not report battery readings.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     Text(
-                        text = "Health: ${batteryFacts.healthLabel}  |  ${"%.1f".format(batteryFacts.temperatureC)}°C  |  ${batteryFacts.voltageMv} mV  |  Level ${batteryFacts.levelPercent}%${if (batteryFacts.charging) " (charging)" else ""}",
+                        text = "Health: ${batteryFacts.healthLabel}  |  ${batteryFacts.temperatureC?.let { "%.1f".format(it) + "°C" } ?: "Temperature unavailable"}  |  ${batteryFacts.voltageMv?.let { "$it mV" } ?: "Voltage unavailable"}  |  Level ${batteryFacts.levelPercent}%${if (batteryFacts.charging) " (charging)" else ""}",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )
