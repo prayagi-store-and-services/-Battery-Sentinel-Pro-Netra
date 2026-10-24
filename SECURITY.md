@@ -2,7 +2,7 @@
 
 ## Explicit cache-warning notification destination (v2.2.10)
 
-The cache warning now wraps an explicit, immutable PendingIntent targeting a non-exported internal activity. The activity ignores caller-supplied extras and opens the existing Android storage-settings flow. This addresses the implicit PendingIntent reported by CodeQL (java/android/implicit-pendingintents); alert closure still requires the scanner to confirm the merged code. No new permission, network, library or stored data.
+The cache warning now wraps an explicit, immutable PendingIntent targeting a non-exported internal activity. The activity ignores caller-supplied extras and opens only an explicit component from an exported system-package storage-settings handler. It does not forward arbitrary intents; if no trusted handler exists, it reports that storage settings are unavailable. This addresses the implicit PendingIntent reported by CodeQL (java/android/implicit-pendingintents); alert closure still requires the scanner to confirm the merged code. No new permission, network, library or stored data.
 
 
 ## Screen spacing (v2.2.8)
