@@ -288,6 +288,34 @@ class TruthfulnessCardRenderTest {
         captureCard("ecosystem-version-header.png")
     }
 
+    @Test
+    fun renderHardwareFactsWithMissingSensors() {
+        val facts = com.example.util.BatteryHardwareFacts.Facts(50, null, null, "Good", false)
+        compose.setContent { MyApplicationTheme {
+            Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+                com.example.ui.screens.BatteryHardwareFactsCard(facts)
+            }
+        } }
+        compose.onNodeWithText("Temperature unavailable", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Voltage unavailable", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Level 50%", substring = true).assertIsDisplayed()
+        captureCard("hardware-facts-missing-sensors.png")
+    }
+
+    @Test
+    fun renderHardwareFactsWithRealSubzeroTemperature() {
+        val facts = com.example.util.BatteryHardwareFacts.Facts(50, -0.1f, 4100, "Good", false)
+        compose.setContent { MyApplicationTheme {
+            Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+                com.example.ui.screens.BatteryHardwareFactsCard(facts)
+            }
+        } }
+        compose.onNodeWithText("${"%.1f".format(-0.1f)}°C", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("4100 mV", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Level 50%", substring = true).assertIsDisplayed()
+        captureCard("hardware-facts-real-subzero.png")
+    }
+
     private fun captureCard(filename: String) {
         compose.waitForIdle()
         // WindowCapture's PixelCopy/redraw wait is not supported reliably by Robolectric.
