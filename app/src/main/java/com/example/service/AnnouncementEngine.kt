@@ -487,7 +487,6 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
     /**
      * Enqueues an announcement item respecting master enabled, night protection, and deduplication.
      */
-    @Synchronized
     /** "Power connected, 42 percent." The percent is left out at 100 and at the user's own target, which have their own line. */
     /** "BT Buds, 60 percent." With no battery info: "BT Buds." The percent is left out at 100 on disconnect. */
     private fun btText(name: String?, pct: Int?, disconnect: Boolean): String {
@@ -505,6 +504,8 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         return "$base, $level percent."
     }
 
+    // Share this monitor with processQueue: producers may run on background threads.
+    @Synchronized
     fun enqueue(item: AnnouncementItem) {
         val settings = getSettings()
 
