@@ -320,29 +320,7 @@ internal fun AppForegroundUsageContent(
 
         // Battery hardware facts (real sensor values; capacity in mAh is NOT exposed by Android)
         item {
-            SentinelCard(
-                title = "Battery Hardware Facts",
-                icon = Icons.Default.Speed,
-                dotState = DotState.CONNECTED,
-                accentColor = NetraEmerald
-            ) {
-                if (batteryFacts == null) {
-                    Text("Unavailable - the phone did not report battery readings.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                } else {
-                    Text(
-                        text = "Health: ${batteryFacts.healthLabel}  |  ${"%.1f".format(batteryFacts.temperatureC)}°C  |  ${batteryFacts.voltageMv} mV  |  Level ${batteryFacts.levelPercent}%${if (batteryFacts.charging) " (charging)" else ""}",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(6.dp)
-                    )
-                    Text(
-                        text = "If the battery was replaced before and fast drain is back: a worn or low-quality replacement battery cannot be told apart from an app by any app - Android exposes no capacity (mAh) or cycle count. The honest test: if a fast drop window shows no active app above, suspect the battery; if one app is always busy, suspect the app.",
-                        fontSize = 11.5.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            BatteryHardwareFactsCard(batteryFacts)
         }
 
         // Category Filter Chips
@@ -511,6 +489,34 @@ private fun AppKpiBox(label: String, value: String, accent: Color, modifier: Mod
             Text(text = label, fontSize = 7.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(2.dp))
             Text(text = value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = accent)
+        }
+    }
+}
+
+
+@Composable
+internal fun BatteryHardwareFactsCard(facts: BatteryHardwareFacts.Facts?) {
+    SentinelCard(
+        title = "Battery Hardware Facts",
+        icon = Icons.Default.Speed,
+        dotState = DotState.CONNECTED,
+        accentColor = NetraEmerald
+    ) {
+        if (facts == null) {
+            Text("Unavailable - the phone did not report battery readings.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            Text(
+                text = "Health: ${facts.healthLabel}  |  ${facts.temperatureC?.let { "%.1f".format(it) + "°C" } ?: "Temperature unavailable"}  |  ${facts.voltageMv?.let { "$it mV" } ?: "Voltage unavailable"}  |  Level ${facts.levelPercent}%${if (facts.charging) " (charging)" else ""}",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(6.dp)
+            )
+            Text(
+                text = "If the battery was replaced before and fast drain is back: a worn or low-quality replacement battery cannot be told apart from an app by any app - Android exposes no capacity (mAh) or cycle count. The honest test: if a fast drop window shows no active app above, suspect the battery; if one app is always busy, suspect the app.",
+                fontSize = 11.5.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
