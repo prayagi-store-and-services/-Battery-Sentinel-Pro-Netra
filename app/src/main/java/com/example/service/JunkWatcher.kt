@@ -5,6 +5,9 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.usage.StorageStatsManager
+import android.content.ComponentName
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -74,8 +77,22 @@ object JunkWatcher {
         )
         for (a in actions) {
             try {
-                ctx.startActivity(Intent(a).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                return true
+                val candidate = Intent(a)
+                @Suppress("DEPRECATION")
+                val targets = ctx.packageManager.queryIntentActivities(candidate, PackageManager.MATCH_SYSTEM_ONLY)
+                for (target in targets) {
+                    val info = target.activityInfo ?: continue
+                    val system = info.applicationInfo.flags and
+                        (ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+                    if (!system || !info.exported || !info.enabled) continue
+                    try {
+                        ctx.startActivity(Intent(a).apply {
+                            component = ComponentName(info.packageName, info.name)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        })
+                        return true
+                    } catch (_: Exception) { /* Try another trusted system handler. */ }
+                }
             } catch (_: Exception) {}
         }
         return false
@@ -84,6 +101,14 @@ object JunkWatcher {
     fun openUsageAccessSettings(ctx: Context) {
         try { ctx.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Exception) {}
     }
+
+    internal fun storageSettingsPendingIntent(ctx: Context): PendingIntent = PendingIntent.getActivity(
+        ctx, 104, Intent(ctx, com.example.StorageSettingsActivity::class.java).apply {
+            action = Settings.ACTION_INTERNAL_STORAGE_SETTINGS
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        },
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
 
     /** Fresh reading for the screen (no warning, no throttle). */
     suspend fun refreshNow(ctx: Context) = withContext(Dispatchers.IO) { _reading.value = read(ctx) }
@@ -103,10 +128,7 @@ object JunkWatcher {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             nm.createNotificationChannel(NotificationChannel(CHANNEL, "Junk and cache warning", NotificationManager.IMPORTANCE_DEFAULT))
         }
-        val open = PendingIntent.getActivity(
-            ctx, 104, Intent(Settings.ACTION_INTERNAL_STORAGE_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val open = storageSettingsPendingIntent(ctx)
         val mb = bytes / (1024L * 1024L)
         val n = NotificationCompat.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
