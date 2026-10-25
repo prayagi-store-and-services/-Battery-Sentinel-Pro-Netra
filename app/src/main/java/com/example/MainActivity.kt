@@ -132,11 +132,11 @@ open class MainActivity : ComponentActivity() {
         handleAutoUpdateExtra(intent)
     }
 
-    /** Tapping the update notification downloads the newest verified build and starts the install. */
+    /** Tapping the update notification checks metadata and offers Download. */
     private fun handleAutoUpdateExtra(intent: android.content.Intent?) {
         if (intent?.getBooleanExtra(com.example.update.UpdateCheckWorker.EXTRA_AUTO_UPDATE, false) != true) return
         intent.removeExtra(com.example.update.UpdateCheckWorker.EXTRA_AUTO_UPDATE)
-        android.widget.Toast.makeText(this, "Downloading the update...", android.widget.Toast.LENGTH_SHORT).show()
+        android.widget.Toast.makeText(this, "Checking for an update...", android.widget.Toast.LENGTH_SHORT).show()
         GitHubReleaseUpdater.shared(this).checkAndInstall { msg ->
             android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_LONG).show()
         }
@@ -214,7 +214,7 @@ fun MainAppContent(viewModel: NetraViewModel) {
             title = { Text("Update available: " + availableUpdate.versionName) },
             text = {
                 Column {
-                    Text("A newer ${com.example.Brand.name} release is available.")
+                    Text("A newer ${com.example.Brand.name} release is available. Download and Install are separate choices. Keep Play Protect enabled; do not bypass a security warning.")
                     Spacer(modifier = Modifier.size(8.dp))
                     Text("What's new", fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.size(4.dp))
@@ -230,13 +230,15 @@ fun MainAppContent(viewModel: NetraViewModel) {
             confirmButton = {
                 Button(
                     onClick = {
-                        releaseUpdater.installLatest(onError = { message ->
+                        val onError: (String) -> Unit = { message ->
                             android.widget.Toast.makeText(context, "Update problem: $message", android.widget.Toast.LENGTH_LONG).show()
-                        })
+                        }
+                        if ((updateState as? UpdateUiState.Available)?.downloaded == true) releaseUpdater.installLatest(onError = onError)
+                        else releaseUpdater.downloadLatest(onError)
                     },
                     enabled = updateState !is UpdateUiState.Downloading
                 ) {
-                    Text(if (updateState is UpdateUiState.Downloading) "Downloading…" else "Update")
+                    Text(if (updateState is UpdateUiState.Downloading) "Downloading..." else if ((updateState as? UpdateUiState.Available)?.downloaded == true) "Install" else "Download")
                 }
             },
             dismissButton = {

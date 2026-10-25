@@ -42,7 +42,7 @@ internal object UpdateNotifyPolicy {
 /**
  * Once a day (network required, WorkManager decides the exact time, so it respects Doze and uses no exact alarms)
  * asks GitHub whether a newer stable release exists. If so, posts one status-bar notification per version.
- * When the connection allows it (see PreDownload) the verified build is also saved, so the tap installs it at once. Android still asks to confirm the install.
+ * APK download and install each require an explicit choice.
  */
 class UpdateCheckWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
 
@@ -61,15 +61,8 @@ class UpdateCheckWorker(appContext: Context, params: WorkerParameters) : Corouti
             }
             val candidate = GitHubReleasePolicy.parse(body, BuildConfig.VERSION_CODE.toLong())
             if (candidate != null) {
-                // Save the verified update now when the connection allows it, so one tap installs it. Nothing is sent anywhere.
-                val updater = GitHubReleaseUpdater.shared(applicationContext)
-                val info = GitHubReleaseInfo(
-                    tagName = JSONObject(body).getString("tag_name"), versionName = JSONObject(body).getString("tag_name").removePrefix("v"),
-                    versionCode = candidate.versionCode, notes = "", apkUrl = candidate.url, sha256 = candidate.sha256, sizeBytes = candidate.size
-                )
-                var saved = updater.savedApk(info) != null
-                if (!saved && PreDownload.allowedNow(applicationContext, false, candidate.size)) saved = updater.saveInBackground(info)
-                notifyIfNew(applicationContext, candidate, saved)
+                // Metadata only. APK download needs a separate explicit choice.
+                notifyIfNew(applicationContext, candidate, false)
             }
         } catch (_: Exception) {
             // Try again at the next daily run; never hammer the API.
@@ -96,7 +89,7 @@ class UpdateCheckWorker(appContext: Context, params: WorkerParameters) : Corouti
         val n = NotificationCompat.Builder(c, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
             .setContentTitle("Update available")
-            .setContentText(if (downloaded) "A new ${com.example.Brand.name} is downloaded. Tap to install." else "A new ${com.example.Brand.name} is out. Tap to update.")
+            .setContentText("A new ${com.example.Brand.name} is available. Tap to choose Download.")
             .setContentIntent(open)
             .setAutoCancel(true)
             .build()

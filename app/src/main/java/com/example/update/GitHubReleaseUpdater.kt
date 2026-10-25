@@ -29,7 +29,7 @@ sealed interface UpdateUiState {
     data object Idle : UpdateUiState
     data object Checking : UpdateUiState
     data class UpToDate(val versionName: String) : UpdateUiState
-    data class Available(val release: GitHubReleaseInfo) : UpdateUiState
+    data class Available(val release: GitHubReleaseInfo, val downloaded: Boolean = false) : UpdateUiState
     data class Downloading(val release: GitHubReleaseInfo, val line: String = "", val fraction: Float = 0f) : UpdateUiState
     data class Error(val message: String) : UpdateUiState
 }
@@ -80,44 +80,55 @@ class GitHubReleaseUpdater(context: Context) {
         periodicJob = null
     }
 
-    /** Used by the update notification: look for the newest release, then download and start the install at once. */
-    fun checkAndInstall(onError: (String) -> Unit = {}) {
-        if (_state.value is UpdateUiState.Checking || _state.value is UpdateUiState.Downloading) return
+    /** Notification entry only checks metadata and shows the normal Download choice. */
+    fun checkAndInstall(onError: (String) -> Unit = {}) { checkNow() }
+
+    @Synchronized
+    fun downloadLatest(onError: (String) -> Unit = {}) {
+        val release = (_state.value as? UpdateUiState.Available)?.release ?: return
+        _state.value = UpdateUiState.Downloading(release)
         CoroutineScope(Dispatchers.IO).launch {
-            checkInternal()
-            withContext(Dispatchers.Main) {
-                if (_state.value is UpdateUiState.Available) installLatest(onError = onError)
-                else onError("No newer version found.")
+            try {
+                downloadApk(release)
+                _state.value = UpdateUiState.Available(release, downloaded = true)
+            } catch (e: Exception) {
+                _state.value = UpdateUiState.Available(release)
+                withContext(Dispatchers.Main) { onError(plainFailure(e, "Download failed.")) }
             }
         }
     }
 
+    @Synchronized
     fun installLatest(onInstallStarted: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        val release = (_state.value as? UpdateUiState.Available)?.release ?: readCache()
-        if (release == null) {
-            onError("No cached release is available.")
+        val ready = _state.value as? UpdateUiState.Available
+        val release = ready?.release
+        if (release == null || ready?.downloaded != true) {
+            onError("Choose Download and wait for verification before Install.")
             return
         }
+        _state.value = UpdateUiState.Downloading(release)
         CoroutineScope(Dispatchers.IO).launch {
-            _state.value = UpdateUiState.Downloading(release)
             try {
-                val apk = downloadApk(release)
-                withContext(Dispatchers.Main) {
+                val apk = savedApk(release) ?: error("Verified download is missing. Download again.")
+                val permitted = withContext(Dispatchers.Main) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                         !appContext.packageManager.canRequestPackageInstalls()
                     ) {
-                        _state.value = UpdateUiState.Available(release)
+                        _state.value = UpdateUiState.Available(release, downloaded = true)
                         appContext.startActivity(
                             Intent(
                                 Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                                 Uri.parse("package:" + appContext.packageName)
                             ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         )
-                        onError("Allow installs from this source, then tap Update again.")
-                        return@withContext
-                    }
-                    stageInstall(apk)
-                    onInstallStarted()
+                        onError("Allow installs from this source, then tap Install again.")
+                        false
+                    } else true
+                }
+                if (permitted) {
+                    // Hashing, archive inspection and session byte copy stay on the IO dispatcher.
+                    stageInstall(apk, release)
+                    withContext(Dispatchers.Main) { onInstallStarted() }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -218,10 +229,8 @@ class GitHubReleaseUpdater(context: Context) {
         } catch (_: Exception) { null }
     }
 
-    /** Background save (no UI state change). Returns true when a verified installer is on disk afterwards. */
-    fun saveInBackground(release: GitHubReleaseInfo): Boolean = try {
-        savedApk(release) != null || downloadApk(release, report = false).exists()
-    } catch (_: Exception) { false }
+    /** Compatibility entry. Background APK downloads are no longer permitted. */
+    fun saveInBackground(release: GitHubReleaseInfo): Boolean = false
 
     private fun downloadApk(release: GitHubReleaseInfo, report: Boolean = true): File {
         require(release.versionCode > BuildConfig.VERSION_CODE && release.sizeBytes in 1..GitHubReleasePolicy.MAX_APK_BYTES)
@@ -303,7 +312,10 @@ class GitHubReleaseUpdater(context: Context) {
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private fun stageInstall(apk: File) {
+    private fun stageInstall(apk: File, release: GitHubReleaseInfo) {
+        require(apk.canonicalFile.parentFile == File(appContext.cacheDir, "updates").canonicalFile)
+        require(apk.length() == release.sizeBytes && sha256(apk).equals(release.sha256, ignoreCase = true)) { "Update bytes changed before install." }
+        verifyApk(apk, release)
         val installer = appContext.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
             setAppPackageName(appContext.packageName)
