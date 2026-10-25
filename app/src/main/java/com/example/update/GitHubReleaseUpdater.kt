@@ -98,6 +98,7 @@ class GitHubReleaseUpdater(context: Context) {
         }
     }
 
+    @Synchronized
     fun installLatest(onInstallStarted: () -> Unit = {}, onError: (String) -> Unit = {}) {
         val ready = _state.value as? UpdateUiState.Available
         val release = ready?.release
@@ -105,11 +106,11 @@ class GitHubReleaseUpdater(context: Context) {
             onError("Choose Download and wait for verification before Install.")
             return
         }
+        _state.value = UpdateUiState.Downloading(release)
         CoroutineScope(Dispatchers.IO).launch {
-            _state.value = UpdateUiState.Downloading(release)
             try {
                 val apk = savedApk(release) ?: error("Verified download is missing. Download again.")
-                withContext(Dispatchers.Main) {
+                val permitted = withContext(Dispatchers.Main) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                         !appContext.packageManager.canRequestPackageInstalls()
                     ) {
@@ -121,10 +122,13 @@ class GitHubReleaseUpdater(context: Context) {
                             ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         )
                         onError("Allow installs from this source, then tap Install again.")
-                        return@withContext
-                    }
+                        false
+                    } else true
+                }
+                if (permitted) {
+                    // Hashing, archive inspection and session byte copy stay on the IO dispatcher.
                     stageInstall(apk, release)
-                    onInstallStarted()
+                    withContext(Dispatchers.Main) { onInstallStarted() }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
