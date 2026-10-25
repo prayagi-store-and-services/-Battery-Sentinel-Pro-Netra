@@ -52,7 +52,7 @@ class CentralizedUpdatesPolicyTest {
         )) {
             try {
                 Class.forName(cls)
-                fail<Unit>("removed updater class still present: $cls")
+                fail("removed updater class still present: $cls")
             } catch (_: ClassNotFoundException) {
                 // expected
             }
