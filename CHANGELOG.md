@@ -7,7 +7,7 @@ All user-facing release notes are maintained here. The guarded release workflow 
 - Security: the cache warning opens a fixed internal activity using an explicit, immutable notification intent, before opening Android storage settings. It no longer gives the notification an unspecified intent destination.
 
 - Fixed: in the night (silent) window the full-charge alert no longer speaks, repeats, plays the ringtone loop or vibrates. It shows one silent notification instead. Outside the window nothing changes.
-- Improved: the Devices and Logs screens now use the same card spacing as every other screen.
+- Fixed: missing battery temperature and missing or non-positive voltage now show Unavailable instead of default sensor values. Real zero and subzero temperatures remain valid; available battery percentage and health stay visible. This is a measurement-display fix, not a cooling or security claim.
 
 ## [2.2.7]
 
