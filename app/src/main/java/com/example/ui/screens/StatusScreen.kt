@@ -740,7 +740,7 @@ fun StatusScreen(
                     onClick = { com.example.util.PermissionHelper.openUsageAccessSettings(context) }
                 )
                 PermissionStatusRow(
-                    label = "Battery Optimization Exemption",
+                    label = "Battery Optimization Exemption (Optional)",
                     isGranted = permissions.isIgnoringBatteryOptimizations,
                     onClick = { com.example.util.PermissionHelper.openBatteryOptimizationSettings(context) }
                 )
