@@ -71,15 +71,23 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         // queued work, a status-bar notification, a cached installer and saved release metadata on
         // devices that ran an older version: cancel and delete all of it here. Safe to repeat.
         Thread {
-            try { androidx.work.WorkManager.getInstance(applicationContext).cancelUniqueWork("netra_update_check") } catch (_: Exception) {}
-            try {
-                if (android.os.Build.VERSION.SDK_INT >= 26) {
-                    (getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager).deleteNotificationChannel("netra_app_update")
-                }
-                (getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager).cancel(7430)
-            } catch (_: Exception) {}
-            try { java.io.File(applicationContext.cacheDir, "updates").listFiles()?.forEach { it.delete() } } catch (_: Exception) {}
-            try { applicationContext.getSharedPreferences("netra_release_update_cache", android.content.Context.MODE_PRIVATE).edit().clear().apply() } catch (_: Exception) {}
+            val nm = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+            com.example.LegacyUpdateCleanup.purge(
+                cacheDir = applicationContext.cacheDir,
+                prefs = applicationContext.getSharedPreferences(com.example.LegacyUpdateCleanup.PREFS_NAME, android.content.Context.MODE_PRIVATE),
+                notifications = object : com.example.LegacyUpdateCleanup.NotificationOps {
+                    override fun cancel(id: Int) = nm.cancel(id)
+                    override fun deleteChannel(id: String) {
+                        if (android.os.Build.VERSION.SDK_INT >= 26) nm.deleteNotificationChannel(id)
+                    }
+                },
+                work = object : com.example.LegacyUpdateCleanup.WorkOps {
+                    override fun cancelUniqueWork(name: String) {
+                        androidx.work.WorkManager.getInstance(applicationContext).cancelUniqueWork(name)
+                    }
+                },
+                deleteChannelSupported = true
+            )
         }.start()
         database = NetraDatabase.getDatabase(this)
         settingsRepository = SettingsRepository(this)
