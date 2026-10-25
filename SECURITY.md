@@ -1,5 +1,10 @@
 # Security Policy
 
+## In-app updater removed; updates only via Netra Ecosystem (2026-10-25)
+
+The app's own update check, APK download, cached installer and session-install flow are removed. This deletes the `REQUEST_INSTALL_PACKAGES` permission, the daily/6-hourly update worker and notification, the Settings "Check for updates" card, the update dialog and the install-result receiver. New versions are delivered by the Netra Ecosystem app, which verifies the package name, version, SHA-256 digest and signing certificate before install; the project website only carries the link. On first run after this change the app cancels the old updater's queued work and notification and deletes any installer file and release metadata the old flow left behind. The FileProvider remains only for generated battery PDF/CSV reports. No new permission, library or network call.
+
+
 ## Explicit cache-warning notification destination (v2.2.10)
 
 The cache warning now wraps an explicit, immutable PendingIntent targeting a non-exported internal activity. The activity ignores caller-supplied extras and opens only an explicit component from an exported system-package storage-settings handler. It does not forward arbitrary intents; if no trusted handler exists, it reports that storage settings are unavailable. This addresses the implicit PendingIntent reported by CodeQL (java/android/implicit-pendingintents); alert closure still requires the scanner to confirm the merged code. No new permission, network, library or stored data.
@@ -257,7 +262,7 @@ This section describes what the current code does. It is updated with the app.
 - **Experimental ADB switch:** `WRITE_SECURE_SETTINGS` is declared in the manifest but is not granted by Android to normal apps. Only you can grant it, from a computer, with `adb shell pm grant com.aistudio.batterysentinel.ntra android.permission.WRITE_SECURE_SETTINGS`. Without that grant the switch does nothing. This path is experimental and has not been verified on real devices. Do not grant it unless you understand it, and you can revoke it with `adb shell pm revoke` using the same package and permission.
 
 ### Other permissions
-The manifest also declares `WRITE_SETTINGS` (Modify system settings), used only by the optional "Charging + screen off savings" to lower brightness while charging with the screen off; Android shows it as a switch that only you can turn on, and the app never grants it. It also declares internet and network state, notifications, boot completed, foreground service, battery-optimization request, approximate and precise location (weather and climate context), Bluetooth, vibration, and `REQUEST_INSTALL_PACKAGES` (for the in-app update flow; Android still asks you to approve every install). Report any permission you think is not needed.
+The manifest also declares `WRITE_SETTINGS` (Modify system settings), used only by the optional "Charging + screen off savings" to lower brightness while charging with the screen off; Android shows it as a switch that only you can turn on, and the app never grants it. It also declares internet and network state, notifications, boot completed, foreground service, battery-optimization request, approximate and precise location (weather and climate context), Bluetooth and vibration. The app no longer requests `REQUEST_INSTALL_PACKAGES`: updates are delivered by Netra Ecosystem, not by this app. Report any permission you think is not needed.
 
 ### Solar monitoring (planned, not enabled)
 No solar provider is enabled in the app today. Before any provider ships, these rules apply (see `docs/SOLAR_MONITORING_INTEGRATION_PLAN.md`):
@@ -274,7 +279,7 @@ No solar provider is enabled in the app today. Before any provider ships, these 
 - Firestore rules allow only creating a counter with value 1 or raising it by exactly 1; the counters are public to read. Anyone could in theory add extra +1s, so the figure is approximate, not exact people. Reinstalling or clearing data can count one person twice.
 
 ### Update check
-- The app checks GitHub (the public release API, with a backup file on the project website) for a newer version. It sends no user data. Settings has a "Check for updates" button that shows the real status or error.
+- This app no longer checks for, downloads or installs its own updates. New versions are delivered by the Netra Ecosystem app, which verifies the package name, version code, SHA-256 digest and signing certificate before install; the project website only carries the link. This app keeps no update server contact and no APK cache.
 
 ### Automatic crash reports
 
@@ -319,7 +324,7 @@ Some features call an AI service (Gemini) over the network. Do not enter secrets
 - Honest limits: it adds no background service, no new permission and no new library; it uses only the battery readings the app already takes. Android does not let an app restrict other apps' data or battery. The only thing possible is to end background processes, and apps may restart, so the saving can be small. Closed apps and cleared notifications cannot be brought back.
 
 ## Installer file cleanup
-- After an in-app update installs, the app restarts and deletes every downloaded installer file from its cache folder (`cache/updates/`) on start. A new download also replaces older files. If the user cancels the install, the file is removed the next time the app starts.
+- The in-app updater is removed. On every start the app deletes anything the old updater left in its cache folder (`cache/updates/`), cancels its old scheduled work and update notification, and clears its saved release metadata. No new installer file is ever written by this app.
 
 ## Releases and Signing
 - Release APKs are built by the repository's guarded release workflow from a reviewed commit on `main` and published on the GitHub Releases page.
