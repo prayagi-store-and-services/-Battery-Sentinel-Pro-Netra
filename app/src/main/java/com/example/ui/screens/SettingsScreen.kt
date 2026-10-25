@@ -377,19 +377,19 @@ fun SettingsScreen(
             }
         }
 
-        // 4. Battery Optimization Exemption
+        // 4. Optional Android battery settings
         item {
             SentinelCard(
-                title = "24/7 OEM Sleep Exemption",
+                title = "Android Battery Settings (Optional)",
                 icon = Icons.Default.Shield,
                 dotState = if (permissions.isIgnoringBatteryOptimizations) DotState.CONNECTED else DotState.THROTTLED,
                 accentColor = NetraEmerald
             ) {
                 Text(
                     text = if (permissions.isIgnoringBatteryOptimizations)
-                        "Device is configured to allow 24/7 Sentinel background execution without OEM process killing."
+                        "Android reports this app is not battery optimized. Doze restrictions and manufacturer limits may still apply; continuous monitoring is not guaranteed."
                     else
-                        "Allow Netra Sentinel Pro to run continuously without being killed by Android Doze / OEM battery managers.",
+                        "Android battery optimization is enabled. You can review the system settings if monitoring is delayed. Changing them is optional and may increase battery use; the app cannot prevent Android from stopping it.",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -399,7 +399,7 @@ fun SettingsScreen(
                         onClick = { com.example.util.PermissionHelper.openBatteryOptimizationSettings(context) },
                         modifier = Modifier.fillMaxWidth().testTag("exempt_battery_button")
                     ) {
-                        Text("Configure Battery Optimization Exemption", fontSize = 12.sp)
+                        Text("Review Android Battery Settings", fontSize = 12.sp)
                     }
                 }
             }
