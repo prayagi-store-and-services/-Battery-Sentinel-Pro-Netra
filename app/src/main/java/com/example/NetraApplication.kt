@@ -67,8 +67,28 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         super.onCreate()
         try { Brand.applyLauncherName(this) } catch (_: Throwable) { }
         instance = this
-        // Remove any installer file left from an in-app update (background thread).
-        Thread { com.example.update.UpdateFileCleanup.cleanLeftovers(applicationContext) }.start()
+        // App updates now come only from Netra Ecosystem. The removed in-app updater may have left
+        // queued work, a status-bar notification, a cached installer and saved release metadata on
+        // devices that ran an older version: cancel and delete all of it here. Safe to repeat.
+        Thread {
+            val nm = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+            com.example.LegacyUpdateCleanup.purge(
+                cacheDir = applicationContext.cacheDir,
+                prefs = applicationContext.getSharedPreferences(com.example.LegacyUpdateCleanup.PREFS_NAME, android.content.Context.MODE_PRIVATE),
+                notifications = object : com.example.LegacyUpdateCleanup.NotificationOps {
+                    override fun cancel(id: Int) = nm.cancel(id)
+                    override fun deleteChannel(id: String) {
+                        if (android.os.Build.VERSION.SDK_INT >= 26) nm.deleteNotificationChannel(id)
+                    }
+                },
+                work = object : com.example.LegacyUpdateCleanup.WorkOps {
+                    override fun cancelUniqueWork(name: String) {
+                        androidx.work.WorkManager.getInstance(applicationContext).cancelUniqueWork(name)
+                    }
+                },
+                deleteChannelSupported = true
+            )
+        }.start()
         database = NetraDatabase.getDatabase(this)
         settingsRepository = SettingsRepository(this)
         centralDataCenter = NetraCentralDataCenter()
@@ -94,7 +114,6 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
             anchorStore = com.example.service.PrefsDischargeAnchorStore(this)
         )
         com.example.service.StabilityHealthScheduler.schedule(this)
-        com.example.update.UpdateCheckWorker.schedule(this)
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             stabilitySentinel.flushPendingReports()
         }

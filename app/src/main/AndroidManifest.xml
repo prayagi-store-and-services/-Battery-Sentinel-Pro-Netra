@@ -24,8 +24,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <!-- Direct GitHub APK update install flow; Android still requires user approval. -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Saver: ask Android to end background processes of other apps (normal permission, no Force stop). -->
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
@@ -184,11 +182,6 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/netra_battery_widget_info" />
         </receiver>
-
-        <receiver
-            android:name=".update.InstallResultReceiver"
-            android:enabled="true"
-            android:exported="false" />
 
         <!-- FileProvider for Sharing & Viewing Generated Battery PDF Reports -->
         <provider

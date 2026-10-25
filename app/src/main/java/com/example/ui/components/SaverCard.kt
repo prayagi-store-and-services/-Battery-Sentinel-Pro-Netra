@@ -121,7 +121,7 @@ fun SaverCard() {
                 c.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }) { Text("Open notification access") }
             if (restrictedSettingsLikely(c)) {
-                Text("If the switch \"Allow notification access\" is grey or will not turn on: Android 13 and newer block this for apps installed from a file (APK) instead of a store. This app cannot unlock it for you. Easiest fix: install the next update with \"Check for update\" inside this app, because that install is not blocked. Or do this once:", fontSize = 12.sp)
+                Text("If the switch \"Allow notification access\" is grey or will not turn on: Android 13 and newer block this for apps installed from a file (APK) instead of a store. This app cannot unlock it for you. Android may still apply this restriction after any install that did not come from a store, including one delivered by the Netra Ecosystem app. Do this once:", fontSize = 12.sp)
                 RestrictedSettingsGuide()
                 TextButton(onClick = {
                     c.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + c.packageName)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -135,8 +135,9 @@ fun SaverCard() {
 
 /**
  * True when Android 13+ may block notification access ("Restricted setting") for this app: the app was not installed by
- * Google Play or by this app's own updater (the updater uses a PackageInstaller session, which Android does not restrict). Android has no public call that says whether the block is active, so this only decides whether to SHOW the
- * steps; the steps say "if the switch is grey".
+ * Google Play. Installs delivered by the Netra Ecosystem app are file installs, not store installs; Android may still
+ * restrict them, so they do not exempt this app. Android has no public call that says whether the block
+ * is active, so this only decides whether to SHOW the steps; the steps say "if the switch is grey".
  */
 internal fun restrictedSettingsLikely(c: android.content.Context): Boolean {
     if (android.os.Build.VERSION.SDK_INT < 33) return false

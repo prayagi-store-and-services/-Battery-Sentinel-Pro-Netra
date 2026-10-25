@@ -151,15 +151,13 @@ Key test coverage:
 
 ---
 
-## GitHub Release & In-App Update System
+## GitHub Releases & Update Delivery
 
 - Release gate: feature/security feat, fix, security, or patch changes on main enter the guarded release workflow. A release is published only after Android assembleDebug + full unit tests, PDF instrumentation/connected tests, CodeQL, signed release build, and certificate verification all pass.
 - Semantic versioning: netraVersionName and monotonically increasing netraVersionCode are maintained in gradle.properties; the guarded workflow bumps them before the release candidate is tested.
-- Release notes: CHANGELOG.md is the source of the published release body. The release body also records the integer versionCode used by the in-app updater.
+- Release notes: CHANGELOG.md is the source of the published release body. The release body also records the integer versionCode used by Netra Ecosystem's update check.
 - Signed APK: release signing reads KEYSTORE_PATH, STORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD from environment variables or local keystore.properties. No keystore/password is committed. RELEASE_CERT_SHA256 is required in CI and must match the certificate used by currently installed builds.
-- In-app update: GitHubReleaseUpdater checks the repository GitHub Releases API on launch and every 6 hours while the app is active. It compares integer versionCode, displays release notes, caches the last-known release metadata, downloads the APK, verifies the GitHub asset SHA-256 digest when supplied, and stages the APK through Android PackageInstaller.
-- User approval: the app never performs a silent install. Android install-source approval and user confirmation remain authoritative; if approval is missing, the updater opens the system setting for this app install-source permission.
-- Failure handling: network failures, API errors/rate limits, missing assets, download errors, and checksum mismatches return an update error state rather than crashing the app. Cached release metadata remains available for offline comparison.
+- Update delivery: the app no longer checks for, downloads or installs updates itself. New versions are delivered by the Netra Ecosystem app (the project website only links to it); Eco verifies package name, integer versionCode, SHA-256 digest and signing certificate before install, and Android still asks the user to confirm. On start this app removes any installer file, queued work, notification and release metadata left by its former updater.
 - Direct repository: prayagi-store-and-services/-Battery-Sentinel-Pro-Netra.
 
 

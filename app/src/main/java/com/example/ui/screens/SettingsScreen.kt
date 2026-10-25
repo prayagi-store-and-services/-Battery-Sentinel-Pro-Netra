@@ -121,7 +121,6 @@ fun SettingsScreen(
             }
         }
 
-        item { com.example.ui.components.UpdateCheckCard() }
         item { com.example.ui.components.BsPermissionsCard() }
         item { com.example.stats.UsageCountCard() }
 
@@ -597,6 +596,7 @@ fun SettingsScreen(
                 Text(text = "App Name: ${com.example.Brand.name}", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 com.example.Brand.rePinNote(System.currentTimeMillis())?.let { Text(text = it, fontSize = 11.sp) }
                 Text(text = "Version: ${com.example.BuildConfig.VERSION_NAME} Pro • Autonomous Engine", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = "Updates: delivered only by the Netra Ecosystem app. This app no longer checks for, downloads or installs updates itself.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(text = "Monitoring: reacts to Android battery events and re-checks every 45 seconds (every 15 minutes in the ideal charge state) while the monitor runs", fontSize = 11.sp, color = NetraEmerald)
             }
         }
