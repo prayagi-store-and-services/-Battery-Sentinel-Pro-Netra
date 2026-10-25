@@ -67,8 +67,20 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         super.onCreate()
         try { Brand.applyLauncherName(this) } catch (_: Throwable) { }
         instance = this
-        // Remove any installer file left from an in-app update (background thread).
-        Thread { com.example.update.UpdateFileCleanup.cleanLeftovers(applicationContext) }.start()
+        // App updates now come only from Netra Ecosystem. The removed in-app updater may have left
+        // queued work, a status-bar notification, a cached installer and saved release metadata on
+        // devices that ran an older version: cancel and delete all of it here. Safe to repeat.
+        Thread {
+            try { androidx.work.WorkManager.getInstance(applicationContext).cancelUniqueWork("netra_update_check") } catch (_: Exception) {}
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= 26) {
+                    (getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager).deleteNotificationChannel("netra_app_update")
+                }
+                (getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager).cancel(7430)
+            } catch (_: Exception) {}
+            try { java.io.File(applicationContext.cacheDir, "updates").listFiles()?.forEach { it.delete() } } catch (_: Exception) {}
+            try { applicationContext.getSharedPreferences("netra_release_update_cache", android.content.Context.MODE_PRIVATE).edit().clear().apply() } catch (_: Exception) {}
+        }.start()
         database = NetraDatabase.getDatabase(this)
         settingsRepository = SettingsRepository(this)
         centralDataCenter = NetraCentralDataCenter()
@@ -94,7 +106,6 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
             anchorStore = com.example.service.PrefsDischargeAnchorStore(this)
         )
         com.example.service.StabilityHealthScheduler.schedule(this)
-        com.example.update.UpdateCheckWorker.schedule(this)
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             stabilitySentinel.flushPendingReports()
         }
