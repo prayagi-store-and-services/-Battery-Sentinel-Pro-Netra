@@ -54,7 +54,7 @@ class LegacyUpdateCleanupTest {
 
     @Test
     fun purgeRemovesEveryUpdaterLeftover() {
-        val dir = createTempDir()
+        val dir = kotlin.io.path.createTempDirectory().toFile()
         val updates = java.io.File(dir, LegacyUpdateCleanup.CACHE_DIR_NAME).apply { mkdirs() }
         val staleApk = java.io.File(updates, "pending.apk").apply { writeBytes(byteArrayOf(1, 2, 3)) }
         val prefs = FakePrefs()
@@ -72,7 +72,7 @@ class LegacyUpdateCleanupTest {
 
     @Test
     fun workManagerFailureDoesNotSkipOtherSteps() {
-        val dir = createTempDir()
+        val dir = kotlin.io.path.createTempDirectory().toFile()
         val updates = java.io.File(dir, LegacyUpdateCleanup.CACHE_DIR_NAME).apply { mkdirs() }
         val f = java.io.File(updates, "x.bin").apply { writeBytes(byteArrayOf(9)) }
         val prefs = FakePrefs()
@@ -88,7 +88,7 @@ class LegacyUpdateCleanupTest {
 
     @Test
     fun purgeIsIdempotentOnCleanState() {
-        val dir = createTempDir()
+        val dir = kotlin.io.path.createTempDirectory().toFile()
         LegacyUpdateCleanup.purge(dir, FakePrefs(), FakeNotifications(), FakeWork(), deleteChannelSupported = true)
         LegacyUpdateCleanup.purge(dir, FakePrefs(), FakeNotifications(), FakeWork(), deleteChannelSupported = true)
     }
