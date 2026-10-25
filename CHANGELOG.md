@@ -4,10 +4,15 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Fixed: announcement enqueue and queue processing now share the same lock, preventing background producers from changing the queue while it is being processed.
+- Fixed: missing battery temperature and missing or non-positive voltage now show Unavailable instead of default sensor values. Real zero and subzero temperatures remain valid; available battery percentage is unchanged.
+
+## [2.2.10]
+
 - Security: the cache warning opens a fixed internal activity using an explicit, immutable notification intent, before opening Android storage settings. It no longer gives the notification an unspecified intent destination.
 
 - Fixed: in the night (silent) window the full-charge alert no longer speaks, repeats, plays the ringtone loop or vibrates. It shows one silent notification instead. Outside the window nothing changes.
-- Fixed: missing battery temperature and missing or non-positive voltage now show Unavailable instead of default sensor values. Real zero and subzero temperatures remain valid; available battery percentage and health stay visible. This is a measurement-display fix, not a cooling or security claim.
+- Improved: the Devices and Logs screens now use the same card spacing as every other screen.
 
 ## [2.2.7]
 
