@@ -121,7 +121,6 @@ fun SettingsScreen(
             }
         }
 
-        item { com.example.ui.components.UpdateCheckCard() }
         item { com.example.ui.components.BsPermissionsCard() }
         item { com.example.stats.UsageCountCard() }
 
