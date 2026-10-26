@@ -379,29 +379,8 @@ fun SettingsScreen(
 
         // 4. Optional Android battery settings
         item {
-            SentinelCard(
-                title = "Android Battery Settings (Optional)",
-                icon = Icons.Default.Shield,
-                dotState = if (permissions.isIgnoringBatteryOptimizations) DotState.CONNECTED else DotState.THROTTLED,
-                accentColor = NetraEmerald
-            ) {
-                Text(
-                    text = if (permissions.isIgnoringBatteryOptimizations)
-                        "Android reports this app is not battery optimized. Doze restrictions and manufacturer limits may still apply; continuous monitoring is not guaranteed."
-                    else
-                        "Android battery optimization is enabled. You can review the system settings if monitoring is delayed. Changing them is optional and may increase battery use; the app cannot prevent Android from stopping it.",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                if (!permissions.isIgnoringBatteryOptimizations) {
-                    OutlinedButton(
-                        onClick = { com.example.util.PermissionHelper.openBatteryOptimizationSettings(context) },
-                        modifier = Modifier.fillMaxWidth().testTag("exempt_battery_button")
-                    ) {
-                        Text("Review Android Battery Settings", fontSize = 12.sp)
-                    }
-                }
+            AndroidBatterySettingsCard(permissions.isIgnoringBatteryOptimizations) {
+                com.example.util.PermissionHelper.openBatteryOptimizationSettings(context)
             }
         }
 
