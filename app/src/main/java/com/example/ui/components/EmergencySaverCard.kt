@@ -55,6 +55,8 @@ import com.example.util.HeatSuspects
 @Composable
 fun EmergencySaverCard(modifier: Modifier = Modifier) {
     var open by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    var restoreStatus by remember { mutableStateOf("") }
 
     SentinelCard(
         title = "Emergency Saver",
@@ -75,6 +77,11 @@ fun EmergencySaverCard(modifier: Modifier = Modifier) {
         ) {
             Text("Build my saving plan", fontSize = 13.sp)
         }
+        Button(onClick = {
+            com.example.service.SavingSettings.restore(context, "emergency")
+            restoreStatus = com.example.service.SavingSettings.status(context)
+        }) { Text("End emergency display savings / retry restore") }
+        if (restoreStatus.isNotEmpty()) Text(restoreStatus, fontSize = 11.sp)
     }
 
     if (open) {
@@ -91,6 +98,7 @@ private fun EmergencySaverOverlay(onClose: () -> Unit) {
     var percent by remember { mutableStateOf(30f) }
     var hours by remember { mutableStateOf(6f) }
     var applied by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf("") }
 
     val canWrite = remember { Settings.System.canWrite(context) }
     val budget = EmergencySaverPlan.budget(percent.toInt(), hours.toInt())
@@ -160,6 +168,12 @@ private fun EmergencySaverOverlay(onClose: () -> Unit) {
                 tagPrefix = "usage"
             )
 
+            Button(onClick = {
+                com.example.service.SavingSettings.restore(context, "emergency")
+                applied = false
+                result = com.example.service.SavingSettings.status(context)
+            }) { Text("End display savings / retry restore") }
+            if (result.isNotEmpty()) Text(result, fontSize = 11.sp)
             Spacer(modifier = Modifier.height(12.dp))
             Text("Your plan, in order", fontSize = 14.sp, fontWeight = FontWeight.Bold)
 
@@ -180,6 +194,7 @@ private fun EmergencySaverOverlay(onClose: () -> Unit) {
                             Button(
                                 onClick = {
                                     applied = applyDisplaySavings(context)
+                                    result = com.example.service.SavingSettings.status(context)
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = NetraEmerald),
                                 modifier = Modifier.testTag("emergency_apply_button")
@@ -238,14 +253,5 @@ private fun ChipRow(options: List<String>, selectedIndex: Int, onSelect: (Int) -
 
 /** Applies brightness 25% + 15s screen timeout. Returns true when actually applied. */
 private fun applyDisplaySavings(context: android.content.Context): Boolean {
-    return try {
-        if (!Settings.System.canWrite(context)) return false
-        val cr = context.contentResolver
-        Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
-        Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS, 64)
-        Settings.System.putInt(cr, Settings.System.SCREEN_OFF_TIMEOUT, 15_000)
-        true
-    } catch (_: Exception) {
-        false
-    }
+    return com.example.service.SavingSettings.display(context, "emergency", 64, 15_000)
 }
