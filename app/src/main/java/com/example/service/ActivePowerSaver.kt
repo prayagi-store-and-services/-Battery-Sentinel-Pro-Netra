@@ -30,7 +30,7 @@ object ActivePowerSaver {
         enabled && (inForcedWindow(hourOfDay) || (!screenOn && screenOffForMs >= IDLE_MS))
 
     private fun prefs(c: Context) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-    fun isEnabled(c: Context) = prefs(c).getBoolean(KEY_ENABLED, true)
+    fun isEnabled(c: Context) = prefs(c).getBoolean(KEY_ENABLED, false)
     fun isApplied(c: Context) = prefs(c).getBoolean(KEY_APPLIED, false)
     fun setEnabled(c: Context, on: Boolean) {
         prefs(c).edit().putBoolean(KEY_ENABLED, on).apply()
@@ -60,43 +60,23 @@ object ActivePowerSaver {
         val since = p.getLong(KEY_OFF_SINCE, 0L)
         val offFor = if (since > 0L) nowMs - since else 0L
         val want = shouldBeActive(isEnabled(app), hourNow(), screenOn, offFor) && !DrivingFlag.isDriving(app)
-        if (want && !isApplied(app)) apply(app) else if (!want && isApplied(app)) restore(app)
+        SavingSettings.retryPending(app)
+        if (want && !isApplied(app)) apply(app) else if (!want) restore(app)
     }
 
     private fun apply(app: Context) {
-        if (!Settings.System.canWrite(app) || ScreenOffSaver.isApplied(app)) return
-        val p = prefs(app)
-        val r = app.contentResolver
-        runCatching {
-            // Save first, so a failure half way can still be undone.
-            p.edit().putBoolean(KEY_APPLIED, true)
-                .putInt(KEY_TIMEOUT, Settings.System.getInt(r, Settings.System.SCREEN_OFF_TIMEOUT, 60000))
-                .putBoolean(KEY_SYNC, ContentResolver.getMasterSyncAutomatically()).apply()
-            Settings.System.putInt(r, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
-            Settings.System.putInt(r, Settings.System.SCREEN_BRIGHTNESS, SAVER_BRIGHTNESS)
-            Settings.System.putInt(r, Settings.System.SCREEN_OFF_TIMEOUT, SAVER_TIMEOUT_MS)
-            ContentResolver.setMasterSyncAutomatically(false)
-        }.onFailure { restore(app) }
+        val display = SavingSettings.display(app, "active", SAVER_BRIGHTNESS, SAVER_TIMEOUT_MS)
+        val sync = SavingSettings.pauseSync(app, "active")
+        prefs(app).edit().putBoolean(KEY_APPLIED, display || sync).apply()
     }
 
     fun restore(c: Context) {
-        val app = c.applicationContext
-        val p = prefs(app)
-        if (!p.getBoolean(KEY_APPLIED, false)) return
-        runCatching {
-            val r = app.contentResolver
-            if (Settings.System.canWrite(app)) {
-                Settings.System.putInt(r, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC)
-                Settings.System.putInt(r, Settings.System.SCREEN_OFF_TIMEOUT, p.getInt(KEY_TIMEOUT, 60000))
-            }
-            ContentResolver.setMasterSyncAutomatically(p.getBoolean(KEY_SYNC, true))
-        }
-        p.edit().putBoolean(KEY_APPLIED, false).apply()
+        SavingSettings.restore(c, "active")
+        prefs(c).edit().putBoolean(KEY_APPLIED, false).apply()
     }
 
     fun statusText(c: Context): String = when {
-        !Settings.System.canWrite(c) -> "Unavailable: allow Modify system settings"
-        isApplied(c) -> "Active now (dimmed, 15 s timeout, auto-sync off)"
+        isApplied(c) -> SavingSettings.status(c)
         isEnabled(c) -> "On, waiting: starts at 11 PM or 15 minutes after the screen goes off"
         else -> "Off"
     }
