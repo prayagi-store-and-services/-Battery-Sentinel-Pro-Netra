@@ -147,4 +147,13 @@ class BatteryDotRingsRenderTest {
         p.edit().clear().commit()
     }
 
+    @Test fun chargingScreenDefaultRingsRetainsPreviewControls() {
+        rule.activity.getSharedPreferences(com.example.ui.components.ChargingStyleSettings.PREFS, android.content.Context.MODE_PRIVATE).edit().clear().commit()
+        rule.setContent { MaterialTheme { com.example.ui.components.ChargingScreenContent({}, preview = true) } }
+        rule.waitForIdle()
+        rule.onNodeWithText("Health").assertIsDisplayed()
+        rule.onNodeWithText("Power is battery-side (voltage x current), not wall-adapter wattage. Double tap to close.").assertIsDisplayed()
+        capture("charging-screen-rings")
+    }
+
 }
