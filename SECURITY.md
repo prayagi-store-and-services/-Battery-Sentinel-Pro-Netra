@@ -1,5 +1,9 @@
 # Security Policy
 
+## Power-saving recommendations and JVM test dependency (v2.2.15)
+
+Recommendations use a dedicated silent notification channel and immutable system-settings PendingIntents. They do not change system settings, add permissions, send network data, or alter thermal safety handling. Per-level settings and deduplication are stored privately. The earlier PR #258 added a Guava 33.7.2 JVM test-only constraint for GHSA-xxph-c9ww-hj94. It does not ship in the APK; releaseRuntimeClasspath contained no Guava. The GitHub alert is not claimed closed until GitHub reports it closed. Physical-device behavior is untested.
+
 ## Saving consent and recovery (v2.2.14)
 
 Display/timeout and global-sync writes now require separate default-off consent. Shared per-setting records and failure recovery prevent competing savers from replacing originals. Other apps' background-process cleanup is manual-only and unavailable on Android 14+. Irreversible notification clearing has a new default-off opt-in. Adds private local consent/restore preferences, no new permission, library, network endpoint or server. This is consent/reliability hardening, not a claimed vulnerability fix. Not tested on a physical phone.
