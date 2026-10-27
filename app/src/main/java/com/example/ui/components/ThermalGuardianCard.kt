@@ -50,6 +50,7 @@ fun ThermalGuardianCard(modifier: Modifier = Modifier) {
     val settings by NetraApplication.instance.settingsRepository.settings.collectAsState()
 
     val (dot, accent) = when (ui.zone) {
+        ThermalGuardianPolicy.Zone.CRITICAL -> DotState.CRITICAL to StatusRed
         ThermalGuardianPolicy.Zone.SEVERE -> DotState.CRITICAL to StatusRed
         ThermalGuardianPolicy.Zone.ACTIVE -> DotState.CRITICAL to StatusRed
         ThermalGuardianPolicy.Zone.LIGHT -> DotState.THROTTLED to StatusAmber
