@@ -4,6 +4,11 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Updates now show a metadata-only newer-version notice and open the exact BSPN update page in compatible Netra Ecosystem or the Eco website. BSPN no longer downloads or installs APKs.
+- Retires legacy update jobs, installer notices and cached APKs. Version checks share a six-hour cache and failure backoff; Check again can refresh manually.
+
+## [2.2.11]
+
 - Fixed: announcement enqueue and queue processing now share the same lock, preventing background producers from changing the queue while it is being processed.
 - Fixed: missing battery temperature and missing or non-positive voltage now show Unavailable instead of default sensor values. Real zero and subzero temperatures remain valid; available battery percentage is unchanged.
 
