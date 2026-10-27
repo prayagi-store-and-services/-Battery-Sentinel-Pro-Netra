@@ -61,7 +61,7 @@ object PowerRecommendations {
         if (!p.edit().putStringSet("seen", consumed.map { it.toString() }.toSet()).commit()) return
         val body = "Battery ${state.batteryLevel}%. Consider lowering screen brightness and enabling Android Battery Saver. Netra has not changed either setting."
         fun action(action: String, request: Int): PendingIntent = PendingIntent.getActivity(c, request,
-            Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            Intent(c, com.example.PowerSettingsActivity::class.java).setAction(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val notification = NotificationCompat.Builder(c, CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Power-saving suggestion: ${state.batteryLevel}%")
