@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -103,36 +104,8 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             val currentWeather = weatherEngine?.fetchWeatherContext(mergedLoc.latitude, mergedLoc.longitude, forceWeather)
                 ?: com.example.model.WeatherContextState(isAvailable = false)
 
-            // Field-level last-valid retention for weather
-            val mergedWeather = com.example.model.WeatherContextState(
-                temperatureCelsius = currentWeather.temperatureCelsius ?: oldState.weatherContext.temperatureCelsius,
-                feelsLikeCelsius = currentWeather.feelsLikeCelsius ?: oldState.weatherContext.feelsLikeCelsius,
-                humidityPercent = currentWeather.humidityPercent ?: oldState.weatherContext.humidityPercent,
-                condition = if (currentWeather.isAvailable) currentWeather.condition else oldState.weatherContext.condition,
-                conditionText = currentWeather.conditionText ?: oldState.weatherContext.conditionText,
-                isPrecipitating = currentWeather.isPrecipitating ?: oldState.weatherContext.isPrecipitating,
-                windSpeedKmh = currentWeather.windSpeedKmh ?: oldState.weatherContext.windSpeedKmh,
-                severeWeatherAlert = if (currentWeather.isAvailable) currentWeather.severeWeatherAlert else oldState.weatherContext.severeWeatherAlert,
-                weatherSource = currentWeather.weatherSource ?: oldState.weatherContext.weatherSource,
-                lastUpdated = currentWeather.lastUpdated,
-                isAvailable = currentWeather.isAvailable || (oldState.weatherContext.temperatureCelsius != null)
-            )
-
-            // Recompute adaptive thermal context
-            val newAdaptiveThermal = ClimateBaselineEngine.computeAdaptiveThermalContext(
-                countryCode = mergedLoc.countryCode,
-                ambientTempCelsius = mergedWeather.temperatureCelsius,
-                actualBatteryTempCelsius = oldState.temperatureCelsius,
-                deviceIdleState = oldState.deviceIdleState,
-                isCharging = oldState.isCharging
-            )
-
-            // Single atomic canonical state update
-            _centralState.value = _centralState.value.copy(
-                locationContext = mergedLoc,
-                weatherContext = mergedWeather,
-                adaptiveThermalContext = newAdaptiveThermal
-            )
+            updateLocationAndWeatherDirect(currentLoc, currentWeather)
+            val published = _centralState.value
 
             // Emit CLIMATE_CONTEXT_UPDATED event
             _centralEvents.tryEmit(
@@ -141,7 +114,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                     eventType = NetraEventType.CLIMATE_CONTEXT_UPDATED,
                     timestamp = System.currentTimeMillis(),
                     previousValue = oldState.locationContext.countryCode,
-                    newValue = "${mergedLoc.countryCode} • ${mergedWeather.temperatureCelsius}°C",
+                    newValue = "${published.locationContext.countryCode} • ${published.weatherContext.temperatureCelsius}°C",
                     source = "ClimateEngine"
                 )
             )
@@ -152,47 +125,48 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
         location: com.example.model.LocationContextState,
         weather: com.example.model.WeatherContextState
     ) {
-        val oldState = _centralState.value
-        val mergedLoc = com.example.model.LocationContextState(
-            countryCode = location.countryCode ?: oldState.locationContext.countryCode,
-            countryName = if (location.countryName != null && location.countryName != "Unknown") location.countryName else oldState.locationContext.countryName ?: location.countryName,
-            regionName = location.regionName ?: oldState.locationContext.regionName,
-            locality = location.locality ?: oldState.locationContext.locality,
-            locationAccuracyMeters = location.locationAccuracyMeters ?: oldState.locationContext.locationAccuracyMeters,
-            locationSource = location.locationSource ?: oldState.locationContext.locationSource,
-            latitude = location.latitude ?: oldState.locationContext.latitude,
-            longitude = location.longitude ?: oldState.locationContext.longitude,
-            permissionState = location.permissionState,
-            lastUpdated = location.lastUpdated
-        )
+        _centralState.update { oldState ->
+            val mergedLoc = com.example.model.LocationContextState(
+                countryCode = location.countryCode ?: oldState.locationContext.countryCode,
+                countryName = if (location.countryName != null && location.countryName != "Unknown") location.countryName else oldState.locationContext.countryName ?: location.countryName,
+                regionName = location.regionName ?: oldState.locationContext.regionName,
+                locality = location.locality ?: oldState.locationContext.locality,
+                locationAccuracyMeters = location.locationAccuracyMeters ?: oldState.locationContext.locationAccuracyMeters,
+                locationSource = location.locationSource ?: oldState.locationContext.locationSource,
+                latitude = location.latitude ?: oldState.locationContext.latitude,
+                longitude = location.longitude ?: oldState.locationContext.longitude,
+                permissionState = location.permissionState,
+                lastUpdated = location.lastUpdated
+            )
 
-        val mergedWeather = com.example.model.WeatherContextState(
-            temperatureCelsius = weather.temperatureCelsius ?: oldState.weatherContext.temperatureCelsius,
-            feelsLikeCelsius = weather.feelsLikeCelsius ?: oldState.weatherContext.feelsLikeCelsius,
-            humidityPercent = weather.humidityPercent ?: oldState.weatherContext.humidityPercent,
-            condition = if (weather.isAvailable) weather.condition else oldState.weatherContext.condition,
-            conditionText = weather.conditionText ?: oldState.weatherContext.conditionText,
-            isPrecipitating = weather.isPrecipitating ?: oldState.weatherContext.isPrecipitating,
-            windSpeedKmh = weather.windSpeedKmh ?: oldState.weatherContext.windSpeedKmh,
-            severeWeatherAlert = if (weather.isAvailable) weather.severeWeatherAlert else oldState.weatherContext.severeWeatherAlert,
-            weatherSource = weather.weatherSource ?: oldState.weatherContext.weatherSource,
-            lastUpdated = weather.lastUpdated,
-            isAvailable = weather.isAvailable || (oldState.weatherContext.temperatureCelsius != null)
-        )
+            val mergedWeather = com.example.model.WeatherContextState(
+                temperatureCelsius = weather.temperatureCelsius ?: oldState.weatherContext.temperatureCelsius,
+                feelsLikeCelsius = weather.feelsLikeCelsius ?: oldState.weatherContext.feelsLikeCelsius,
+                humidityPercent = weather.humidityPercent ?: oldState.weatherContext.humidityPercent,
+                condition = if (weather.isAvailable) weather.condition else oldState.weatherContext.condition,
+                conditionText = weather.conditionText ?: oldState.weatherContext.conditionText,
+                isPrecipitating = weather.isPrecipitating ?: oldState.weatherContext.isPrecipitating,
+                windSpeedKmh = weather.windSpeedKmh ?: oldState.weatherContext.windSpeedKmh,
+                severeWeatherAlert = if (weather.isAvailable) weather.severeWeatherAlert else oldState.weatherContext.severeWeatherAlert,
+                weatherSource = weather.weatherSource ?: oldState.weatherContext.weatherSource,
+                lastUpdated = weather.lastUpdated,
+                isAvailable = weather.isAvailable || (oldState.weatherContext.temperatureCelsius != null)
+            )
 
-        val newAdaptiveThermal = ClimateBaselineEngine.computeAdaptiveThermalContext(
-            countryCode = mergedLoc.countryCode,
-            ambientTempCelsius = mergedWeather.temperatureCelsius,
-            actualBatteryTempCelsius = oldState.temperatureCelsius,
-            deviceIdleState = oldState.deviceIdleState,
-            isCharging = oldState.isCharging
-        )
+            val newAdaptiveThermal = ClimateBaselineEngine.computeAdaptiveThermalContext(
+                countryCode = mergedLoc.countryCode,
+                ambientTempCelsius = mergedWeather.temperatureCelsius,
+                actualBatteryTempCelsius = oldState.temperatureCelsius,
+                deviceIdleState = oldState.deviceIdleState,
+                isCharging = oldState.isCharging
+            )
 
-        _centralState.value = _centralState.value.copy(
-            locationContext = mergedLoc,
-            weatherContext = mergedWeather,
-            adaptiveThermalContext = newAdaptiveThermal
+            oldState.copy(
+                locationContext = mergedLoc,
+                weatherContext = mergedWeather,
+                adaptiveThermalContext = newAdaptiveThermal
         )
+        }
     }
 
     fun initPersistence(context: Context) {
@@ -206,7 +180,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             val savedPower = prefs.getFloat("saved_power", -1f).takeIf { it >= 0f }
 
             // Restored persisted state is marked as LAST_KNOWN / NOT FRESH
-            _centralState.value = _centralState.value.copy(
+            _centralState.update { current -> current.copy(
                 batteryLevel = savedLevel,
                 temperatureCelsius = savedTemp,
                 voltageMv = savedVoltage,
@@ -220,7 +194,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                     currentStatus = if (savedCurrent != null) FieldStatus.LAST_VALID else FieldStatus.UNAVAILABLE,
                     powerStatus = if (savedPower != null) FieldStatus.LAST_VALID else FieldStatus.UNAVAILABLE
                 )
-            )
+            ) }
         }
     }
 
@@ -245,10 +219,10 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             oldState.audioRoutingStatus
         }
 
-        _centralState.value = _centralState.value.copy(
-            capabilities = detected,
+        _centralState.update { current -> current.copy(
+            capabilities = detected + current.capabilities.filterKeys { it in telemetryCapabilityTypes },
             audioRoutingStatus = routingStatus
-        )
+        ) }
     }
 
     fun refreshAudioRouting(context: Context) {
@@ -262,37 +236,37 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
         } catch (_: Exception) {
             _centralState.value.audioRoutingStatus
         }
-        _centralState.value = _centralState.value.copy(audioRoutingStatus = routingStatus)
+        _centralState.update { current -> current.copy(audioRoutingStatus = routingStatus) }
     }
 
     fun updateAudioRoutingStatus(status: com.example.model.AudioRoutingStatus) {
-        _centralState.value = _centralState.value.copy(audioRoutingStatus = status)
+        _centralState.update { current -> current.copy(audioRoutingStatus = status) }
     }
 
     fun updateIdealStateStatus(active: Boolean, thermalTargetReached: Boolean) {
-        _centralState.value = _centralState.value.copy(
+        _centralState.update { current -> current.copy(
             isIdealStateActive = active,
             isIdealThermalTargetReached = thermalTargetReached
-        )
+        ) }
     }
 
     fun updateThermalStatus(status: Int) {
-        _centralState.value = _centralState.value.copy(thermalStatus = status)
+        _centralState.update { current -> current.copy(thermalStatus = status) }
     }
 
     fun updateChargingOptimizationMode(mode: com.example.model.ChargingOptimizationMode) {
-        _centralState.value = _centralState.value.copy(chargingOptimizationMode = mode)
+        _centralState.update { current -> current.copy(chargingOptimizationMode = mode) }
     }
 
     fun updateScreenState(isScreenOn: Boolean, isConfirmedOff: Boolean) {
         val wasScreenOn = _centralState.value.isScreenOn
         val wasConfirmedOff = _centralState.value.isScreenOffConfirmed
 
-        _centralState.value = _centralState.value.copy(
+        _centralState.update { current -> current.copy(
             isScreenOn = isScreenOn,
             isScreenOffConfirmed = isConfirmedOff,
             isIdealStateActive = isConfirmedOff
-        )
+        ) }
 
         // Adaptive Screen-Off Network Optimization integration
         val settings = try {
@@ -314,7 +288,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
     fun updateNetworkOptimizationState(newState: com.example.model.NetworkOptimizationState) {
         val oldState = _centralState.value
         if (oldState.networkOptimizationState != newState) {
-            _centralState.value = oldState.copy(networkOptimizationState = newState)
+            _centralState.update { current -> current.copy(networkOptimizationState = newState) }
             _centralEvents.tryEmit(
                 NetraCentralEvent(
                     eventId = "event_net_opt_${System.currentTimeMillis()}",
@@ -332,26 +306,26 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
         val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
         val memInfo = android.app.ActivityManager.MemoryInfo()
         am?.getMemoryInfo(memInfo)
-        
+
         val totalMem = memInfo.totalMem.toFloat()
         val availMem = memInfo.availMem.toFloat()
         val ramPercent = (availMem / totalMem) * 100f
-        
+
         // Simple CPU headroom estimation: 1.0 - (uptime / duration)
         // Public Android API only allows process-level or aggregate loadavg.
         // We will use a lightweight aggregate check.
         val cpuLoad = try {
             java.io.File("/proc/loadavg").readText().split(" ")[0].toFloatOrNull() ?: 0f
         } catch (e: Exception) { 0f }
-        
+
         val cpuHeadroom = (100f - (cpuLoad * 10f)).coerceIn(0f, 100f)
-        
-        _centralState.value = _centralState.value.copy(
+
+        _centralState.update { current -> current.copy(
             availableRamPercent = ramPercent,
             isMemoryOptimizationNeeded = ramPercent < 40f,
             cpuHeadroomPercent = cpuHeadroom,
             isCpuOptimizationNeeded = cpuHeadroom < 60f
-        )
+        ) }
     }
 
     // Session Timestamp tracking
@@ -431,7 +405,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
     ) {
         val t0Nanos = System.nanoTime()
         val eventsToEmit = mutableListOf<NetraCentralEvent>()
-        val newState = telemetryMutex.withLock {
+        telemetryMutex.withLock {
             val now = telemetryClock()
             val oldState = _centralState.value
 
@@ -613,7 +587,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                     chargingStoppedAt = null
                 }
             }
-            
+
             // Screen-off drain tracking
             val currentScreenOn = _centralState.value.isScreenOn
             if (mergedIsCharging == false) {
@@ -996,9 +970,8 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 isIdealThermalTargetReached = isThermalTargetReached
             )
 
-            // Publish state IMMEDIATELY (single atomic update)
-            _centralState.value = updatedState
-            updatedState
+            // Publish only telemetry-owned fields into the current canonical state.
+            publishTelemetryState(updatedState, bluetoothConnected, bluetoothBattery)
         }
 
         // Non-suspending event delivery to collectors
@@ -1022,48 +995,107 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
         }
     }
 
+    private val telemetryCapabilityTypes = setOf(
+        CapabilityType.BATTERY_CURRENT, CapabilityType.BATTERY_TEMPERATURE,
+        CapabilityType.BATTERY_VOLTAGE, CapabilityType.BATTERY_POWER_CALCULATION,
+        CapabilityType.CHARGING_SPEED_CALCULATION, CapabilityType.FAST_CHARGING_DETECTION
+    )
+
+    /** CAS merges telemetry-owned fields without erasing concurrent media/control updates.
+     * The candidate may have been calculated from an older snapshot. The retryable
+     * lambda only copies values: no events, persistence or device actions run here.
+     */
+    internal fun publishTelemetryState(candidate: NetraCentralState, bluetoothConnected: Boolean? = null, bluetoothBattery: Int? = null) {
+        _centralState.update { current -> current.copy(
+            batteryLevel = candidate.batteryLevel,
+            isCharging = candidate.isCharging,
+            isChargerConnected = candidate.isChargerConnected,
+            canonicalChargerState = candidate.canonicalChargerState,
+            chargerConnectedAt = candidate.chargerConnectedAt,
+            chargingStartedAt = candidate.chargingStartedAt,
+            chargingStoppedAt = candidate.chargingStoppedAt,
+            chargerDisconnectedAt = candidate.chargerDisconnectedAt,
+            dischargingStartedAt = candidate.dischargingStartedAt,
+            pluggedType = candidate.pluggedType,
+            temperatureCelsius = candidate.temperatureCelsius,
+            voltageMv = candidate.voltageMv,
+            currentMa = candidate.currentMa,
+            powerWatts = candidate.powerWatts,
+            netPowerWatts = candidate.netPowerWatts,
+            consumptionPowerWatts = candidate.consumptionPowerWatts,
+            chargingSpeed = candidate.chargingSpeed,
+            announcementSpeed = candidate.announcementSpeed,
+            bluetoothConnected = bluetoothConnected ?: current.bluetoothConnected,
+            bluetoothBatteryPercent = bluetoothBattery ?: current.bluetoothBatteryPercent,
+            lastUpdateTimestamp = candidate.lastUpdateTimestamp,
+            isDataFresh = candidate.isDataFresh,
+            fieldStates = candidate.fieldStates,
+            capabilities = current.capabilities + candidate.capabilities.filterKeys { it in telemetryCapabilityTypes },
+            chargingEtaMinutes = candidate.chargingEtaMinutes,
+            dischargingEtaMinutes = candidate.dischargingEtaMinutes,
+            chargingEtaConfident = candidate.chargingEtaConfident,
+            dischargingEtaConfident = candidate.dischargingEtaConfident,
+            isCriticalThermalActive = candidate.isCriticalThermalActive,
+            isLowBatteryControlActive = candidate.isLowBatteryControlActive,
+            targetBrightnessPercent = candidate.targetBrightnessPercent,
+            thermalCauseDiagnosis = candidate.thermalCauseDiagnosis,
+            environmentalDiagnosis = candidate.environmentalDiagnosis,
+            deviceIdleState = candidate.deviceIdleState,
+            adaptiveThermalContext = ClimateBaselineEngine.computeAdaptiveThermalContext(
+                countryCode = current.locationContext.countryCode,
+                ambientTempCelsius = current.weatherContext.temperatureCelsius,
+                actualBatteryTempCelsius = candidate.temperatureCelsius,
+                deviceIdleState = candidate.deviceIdleState,
+                isCharging = candidate.isCharging
+            ),
+            pipelineLatency = candidate.pipelineLatency,
+            isIdealThermalTargetReached = candidate.isIdealThermalTargetReached
+        ) }
+    }
+
     /** A running service or Bluetooth update is not a new battery observation. */
     suspend fun expireTelemetryFreshness() = telemetryMutex.withLock {
-        val state = _centralState.value
         val now = telemetryClock()
-        fun aged(status: FieldStatus, observedAt: Long): FieldStatus =
-            if (status == FieldStatus.LIVE && (observedAt <= 0L || now < observedAt || now - observedAt > 120_000L))
-                FieldStatus.LAST_VALID else status
-        val f = state.fieldStates
-        val agedFields = f.copy(
-            levelStatus = aged(f.levelStatus, f.levelObservedAt),
-            tempStatus = aged(f.tempStatus, f.tempObservedAt),
-            voltageStatus = aged(f.voltageStatus, f.voltageObservedAt),
-            currentStatus = aged(f.currentStatus, f.currentObservedAt),
-            powerStatus = aged(f.powerStatus, f.powerObservedAt)
+        _centralState.update { state ->
+            fun aged(status: FieldStatus, observedAt: Long): FieldStatus =
+                if (status == FieldStatus.LIVE && (observedAt <= 0L || now < observedAt || now - observedAt > 120_000L))
+                    FieldStatus.LAST_VALID else status
+            val f = state.fieldStates
+            val agedFields = f.copy(
+                levelStatus = aged(f.levelStatus, f.levelObservedAt),
+                tempStatus = aged(f.tempStatus, f.tempObservedAt),
+                voltageStatus = aged(f.voltageStatus, f.voltageObservedAt),
+                currentStatus = aged(f.currentStatus, f.currentObservedAt),
+                powerStatus = aged(f.powerStatus, f.powerObservedAt)
+            )
+            val fresh = state.isDataFresh && agedFields.levelStatus == FieldStatus.LIVE
+            val agedCapabilities = state.capabilities.toMutableMap().apply {
+                fun revoke(type: CapabilityType, status: FieldStatus) {
+                    if (status != FieldStatus.LIVE && this[type] == CapabilityStatus.AVAILABLE) {
+                        this[type] = CapabilityStatus.UNAVAILABLE
+                    }
+                }
+                revoke(CapabilityType.BATTERY_TEMPERATURE, agedFields.tempStatus)
+                revoke(CapabilityType.BATTERY_VOLTAGE, agedFields.voltageStatus)
+                revoke(CapabilityType.BATTERY_CURRENT, agedFields.currentStatus)
+                val powerInputsLive = agedFields.currentStatus == FieldStatus.LIVE &&
+                    agedFields.voltageStatus == FieldStatus.LIVE
+                if (!powerInputsLive) {
+                    for (type in listOf(CapabilityType.BATTERY_POWER_CALCULATION,
+                        CapabilityType.CHARGING_SPEED_CALCULATION, CapabilityType.FAST_CHARGING_DETECTION)) {
+                        if (this[type] == CapabilityStatus.AVAILABLE) this[type] = CapabilityStatus.UNAVAILABLE
+                    }
+                }
+            }
+            state.copy(
+                fieldStates = agedFields, isDataFresh = fresh, capabilities = agedCapabilities,
+                chargingEtaMinutes = if (fresh) state.chargingEtaMinutes else null,
+                dischargingEtaMinutes = if (fresh) state.dischargingEtaMinutes else null,
+                chargingEtaConfident = if (fresh) state.chargingEtaConfident else false,
+                dischargingEtaConfident = if (fresh) state.dischargingEtaConfident else false,
+                announcementSpeed = if (agedFields.powerStatus == FieldStatus.LIVE) state.announcementSpeed else CanonicalChargingSpeed.UNAVAILABLE
         )
-        val fresh = state.isDataFresh && agedFields.levelStatus == FieldStatus.LIVE
-        val agedCapabilities = state.capabilities.toMutableMap().apply {
-            fun revoke(type: CapabilityType, status: FieldStatus) {
-                if (status != FieldStatus.LIVE && this[type] == CapabilityStatus.AVAILABLE) {
-                    this[type] = CapabilityStatus.UNAVAILABLE
-                }
-            }
-            revoke(CapabilityType.BATTERY_TEMPERATURE, agedFields.tempStatus)
-            revoke(CapabilityType.BATTERY_VOLTAGE, agedFields.voltageStatus)
-            revoke(CapabilityType.BATTERY_CURRENT, agedFields.currentStatus)
-            val powerInputsLive = agedFields.currentStatus == FieldStatus.LIVE &&
-                agedFields.voltageStatus == FieldStatus.LIVE
-            if (!powerInputsLive) {
-                for (type in listOf(CapabilityType.BATTERY_POWER_CALCULATION,
-                    CapabilityType.CHARGING_SPEED_CALCULATION, CapabilityType.FAST_CHARGING_DETECTION)) {
-                    if (this[type] == CapabilityStatus.AVAILABLE) this[type] = CapabilityStatus.UNAVAILABLE
-                }
-            }
         }
-        _centralState.value = state.copy(
-            fieldStates = agedFields, isDataFresh = fresh, capabilities = agedCapabilities,
-            chargingEtaMinutes = if (fresh) state.chargingEtaMinutes else null,
-            dischargingEtaMinutes = if (fresh) state.dischargingEtaMinutes else null,
-            chargingEtaConfident = if (fresh) state.chargingEtaConfident else false,
-            dischargingEtaConfident = if (fresh) state.dischargingEtaConfident else false,
-            announcementSpeed = if (agedFields.powerStatus == FieldStatus.LIVE) state.announcementSpeed else CanonicalChargingSpeed.UNAVAILABLE
-        )
     }
 
     suspend fun processBluetoothDevices(devices: List<com.example.model.BluetoothDeviceItem>, source: String = "BluetoothHelper") {
@@ -1141,7 +1173,7 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             // Process Persistent Bluetooth History using in-memory cache (no blocking disk I/O in critical path)
             val historyMap = mutableMapOf<String, com.example.model.BluetoothDeviceItem>()
             val existingHistory = inMemoryBluetoothHistory ?: (if (oldState.bluetoothHistory.isNotEmpty()) oldState.bluetoothHistory else loadBluetoothHistory()).toMutableList().also { inMemoryBluetoothHistory = it }
-            
+
             existingHistory.forEach { dev ->
                 historyMap[dev.address.ifBlank { dev.name }] = dev
             }
@@ -1171,7 +1203,12 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             )
 
             // Publish state immediately!
-            _centralState.value = newState
+            _centralState.update { current -> current.copy(
+                bluetoothConnected = newState.bluetoothConnected,
+                bluetoothBatteryPercent = newState.bluetoothBatteryPercent,
+                bluetoothDevices = newState.bluetoothDevices,
+                bluetoothHistory = newState.bluetoothHistory
+            ) }
 
             // Offload disk persistence to backgroundScope without delaying live UI
             backgroundScope.launch {
@@ -1246,12 +1283,9 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
     }
 
     fun refreshNightProtectionStateSynchronously() {
-        val settings = com.example.NetraApplication.instance.settingsRepository.settings.value
-        val isNightActive = calculateIsNightProtectionActive(settings)
-        val oldState = _centralState.value
-        if (oldState.isNightProtectionActive != isNightActive) {
-            _centralState.value = oldState.copy(isNightProtectionActive = isNightActive)
-        }
+        _centralState.update { current -> current.copy(isNightProtectionActive = calculateIsNightProtectionActive(
+            com.example.NetraApplication.instance.settingsRepository.settings.value
+        )) }
     }
 
     suspend fun refreshNightProtectionState() {
@@ -1271,22 +1305,19 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
 
     suspend fun updateMediaState(state: com.example.model.CanonicalMediaState) {
         mediaMutex.withLock {
-            val oldState = _centralState.value
-            _centralState.value = oldState.copy(mediaState = state)
+            _centralState.update { current -> current.copy(mediaState = state) }
         }
     }
 
     suspend fun updateMediaControlAvailable(available: Boolean) {
         mediaMutex.withLock {
-            val oldState = _centralState.value
-            _centralState.value = oldState.copy(isMediaControlAvailable = available)
+            _centralState.update { current -> current.copy(isMediaControlAvailable = available) }
         }
     }
 
     suspend fun setMediaPausedByNethra(paused: Boolean) {
         mediaMutex.withLock {
-            val oldState = _centralState.value
-            _centralState.value = oldState.copy(mediaPausedByNethra = paused)
+            _centralState.update { current -> current.copy(mediaPausedByNethra = paused) }
         }
     }
 
@@ -1299,18 +1330,18 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
 
             val controller = getMediaController(context)
             val isPlaying = controller.isMediaPlaying()
-            
+
             if (isPlaying) {
                 controller.prepareForAnnouncement()
-                _centralState.value = oldState.copy(
+                _centralState.update { current -> current.copy(
                     mediaState = com.example.model.CanonicalMediaState.PAUSED,
                     mediaPausedByNethra = true
-                )
+                ) }
                 true
             } else {
-                _centralState.value = oldState.copy(
+                _centralState.update { current -> current.copy(
                     mediaState = if (controller.isMediaPlaying()) com.example.model.CanonicalMediaState.PLAYING else com.example.model.CanonicalMediaState.PAUSED
-                )
+                ) }
                 false
             }
         }
@@ -1322,10 +1353,10 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
             if (oldState.mediaPausedByNethra) {
                 val controller = getMediaController(context)
                 controller.restoreAfterAnnouncement()
-                _centralState.value = oldState.copy(
+                _centralState.update { current -> current.copy(
                     mediaState = com.example.model.CanonicalMediaState.PLAYING,
                     mediaPausedByNethra = false
-                )
+                ) }
                 true
             } else {
                 false
