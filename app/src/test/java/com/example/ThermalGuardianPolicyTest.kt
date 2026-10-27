@@ -240,12 +240,22 @@ class ThermalGuardianPolicyTest {
         assertTrue(n.body.contains("stop charging", ignoreCase = true))
         val say = d.filterIsInstance<ThermalGuardianPolicy.Directive.Speak>().single()
         assertTrue(say.critical)
+        assertTrue(d.none { it is ThermalGuardianPolicy.Directive.ApplyLightControls || it is ThermalGuardianPolicy.Directive.ApplyActiveControls || it is ThermalGuardianPolicy.Directive.ApplySevereControls })
         val d2 = p.onSample(5_000L, 45.6f, true)
         assertTrue(d2.none { it is ThermalGuardianPolicy.Directive.Speak })
         assertTrue(p.onSample(70_000L, 44f, true).none { it is ThermalGuardianPolicy.Directive.RestoreControls })
         p.onSample(100_000L, 36f, false)
         val d3 = p.onSample(170_000L, 36f, false)
         assertTrue(d3.any { it is ThermalGuardianPolicy.Directive.RestoreControls })
+    }
+
+    @Test
+    fun `critical warning does not repeat within 60 s when the phone hovers at 45`() {
+        val p = ThermalGuardianPolicy()
+        assertTrue(p.onSample(0L, 45.2f, false).any { it is ThermalGuardianPolicy.Directive.Notify })
+        p.onSample(5_000L, 44.8f, false)
+        val again = p.onSample(10_000L, 45.1f, false)
+        assertTrue(again.none { it is ThermalGuardianPolicy.Directive.Notify || it is ThermalGuardianPolicy.Directive.Speak })
     }
 
     @Test
