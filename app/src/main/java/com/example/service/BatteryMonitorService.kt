@@ -335,8 +335,8 @@ class BatteryMonitorService : Service() {
         // Offload ALL secondary background work (notifications, safety alerts, widgets, DB)
         serviceScope.launch(Dispatchers.Default) {
             try {
+                dispatchSafetyAndRecommendations(canonical)
                 updateForegroundNotification(canonical)
-                checkSafetyAlerts(canonical)
             } catch (_: Exception) {}
         }
 
@@ -392,6 +392,17 @@ class BatteryMonitorService : Service() {
                 )
                 NetraApplication.instance.batteryRepository.recordTelemetryDebounced(record, canonical)
             } catch (_: Exception) {}
+        }
+    }
+
+    internal fun dispatchSafetyAndRecommendations(
+        state: NetraCentralState,
+        recommend: () -> Unit = { PowerRecommendations.onSample(applicationContext, state) }
+    ) {
+        // Critical safety always runs first. Recommendation failures cannot abort it.
+        checkSafetyAlerts(state)
+        try { recommend() } catch (e: Exception) {
+            Log.w("BatteryMonitorService", "Power recommendation failed", e)
         }
     }
 

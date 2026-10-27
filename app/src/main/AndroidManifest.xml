@@ -69,6 +69,11 @@
         </provider>
 
         <!-- Explicit notification entry point. No external caller or supplied intent is accepted. -->
+        <activity android:name=".PowerSettingsActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+
         <activity android:name=".StorageSettingsActivity"
             android:exported="false"
             android:excludeFromRecents="true"

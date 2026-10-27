@@ -80,6 +80,16 @@ fun PowerPreferencesBody() {
     val profile = bright && (!secure || saver)
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("Battery-level suggestions", fontWeight = FontWeight.SemiBold)
+        Text("Silent by default, including at night. Each level is attempted once per discharge episode, also after restart; a rise of 5 percentage points rearms that level. A skipped level shows only the most urgent suggestion. Battery Saver and display buttons open Android settings; nothing changes automatically.", fontSize = 11.sp)
+        com.example.service.PowerRecommendations.levels.forEach { level ->
+            PrefRow("Suggest at $level%", "Battery Saver and screen-brightness guidance.",
+                com.example.service.PowerRecommendations.enabled(context, level), true) { on ->
+                com.example.service.PowerRecommendations.setEnabled(context, level, on)
+                tick++
+            }
+        }
+
         PrefRow(
             "Saver profile preference",
             if (!canWrite) "Needs the \"Modify system settings\" permission first. Turn the switch to open that Android screen, allow it, then come back."

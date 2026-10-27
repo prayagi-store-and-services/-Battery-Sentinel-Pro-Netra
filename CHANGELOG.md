@@ -4,10 +4,17 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Adds configurable, silent power-saving suggestions at 50%, 30%, 20%, 10% and 5% while on battery. Buttons open Android Battery Saver and display settings; no setting changes automatically.
+- Suggestions retain deduplication across restart. Skipped levels show only the most urgent suggestion; a fresh charger connection or a five-point rise rearms eligible levels. Suggestions run after, and are isolated from, thermal safety handling.
+- Not tested on a physical phone. Automated rules, dispatch, recovery and 360dp layout checks cover this release; OEM behavior and power impact still need device validation.
+
+## [2.2.14]
+
 - Automatic brightness/timeout changes and global auto-sync pause now require separate opt-ins, off by default. Modify system settings permission alone does not count as consent.
 - Savers share persistent ownership and restore records. Undo and retry show actual readings and pending failures; later values are compared before restore. Ambiguous older records ask you to check Android settings instead of inventing missing originals.
 - Other apps' background processes are never cleared automatically. An explicit request is available on supported Android 13 and older; Android 14+ cannot end other apps' processes. Notification clearing has a new default-off consent switch and cannot be undone.
-- No physical-phone test for this release. Automated recovery tests and a 360dp local render passed; OEM behavior still needs device validation.
+- Fixed a state-publication race that could overwrite concurrent media, Bluetooth or control updates during battery telemetry updates. This is a robustness fix, not a security patch.
+- No physical-phone test for this release. Automated recovery and concurrency tests, CI, and a 360dp local render passed; OEM behavior still needs device validation.
 
 ## [2.2.13]
 
