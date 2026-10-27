@@ -2,6 +2,8 @@
 
 **Ultra-Low Power 24/7 Intelligent Battery, Thermal Sentinel & Autonomous Diagnostic Engine**
 
+Beyond monitoring, Battery Sentinel Pro Netra helps protect the battery (heat warnings, charge targets) and save power (power-saving tools). It works within what Android allows and does not guarantee a temperature, battery life or battery health outcome.
+
 Battery Sentinel Pro Netra is an ultra-low-power, event-driven Android battery sentinel built with modern Jetpack Compose, Kotlin Coroutines & Flow, and SQLite Room persistence. The application operates under an absolute priority hierarchy: **Ultra-Low Power First, Device Safety Second, 24/7 Reliability Third, Automatic Recovery Fourth, and Performance/Features Last**.
 
 ---
@@ -151,15 +153,14 @@ Key test coverage:
 
 ---
 
-## GitHub Release & In-App Update System
+## GitHub Release & Update Notice
 
 - Release gate: feature/security feat, fix, security, or patch changes on main enter the guarded release workflow. A release is published only after Android assembleDebug + full unit tests, PDF instrumentation/connected tests, CodeQL, signed release build, and certificate verification all pass.
 - Semantic versioning: netraVersionName and monotonically increasing netraVersionCode are maintained in gradle.properties; the guarded workflow bumps them before the release candidate is tested.
-- Release notes: CHANGELOG.md is the source of the published release body. The release body also records the integer versionCode used by the in-app updater.
+- Release notes: CHANGELOG.md is the source of the published release body. The release body also records the integer versionCode used by the newer-version notice.
 - Signed APK: release signing reads KEYSTORE_PATH, STORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD from environment variables or local keystore.properties. No keystore/password is committed. RELEASE_CERT_SHA256 is required in CI and must match the certificate used by currently installed builds.
-- In-app update: GitHubReleaseUpdater checks the repository GitHub Releases API on launch and every 6 hours while the app is active. It compares integer versionCode, displays release notes, caches the last-known release metadata, downloads the APK, verifies the GitHub asset SHA-256 digest when supplied, and stages the APK through Android PackageInstaller.
-- User approval: the app never performs a silent install. Android install-source approval and user confirmation remain authoritative; if approval is missing, the updater opens the system setting for this app install-source permission.
-- Failure handling: network failures, API errors/rate limits, missing assets, download errors, and checksum mismatches return an update error state rather than crashing the app. Cached release metadata remains available for offline comparison.
+- Newer-version notice (v2.2.12 and later): the app reads release metadata only (the version number) from the repository GitHub Releases data, compares the integer versionCode and shows a notice. It never downloads, stages or installs an APK. Update opens the exact BSPN page in a compatible installed Netra Ecosystem (Eco) app, or the exact BSPN page on the Eco website. Android install approval happens only when you install from Eco or from the release page yourself.
+- Failure handling: network failures, API errors and rate limits leave the notice hidden instead of crashing the app. Nothing is cached for offline use.
 - Direct repository: prayagi-store-and-services/-Battery-Sentinel-Pro-Netra.
 
 
