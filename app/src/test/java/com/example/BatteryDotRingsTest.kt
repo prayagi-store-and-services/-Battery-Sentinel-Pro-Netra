@@ -25,7 +25,7 @@ class BatteryDotRingsTest {
         assertEquals(0f, ringRadialOffset(41,40,0f),0f)
         assertEquals(1f, ringRadialOffset(41,40,1f),0f)
     }
-    @Test fun settledColorsFollowEachMetricNotChargingStatus() {
+    @Test fun settledMetricColorThresholds() {
         assertNotEquals(ringColor(5f,false),ringColor(80f,false))
         assertNotEquals(ringColor(39.5f,true),ringColor(37f,true))
         assertNotEquals(ringColor(38f,true),ringColor(37f,true))
