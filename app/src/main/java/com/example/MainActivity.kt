@@ -71,8 +71,6 @@ import com.example.ui.theme.NetraEmerald
 import com.example.ui.theme.NetraSurface
 import com.example.ui.theme.StatusRed
 import com.example.viewmodel.NetraViewModel
-import com.example.update.GitHubReleaseUpdater
-import com.example.update.UpdateUiState
 
 open class MainActivity : ComponentActivity() {
 
@@ -132,15 +130,8 @@ open class MainActivity : ComponentActivity() {
         handleAutoUpdateExtra(intent)
     }
 
-    /** Tapping the update notification downloads the newest verified build and starts the install. */
-    private fun handleAutoUpdateExtra(intent: android.content.Intent?) {
-        if (intent?.getBooleanExtra(com.example.update.UpdateCheckWorker.EXTRA_AUTO_UPDATE, false) != true) return
-        intent.removeExtra(com.example.update.UpdateCheckWorker.EXTRA_AUTO_UPDATE)
-        android.widget.Toast.makeText(this, "Downloading the update...", android.widget.Toast.LENGTH_SHORT).show()
-        GitHubReleaseUpdater.shared(this).checkAndInstall { msg ->
-            android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_LONG).show()
-        }
-    }
+    /** Old untrusted updater extras never start a download. */
+    private fun handleAutoUpdateExtra(intent:android.content.Intent?){intent?.removeExtra("netra_auto_update")}
 
     private fun handleNetworkPanelExtra(intent: android.content.Intent?) {
         if (intent?.getBooleanExtra(com.example.service.NetworkSwitchCoordinator.EXTRA_OPEN_NETWORK_PANEL, false) == true) {
@@ -168,14 +159,6 @@ fun MainAppContent(viewModel: NetraViewModel) {
     val canonical by viewModel.canonicalState.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
-    val releaseUpdater = remember(context) { GitHubReleaseUpdater.shared(context) }
-    val updateState by releaseUpdater.state.collectAsStateWithLifecycle()
-
-    LaunchedEffect(releaseUpdater) {
-        releaseUpdater.checkNow()
-        releaseUpdater.startPeriodicChecks(this)
-    }
-
     // Thermal & Low Battery Brightness Protection Lock
     // The protection dim (10%) only applies while the screen is idle. Any touch brings normal brightness back at once,
     // and it comes back for good as soon as the protection ends (charger connected, cooled down, battery recovered).
@@ -204,48 +187,7 @@ fun MainAppContent(viewModel: NetraViewModel) {
     // Permissions are now explained one at a time (Approve / Skip) instead of firing system dialogs blindly.
     com.example.permissions.PermissionOnboardingHost(onChanged = { viewModel.refreshHardwareState() })
 
-    var updateDismissedFor by remember { mutableStateOf(-1L) }
-    val downloadingState = updateState as? UpdateUiState.Downloading
-    // The dialog stays open while the download runs, so the user sees the progress instead of it vanishing.
-    val availableUpdate = (updateState as? UpdateUiState.Available)?.release ?: downloadingState?.release
-    if (availableUpdate != null && (updateDismissedFor != availableUpdate.versionCode || downloadingState != null)) {
-        AlertDialog(
-            onDismissRequest = { updateDismissedFor = availableUpdate.versionCode },
-            title = { Text("Update available: " + availableUpdate.versionName) },
-            text = {
-                Column {
-                    Text("A newer ${com.example.Brand.name} release is available.")
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text("What's new", fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.size(4.dp))
-                    Text(availableUpdate.notes.ifBlank { "Release notes are unavailable." })
-                    downloadingState?.let { ds ->
-                        Spacer(modifier = Modifier.size(8.dp))
-                        androidx.compose.material3.LinearProgressIndicator(progress = { ds.fraction }, modifier = Modifier.fillMaxWidth())
-                        Spacer(modifier = Modifier.size(4.dp))
-                        Text(ds.line.ifBlank { "Starting the download..." }, style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        releaseUpdater.installLatest(onError = { message ->
-                            android.widget.Toast.makeText(context, "Update problem: $message", android.widget.Toast.LENGTH_LONG).show()
-                        })
-                    },
-                    enabled = updateState !is UpdateUiState.Downloading
-                ) {
-                    Text(if (updateState is UpdateUiState.Downloading) "Downloading…" else "Update")
-                }
-            },
-            dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { updateDismissedFor = availableUpdate.versionCode }) {
-                    Text("Later")
-                }
-            }
-        )
-    }
+    com.example.update.AppUpdatePrompt()
 
     // BackHandler: return to Home tab if on secondary tab
     BackHandler(enabled = currentTab != NetraTab.HOME) {
