@@ -79,6 +79,7 @@ class ThermalGuardianPolicy {
     // start "long ago" so the first escalation always speaks (a real timestamp minus Long.MIN overflows)
     private var lastActiveSpeakMs: Long = Long.MIN_VALUE / 2
     private var lastSevereSpeakMs: Long = Long.MIN_VALUE / 2
+    private var lastCriticalSpeakMs: Long = Long.MIN_VALUE / 2
     private var sensorWarned = false
     private var identifyDone = false
 
@@ -174,17 +175,19 @@ class ThermalGuardianPolicy {
                 Zone.CRITICAL -> {
                     if (zone == Zone.COOL || zone == Zone.MONITOR) startEpisode(nowMs, tempC, charging)
                     zone = Zone.CRITICAL
-                    lastSevereSpeakMs = 0L
-                    out.add(Directive.ApplySevereControls)
-                    out.add(Directive.LogEvent("critical_controls_on"))
-                    out.add(
-                        Directive.Notify(
-                            title = "Critical heat${degC(tempC)}",
-                            body = "Stop using the phone and stop charging it in a safe, shaded place. Follow the phone maker's instructions. Never use a fridge or ice. The phone's own thermal safety stays in charge.",
-                            severe = true
+                    // Critical is warn-only: no new controls. Earlier-zone controls stay and are
+                    // lifted by the normal recovery. The 60 s cooldown stops a phone hovering at
+                    // 44.9/45 from repeating the notification and speech on every crossing.
+                    if (nowMs - lastCriticalSpeakMs >= SEVERE_SPEAK_COOLDOWN_MS) {
+                        out.add(
+                            Directive.Notify(
+                                title = "Critical heat${degC(tempC)}",
+                                body = "Stop using the phone and stop charging it in a safe, shaded place. Follow the phone maker's instructions. Never use a fridge or ice. The phone's own thermal safety stays in charge.",
+                                severe = true
+                            )
                         )
-                    )
-                    speakCritical(out, nowMs, tempC, charging, force = true)
+                        speakCritical(out, nowMs, tempC, charging, force = true)
+                    }
                 }
                 else -> { zone = newZone }
             }
@@ -294,8 +297,8 @@ class ThermalGuardianPolicy {
     }
 
     private fun speakCritical(out: ArrayList<Directive>, nowMs: Long, tempC: Float?, charging: Boolean?, force: Boolean) {
-        if (!force && nowMs - lastSevereSpeakMs < SEVERE_SPEAK_COOLDOWN_MS) return
-        lastSevereSpeakMs = nowMs
+        if (!force && nowMs - lastCriticalSpeakMs < SEVERE_SPEAK_COOLDOWN_MS) return
+        lastCriticalSpeakMs = nowMs
         val chargeHint = if (charging == true) " Unplug the charger if you can do so safely." else ""
         out.add(Directive.Speak("Critical heat${deg(tempC)}. Stop using the phone.$chargeHint Put it in a safe, shaded place and follow the phone maker's instructions.", critical = true))
     }
