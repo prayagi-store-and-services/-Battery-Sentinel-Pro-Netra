@@ -139,7 +139,7 @@ class ThermalGuardianPolicy {
                     zone = Zone.LIGHT
                     out.add(Directive.ApplyLightControls)
                     out.add(Directive.LogEvent("light_controls_on"))
-                    out.add(Directive.Speak("Phone warm${deg(tempC)}. Dimming the screen to help it cool.", critical = false))
+                    out.add(Directive.Speak("Phone warm${deg(tempC)}. Display savings require separate consent and Android permission; cooling is not guaranteed.", critical = false))
                 }
                 Zone.ACTIVE -> {
                     if (zone == Zone.COOL || zone == Zone.MONITOR) startEpisode(nowMs, tempC, charging)
@@ -151,7 +151,7 @@ class ThermalGuardianPolicy {
                     out.add(
                         Directive.Notify(
                             title = "Phone hot${degC(tempC)}",
-                            body = "Thermal Guardian is dimming the screen and cutting its own work. Close heavy apps; cooling is not guaranteed.",
+                            body = "Thermal Guardian requested display savings if allowed and is cutting its own work. Close heavy apps; cooling is not guaranteed.",
                             severe = false
                         )
                     )

@@ -38,7 +38,7 @@ object PowerPrefs {
     fun canWrite(c: Context) = Settings.System.canWrite(c)
     fun secureGranted(c: Context) = c.checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
     private fun prefs(c: Context) = c.getSharedPreferences(P, Context.MODE_PRIVATE)
-    fun brightnessOn(c: Context) = canWrite(c) && prefs(c).getBoolean("bright_on", false)
+    fun brightnessOn(c: Context) = c.getSharedPreferences("netra_saving_restore_v1", Context.MODE_PRIVATE).getString("display_owner", null) == "manual"
     fun saverOn(c: Context): Boolean = runCatching { Settings.Global.getInt(c.contentResolver, "low_power", 0) == 1 }.getOrDefault(false)
 
     fun openBatterySaver(c: Context) {
@@ -52,35 +52,13 @@ object PowerPrefs {
         }
     }
 
-    /** Lowers brightness and remembers the exact previous values so turning it off puts them back. */
+    /** Explicit user action, still gated by the separate display consent. */
     fun setBrightness(c: Context, on: Boolean): Boolean {
+        if (!on) return com.example.service.SavingSettings.restoreDisplay(c, "manual")
         if (!canWrite(c)) { openWriteSettings(c); return false }
-        val r = c.contentResolver
-        return runCatching {
-            if (on) {
-                if (!prefs(c).getBoolean("bright_on", false)) {
-                    prefs(c).edit()
-                        .putInt("prev_brightness", Settings.System.getInt(r, Settings.System.SCREEN_BRIGHTNESS, 128))
-                        .putInt("prev_mode", Settings.System.getInt(r, Settings.System.SCREEN_BRIGHTNESS_MODE, 0))
-                        .putBoolean("bright_on", true).apply()
-                }
-                Settings.System.putInt(r, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
-                Settings.System.putInt(r, Settings.System.SCREEN_BRIGHTNESS, SAVING_BRIGHTNESS)
-            } else {
-                val p = prefs(c)
-                Settings.System.putInt(r, Settings.System.SCREEN_BRIGHTNESS, p.getInt("prev_brightness", 128))
-                Settings.System.putInt(r, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC)
-                p.edit().putBoolean("bright_on", false).apply()
-            }
-            true
-        }.getOrDefault(false)
+        return com.example.service.SavingSettings.display(c, "manual", SAVING_BRIGHTNESS)
     }
 
-    /** Only works when the one-time computer permission was granted; returns false otherwise. */
-    fun setSaver(c: Context, on: Boolean): Boolean {
-        if (!secureGranted(c)) return false
-        return runCatching { Settings.Global.putInt(c.contentResolver, "low_power", if (on) 1 else 0) }.getOrDefault(false)
-    }
 }
 
 @Composable
@@ -96,7 +74,7 @@ fun PowerPreferencesBody() {
     val refresh = tick
     if (refresh < 0) return
     val canWrite = PowerPrefs.canWrite(context)
-    val secure = PowerPrefs.secureGranted(context)
+    val secure = false // No privileged Battery Saver path.
     val bright = PowerPrefs.brightnessOn(context)
     val saver = secure && PowerPrefs.saverOn(context)
     val profile = bright && (!secure || saver)
@@ -105,11 +83,11 @@ fun PowerPreferencesBody() {
         PrefRow(
             "Saver profile preference",
             if (!canWrite) "Needs the \"Modify system settings\" permission first. Turn the switch to open that Android screen, allow it, then come back."
-            else "Lowers brightness to a saving level" + (if (secure) " and turns on the system Battery Saver" else "; the system Battery Saver part is Unavailable (see below)") + ". Off turns automatic (adaptive) brightness back on.",
+            else "Lowers brightness to a saving level" + (if (secure) " and turns on the system Battery Saver" else "; the system Battery Saver part is Unavailable (see below)") + ". Off restores your saved brightness and mode.",
             profile, true
         ) { on ->
-            if (on) { PowerPrefs.setBrightness(context, true); if (secure) PowerPrefs.setSaver(context, true) }
-            else { PowerPrefs.setBrightness(context, false); if (secure) PowerPrefs.setSaver(context, false) }
+            if (on) { PowerPrefs.setBrightness(context, true); if (secure) Unit }
+            else { PowerPrefs.setBrightness(context, false); if (secure) Unit }
             tick++
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -121,17 +99,17 @@ fun PowerPreferencesBody() {
                     fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            if (secure) Switch(checked = saver, onCheckedChange = { on -> PowerPrefs.setSaver(context, on); tick++ })
+            if (secure) Switch(checked = saver, onCheckedChange = { on -> Unit; tick++ })
             else androidx.compose.material3.TextButton(onClick = { PowerPrefs.openBatterySaver(context) }) { Text("Open") }
         }
         PrefRow(
             "Active Power Saving",
-            "Forced from 11 PM to 7 AM, and after the screen has been off 15 minutes. Dims, 15 s screen timeout, auto-sync off; restores (brightness back to automatic) at 7 AM or when the screen turns on. Android does not let apps switch off Wi-Fi, Bluetooth, mobile data or the network type, so this lowers drain but cannot promise a fixed figure. If Netra Hub (same phone, offline) says you are driving, this pauses; thermal protection and the charge alarm stay on. " + com.example.service.ActivePowerSaver.statusText(context),
+            "Forced from 11 PM to 7 AM, and after the screen has been off 15 minutes. With separate consent, requests dimming, 15 s screen timeout and auto-sync pause; restores saved settings at 7 AM or when the screen turns on. Android does not let apps switch off Wi-Fi, Bluetooth, mobile data or the network type, so no battery-saving figure is promised. If Netra Hub (same phone, offline) says you are driving, this pauses; thermal protection and the charge alarm stay on. " + com.example.service.ActivePowerSaver.statusText(context),
             com.example.service.ActivePowerSaver.isEnabled(context), canWrite
         ) { on -> com.example.service.ActivePowerSaver.setEnabled(context, on); tick++ }
         PrefRow(
             "Brightness preference",
-            if (canWrite) "Sets brightness to a saving level (" + (PowerPrefs.SAVING_BRIGHTNESS * 100 / 255) + "%). Off turns automatic (adaptive) brightness back on."
+            if (canWrite) "Sets brightness to a saving level (" + (PowerPrefs.SAVING_BRIGHTNESS * 100 / 255) + "%). Off restores your saved brightness and mode."
             else "Needs the \"Modify system settings\" permission. Turn the switch to open that Android screen and allow it.",
             bright, true
         ) { on -> PowerPrefs.setBrightness(context, on); tick++ }

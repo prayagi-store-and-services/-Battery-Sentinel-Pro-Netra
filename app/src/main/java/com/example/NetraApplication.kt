@@ -67,6 +67,8 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         super.onCreate()
         try { Brand.applyLauncherName(this) } catch (_: Throwable) { }
         instance = this
+        // End restore ownership from the previous process before any saver controller runs.
+        com.example.service.SavingSettings.startNewProcessSessions(this)
         // Remove any installer file left from an in-app update (background thread).
         Thread { com.example.update.UpdateFileCleanup.cleanLeftovers(applicationContext) }.start()
         database = NetraDatabase.getDatabase(this)

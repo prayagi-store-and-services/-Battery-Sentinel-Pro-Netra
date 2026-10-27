@@ -120,7 +120,7 @@ fun ThermalGuardianCard(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "Honest limits: the app cannot cool the phone by itself. When hot, it dims the screen (with your permission), cuts its own work, names recently used heavy apps and warns. Cooling is not guaranteed; the phone's own safety stays in charge.",
+            text = "Honest limits: the app cannot cool the phone by itself. When hot, it requests screen dimming only with separate consent and Android permission, cuts its own work, names recently used heavy apps and warns. Cooling is not guaranteed; the phone's own safety stays in charge.",
             fontSize = 10.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

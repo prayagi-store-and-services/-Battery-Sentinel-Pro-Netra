@@ -30,7 +30,7 @@ object SaverEngine {
     const val KEY_LEVEL = "saver_level"
     const val KEY_ACT_DISPLAY = "saver_act_display"
     const val KEY_ACT_KILL = "saver_act_kill"
-    const val KEY_ACT_NOTIF = "saver_act_notif"
+    const val KEY_ACT_NOTIF = "saver_act_notif_consent_v2"
     const val KEY_RESULT = "saver_last_result"
     const val KEY_JOURNEY_UNTIL = "saver_journey_until_ms"
     private const val KEY_ACTIVE = "saver_active"
@@ -79,7 +79,8 @@ object SaverEngine {
         val active = p.getBoolean(KEY_ACTIVE, false)
         val journeyOn = SaverPolicy.journeyActive(p.getLong(KEY_JOURNEY_UNTIL, 0L), System.currentTimeMillis())
         // A display restore that could not run earlier (permission missing) is retried on every reading until it works.
-        if (!active && p.getBoolean(KEY_DISPLAY_CHANGED, false)) restoreDisplay(app)
+        SavingSettings.migrateLegacy(app)
+        if (!active) SavingSettings.restoreDisplay(app, "saver")
         if (!enabled && !active && !journeyOn) return
         val temp = tempC?.takeIf { it > 0f }
         val nowMs = System.currentTimeMillis()
@@ -126,42 +127,24 @@ object SaverEngine {
         if (p.getBoolean(KEY_ACT_DISPLAY, true)) {
             notes.add(applyDisplay(app, p))
         }
-        if (p.getBoolean(KEY_ACT_NOTIF, true)) {
+        if (p.getBoolean(KEY_ACT_NOTIF, false)) {
             notes.add(if (!hasNotificationAccess(app)) "notifications: access not granted"
             else if (SaverNotificationListener.clearAll()) "notifications cleared" else "notifications: listener not connected")
         }
-        if (p.getBoolean(KEY_ACT_KILL, true)) {
-            scope.launch { notes.add(closeBackgroundApps(app, p)); p.edit().putString(KEY_RESULT, (p.getString(KEY_EARLY_NOTE, "") ?: "") + "Last run: " + notes.joinToString("; ")).apply() }
-        } else {
-            p.edit().putString(KEY_RESULT, (p.getString(KEY_EARLY_NOTE, "") ?: "") + "Last run: " + notes.joinToString("; ")).apply()
-        }
+        // Never clear other apps' cached processes automatically. The explicit button owns that action.
+        p.edit().putString(KEY_RESULT, (p.getString(KEY_EARLY_NOTE, "") ?: "") + "Last run: " + notes.joinToString("; ")).apply()
     }
 
     private fun applyDisplay(app: Context, p: android.content.SharedPreferences): String {
-        if (!Settings.System.canWrite(app)) return "display: permission not granted"
-        if (ScreenOffSaver.isApplied(app)) return "display: skipped (charging saver already active)"
-        return try {
-            val cr: ContentResolver = app.contentResolver
-            // A restore point from an earlier run that never got restored must not be overwritten by the throttled values.
-            if (!p.getBoolean(KEY_DISPLAY_CHANGED, false)) p.edit()
-                .putInt(KEY_PREV_BRIGHTNESS, Settings.System.getInt(cr, Settings.System.SCREEN_BRIGHTNESS, -1))
-                .putInt(KEY_PREV_MODE, Settings.System.getInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL))
-                .putInt(KEY_PREV_TIMEOUT, Settings.System.getInt(cr, Settings.System.SCREEN_OFF_TIMEOUT, -1))
-                .putBoolean(KEY_DISPLAY_CHANGED, true)
-                .apply()
-            Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
-            Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS, LOW_BRIGHTNESS)
-            // An early start (temperature rising fast) happens while the phone is in use, so the screen timeout is left alone.
-            if (p.getBoolean(KEY_REASON_RISE, false)) "brightness 10%, screen timeout unchanged"
-            else {
-                Settings.System.putInt(cr, Settings.System.SCREEN_OFF_TIMEOUT, MIN_TIMEOUT_MS)
-                "brightness 10% and 15 s screen timeout"
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "display change failed", e)
-            restoreDisplay(app)
-            "display: failed"
-        }
+        val timeout = if (p.getBoolean(KEY_REASON_RISE, false)) null else MIN_TIMEOUT_MS
+        return if (SavingSettings.display(app, "saver", LOW_BRIGHTNESS, timeout))
+            "brightness $LOW_BRIGHTNESS/255, timeout ${timeout?.let { "${it / 1000} s" } ?: "unchanged"}"
+        else "display: not applied (consent, permission or another saver)"
+    }
+
+    fun clearCachedProcesses(c: Context, onResult: (String) -> Unit) {
+        if (android.os.Build.VERSION.SDK_INT >= 34) { onResult("Unavailable: Android 14+ only allows ending the app's own processes"); return }
+        scope.launch { onResult(closeBackgroundApps(c.applicationContext, prefs(c))) }
     }
 
     private suspend fun closeBackgroundApps(app: Context, p: android.content.SharedPreferences): String {
@@ -224,33 +207,7 @@ object SaverEngine {
         return set
     }
 
-    private fun restoreDisplay(app: Context) {
-        val p = prefs(app)
-        if (!p.getBoolean(KEY_DISPLAY_CHANGED, false)) return
-        if (!Settings.System.canWrite(app)) {
-            // Keep the restore point. Nothing is restored and nothing is claimed.
-            p.edit().putString(KEY_RESULT, "Display not restored yet. Unavailable: allow \"Modify system settings\" for this app so brightness and screen timeout can be put back.").apply()
-            return
-        }
-        try {
-            val cr = app.contentResolver
-            // Only put back what is still the value this app set. If you changed it yourself meanwhile, your choice stays.
-            val ours = Settings.System.getInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, -1) == Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL &&
-                Settings.System.getInt(cr, Settings.System.SCREEN_BRIGHTNESS, -1) == LOW_BRIGHTNESS
-            if (ours) {
-                val b = p.getInt(KEY_PREV_BRIGHTNESS, -1)
-                if (b >= 0) Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS, b)
-                Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, p.getInt(KEY_PREV_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL))
-            }
-            if (Settings.System.getInt(cr, Settings.System.SCREEN_OFF_TIMEOUT, -1) == MIN_TIMEOUT_MS) {
-                val t = p.getInt(KEY_PREV_TIMEOUT, -1)
-                if (t > 0) Settings.System.putInt(cr, Settings.System.SCREEN_OFF_TIMEOUT, t)
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "display restore failed", e)
-        }
-        p.edit().putBoolean(KEY_DISPLAY_CHANGED, false).apply()
-    }
+    private fun restoreDisplay(app: Context) { SavingSettings.restoreDisplay(app, "saver") }
 
     /** Puts everything back. Closed apps and cleared notifications cannot be brought back; display settings are. */
     fun restore(app: Context) {

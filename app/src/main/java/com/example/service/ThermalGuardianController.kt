@@ -223,36 +223,12 @@ class ThermalGuardianController(private val app: Context) {
     }
 
     private fun dimScreen(target: Int) {
-        try {
-            if (!Settings.System.canWrite(app)) {
-                ThermalGuardianLog.addEvent("brightness_skipped_no_write_settings")
-                return
-            }
-            val cr = app.contentResolver
-            if (!brightnessDimmed) {
-                savedBrightness = try { Settings.System.getInt(cr, Settings.System.SCREEN_BRIGHTNESS) } catch (_: Exception) { null }
-                savedBrightnessMode = try { Settings.System.getInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE) } catch (_: Exception) { null }
-                brightnessDimmed = true
-            }
-            Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
-            Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS, target)
-            ThermalGuardianLog.addEvent("brightness_dimmed_to_$target")
-        } catch (_: Exception) {}
+        brightnessDimmed = SavingSettings.display(app, "thermal", target)
+        ThermalGuardianLog.addEvent(if (brightnessDimmed) "brightness_dimmed_to_$target" else "brightness_skipped_consent_permission_or_owner")
     }
 
     private fun restoreBrightnessIfOurs() {
-        if (!brightnessDimmed) return
-        try {
-            if (!Settings.System.canWrite(app)) return
-            val cr = app.contentResolver
-            savedBrightness?.let { Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS, it) }
-            savedBrightnessMode?.let { Settings.System.putInt(cr, Settings.System.SCREEN_BRIGHTNESS_MODE, it) }
-            ThermalGuardianLog.addEvent("brightness_restored")
-        } catch (_: Exception) {} finally {
-            brightnessDimmed = false
-            savedBrightness = null
-            savedBrightnessMode = null
-        }
+        if (SavingSettings.restoreDisplay(app, "thermal")) brightnessDimmed = false
     }
 
     private fun identifyHeavyApps(test: Boolean) {

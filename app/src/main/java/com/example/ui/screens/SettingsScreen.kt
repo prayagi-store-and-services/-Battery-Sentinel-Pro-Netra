@@ -295,6 +295,8 @@ fun SettingsScreen(
             }
         }
 
+        item { com.example.ui.components.SavingConsentCard() }
+
         // 4. Power-Saving Profiles (Smart Adaptive, Balanced, Performance, Endurance, Ultra Saver)
         item {
             val profileState by viewModel.powerProfileState.collectAsStateWithLifecycle()

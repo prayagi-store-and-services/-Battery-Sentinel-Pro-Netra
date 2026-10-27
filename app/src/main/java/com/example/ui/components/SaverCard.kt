@@ -37,8 +37,8 @@ fun SaverCard() {
     var temp by remember { mutableFloatStateOf(prefs.getFloat(SaverEngine.KEY_TEMP, SaverPolicy.DEFAULT_TEMP_C)) }
     var level by remember { mutableIntStateOf(prefs.getInt(SaverEngine.KEY_LEVEL, SaverPolicy.DEFAULT_LEVEL)) }
     var actDisplay by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_ACT_DISPLAY, true)) }
-    var actKill by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_ACT_KILL, true)) }
-    var actNotif by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_ACT_NOTIF, true)) }
+    var cachedResult by remember { mutableStateOf("") }
+    var actNotif by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_ACT_NOTIF, false)) }
     var riseOn by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_RISE_ON, true)) }
     var riseC by remember { mutableFloatStateOf(SaverPolicy.clampRise(prefs.getFloat(SaverEngine.KEY_RISE_C, SaverPolicy.DEFAULT_RISE_C))) }
     var riseMin by remember { mutableFloatStateOf(SaverPolicy.clampRiseMinTemp(prefs.getFloat(SaverEngine.KEY_RISE_MIN_TEMP, SaverPolicy.DEFAULT_RISE_MIN_TEMP_C))) }
@@ -100,15 +100,16 @@ fun SaverCard() {
             Text("Brightness 10% and shortest screen timeout", fontSize = 13.sp)
             Switch(checked = actDisplay, onCheckedChange = { actDisplay = it; prefs.edit().putBoolean(SaverEngine.KEY_ACT_DISPLAY, it).apply() })
         }
+        OutlinedButton(enabled = android.os.Build.VERSION.SDK_INT < 34, onClick = {
+            SaverEngine.clearCachedProcesses(c) { result -> cachedResult = result }
+        }) { Text("Request background-process cleanup") }
+        Text("Manual only. Android 14+ cannot end other apps' processes. On older Android, apps may restart. This does not force-stop apps and makes no battery-saving promise.", fontSize = 11.sp)
+        if (cachedResult.isNotEmpty()) Text(cachedResult, fontSize = 11.sp)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(if (android.os.Build.VERSION.SDK_INT >= 34) "Close background apps (not possible on Android 14 and newer)" else "Close background apps", fontSize = 13.sp)
-            Switch(checked = actKill && android.os.Build.VERSION.SDK_INT < 34, enabled = android.os.Build.VERSION.SDK_INT < 34, onCheckedChange = { actKill = it; prefs.edit().putBoolean(SaverEngine.KEY_ACT_KILL, it).apply() })
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Clear notifications", fontSize = 13.sp)
+            Text("Allow clearing notifications (cannot undo)", fontSize = 13.sp)
             Switch(checked = actNotif, onCheckedChange = { actNotif = it; prefs.edit().putBoolean(SaverEngine.KEY_ACT_NOTIF, it).apply() })
         }
-        Text("On Android 13 and older an app can end the background processes of other apps; on Android 14 and newer it cannot, so that option does nothing there. Music, navigation, calls, messaging, keyboard, launcher and Netra apps are not touched, and some apps restart by themselves, so the saving can be small. The result below shows real free RAM before and after. Closed apps and cleared notifications cannot be brought back; brightness and timeout are restored.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("On Android 13 and older an app can end the background processes of other apps; on Android 14 and newer it cannot, so that option does nothing there. Music, navigation, calls, messaging, keyboard, launcher and Netra apps are not touched, and some apps restart by themselves, so no battery-saving benefit is promised. The result below shows real free RAM before and after. Closed apps and cleared notifications cannot be brought back; brightness and timeout are restored.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (enabled && actDisplay && !canWrite) {
             Text("Modify system settings permission is needed for brightness and timeout. Until it is granted nothing is changed.", fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
             TextButton(onClick = {
@@ -121,7 +122,7 @@ fun SaverCard() {
                 c.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }) { Text("Open notification access") }
             if (restrictedSettingsLikely(c)) {
-                Text("If the switch \"Allow notification access\" is grey or will not turn on: Android 13 and newer block this for apps installed from a file (APK) instead of a store. This app cannot unlock it for you. Easiest fix: install the next update with \"Check for update\" inside this app, because that install is not blocked. Or do this once:", fontSize = 12.sp)
+                Text("If the switch \"Allow notification access\" is grey or will not turn on: Android 13 and newer block this for apps installed from a file (APK) instead of a store. This app cannot unlock it for you. Follow these steps:", fontSize = 12.sp)
                 RestrictedSettingsGuide()
                 TextButton(onClick = {
                     c.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + c.packageName)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
