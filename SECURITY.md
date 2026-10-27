@@ -1,5 +1,9 @@
 # Security Policy
 
+## Thermal Guardian critical warning (v2.2.13)
+
+Adds a warn-only critical heat level at 45 C and lowers the active threshold from 40 C to 39.5 C. No new permission, library, network access or stored data. Not a vulnerability fix.
+
 ## Explicit cache-warning notification destination (v2.2.10)
 
 The cache warning now wraps an explicit, immutable PendingIntent targeting a non-exported internal activity. The activity ignores caller-supplied extras and opens only an explicit component from an exported system-package storage-settings handler. It does not forward arbitrary intents; if no trusted handler exists, it reports that storage settings are unavailable. This addresses the implicit PendingIntent reported by CodeQL (java/android/implicit-pendingintents); alert closure still requires the scanner to confirm the merged code. No new permission, network, library or stored data.

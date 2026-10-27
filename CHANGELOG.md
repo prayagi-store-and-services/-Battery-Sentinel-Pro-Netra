@@ -4,6 +4,11 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Improved: Thermal Guardian now has a critical heat level at 45 C and above. At that level the app only warns you (a notification and a spoken message, at most once a minute) and tells you to stop using and stop charging the phone in a safe, shaded place and to follow the phone maker's instructions. It does not take extra actions and cannot cool the phone. Active control now starts at 39.5 C instead of 40 C (high warning and cutting the app's own work). Missing sensor readings still show Unavailable.
+- Not tested on a physical phone for this release; covered by unit tests and automated builds only.
+
+## [2.2.12]
+
 - Updates now show a metadata-only newer-version notice and open the exact BSPN update page in compatible Netra Ecosystem or the Eco website. BSPN no longer downloads or installs APKs.
 - Retires legacy update jobs, installer notices and cached APKs. Version checks share a six-hour cache and failure backoff; Check again can refresh manually.
 

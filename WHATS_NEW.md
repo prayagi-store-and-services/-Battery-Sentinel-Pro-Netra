@@ -1,2 +1,2 @@
-## 2.2.12
-BSPN no longer downloads or installs APK updates. A newer-version notice opens the exact BSPN update page in compatible Eco or on the Eco website.
+## 2.2.13
+Thermal Guardian adds a critical heat warning at 45 C and above (a warning at most once a minute, no extra actions, no cooling claim). Active control now starts at 39.5 C.
