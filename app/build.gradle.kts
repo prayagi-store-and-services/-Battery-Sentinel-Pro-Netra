@@ -173,6 +173,11 @@ dependencies {
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.mockito)
   testImplementation(libs.robolectric)
+  constraints {
+    testImplementation("com.google.guava:guava:33.7.2-jre") {
+      because("GHSA-xxph-c9ww-hj94: avoid eager allocation during Guava Java deserialization in the Robolectric JVM test classpath")
+    }
+  }
   androidTestImplementation(platform(libs.androidx.compose.bom))
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   androidTestImplementation(libs.androidx.espresso.core)
