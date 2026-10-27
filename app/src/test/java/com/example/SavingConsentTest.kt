@@ -427,7 +427,7 @@ class SavingConsentTest {
         assertFalse(p.getBoolean("screen_off_saver_applied", true))
     }
     @Test fun completionCommitFailureBeforeOrAfterMutationNeverRepeatsAndroidWrites() {
-        for (afterMutation in listOf(false, true)) {
+        for (failAt in listOf(6, 7, 8)) for (afterMutation in listOf(false, true)) {
             reset()
             val base = FakeIo(); base.values[Settings.System.SCREEN_BRIGHTNESS] = 40; base.values[Settings.System.SCREEN_BRIGHTNESS_MODE] = 0
             var writes = 0
@@ -439,7 +439,7 @@ class SavingConsentTest {
             var calls = 0
             SavingSettings.editorCommit = {
                 calls++
-                if (calls == 7) { if (afterMutation) it.commit(); false } else it.commit()
+                if (calls == failAt) { if (afterMutation) it.commit(); false } else it.commit()
             }
             SavingSettings.migrateLegacy(c)
             val first = writes
