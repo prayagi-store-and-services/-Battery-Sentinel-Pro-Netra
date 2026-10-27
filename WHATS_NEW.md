@@ -1,2 +1,5 @@
+## 2.2.14
+Separate default-off display/timeout and global-sync consent, persistent saver restore records, visible retry and undo, honest older-version recovery, and manual-only background-process cleanup requests on supported older Android. Notification clearing requires a new opt-in and cannot be undone. Not physical-phone tested.
+
 ## 2.2.13
 Thermal Guardian adds a critical heat warning at 45 C and above (a warning at most once a minute, no extra actions, no cooling claim). Active control now starts at 39.5 C.

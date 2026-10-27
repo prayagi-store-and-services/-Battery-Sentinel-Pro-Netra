@@ -1,5 +1,9 @@
 # Security Policy
 
+## Saving consent and recovery (v2.2.14)
+
+Display/timeout and global-sync writes now require separate default-off consent. Shared per-setting records and failure recovery prevent competing savers from replacing originals. Other apps' background-process cleanup is manual-only and unavailable on Android 14+. Irreversible notification clearing has a new default-off opt-in. Adds private local consent/restore preferences, no new permission, library, network endpoint or server. This is consent/reliability hardening, not a claimed vulnerability fix. Not tested on a physical phone.
+
 ## Thermal Guardian critical warning (v2.2.13)
 
 Adds a warn-only critical heat level at 45 C and lowers the active threshold from 40 C to 39.5 C. No new permission, library, network access or stored data. Not a vulnerability fix.

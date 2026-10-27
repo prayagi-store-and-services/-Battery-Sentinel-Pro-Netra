@@ -4,6 +4,13 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Automatic brightness/timeout changes and global auto-sync pause now require separate opt-ins, off by default. Modify system settings permission alone does not count as consent.
+- Savers share persistent ownership and restore records. Undo and retry show actual readings and pending failures; later values are compared before restore. Ambiguous older records ask you to check Android settings instead of inventing missing originals.
+- Other apps' background processes are never cleared automatically. An explicit request is available on supported Android 13 and older; Android 14+ cannot end other apps' processes. Notification clearing has a new default-off consent switch and cannot be undone.
+- No physical-phone test for this release. Automated recovery tests and a 360dp local render passed; OEM behavior still needs device validation.
+
+## [2.2.13]
+
 - Improved: Thermal Guardian now has a critical heat level at 45 C and above. At that level the app only warns you (a notification and a spoken message, at most once a minute) and tells you to stop using and stop charging the phone in a safe, shaded place and to follow the phone maker's instructions. It does not take extra actions and cannot cool the phone. Active control now starts at 39.5 C instead of 40 C (high warning and cutting the app's own work). Missing sensor readings still show Unavailable.
 - Not tested on a physical phone for this release; covered by unit tests and automated builds only.
 
