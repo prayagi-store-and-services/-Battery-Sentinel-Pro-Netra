@@ -160,7 +160,7 @@ Key test coverage:
 - Release notes: CHANGELOG.md is the source of the published release body. The release body also records the integer versionCode used by the newer-version notice.
 - Signed APK: release signing reads KEYSTORE_PATH, STORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD from environment variables or local keystore.properties. No keystore/password is committed. RELEASE_CERT_SHA256 is required in CI and must match the certificate used by currently installed builds.
 - Newer-version notice (v2.2.12 and later): the app reads release metadata only (the version number) from the repository GitHub Releases data, compares the integer versionCode and shows a notice. It never downloads, stages or installs an APK. Update opens the exact BSPN page in a compatible installed Netra Ecosystem (Eco) app, or the exact BSPN page on the Eco website. Android install approval happens only when you install from Eco or from the release page yourself.
-- Failure handling: network failures, API errors and rate limits leave the notice hidden instead of crashing the app. Version metadata is cached on the device for six hours (including a short backoff after a failed check) to avoid repeated checks; the app never stores or downloads an APK.
+- Failure handling: network failures, API errors and rate limits leave the notice hidden instead of crashing the app. Version metadata is cached on the device for six hours (a failed check is also not retried for six hours unless you tap Check again) to avoid repeated checks; the app never stores or downloads an APK.
 - Direct repository: prayagi-store-and-services/-Battery-Sentinel-Pro-Netra.
 
 
