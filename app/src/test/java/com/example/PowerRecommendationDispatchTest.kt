@@ -31,6 +31,13 @@ class PowerRecommendationDispatchTest {
         assertNotNull(n)
         assertEquals("Power-saving suggestion: 20%", n.extras.getString("android.title"))
         assertEquals(2, n.actions.size)
+        listOf(n.contentIntent, n.actions[0].actionIntent, n.actions[1].actionIntent).forEach {
+            val pending = shadowOf(it)
+            assertEquals(android.content.ComponentName(context, PowerSettingsActivity::class.java), pending.savedIntent.component)
+            assertTrue(pending.flags and android.app.PendingIntent.FLAG_IMMUTABLE != 0)
+        }
+        assertEquals(android.provider.Settings.ACTION_BATTERY_SAVER_SETTINGS, shadowOf(n.actions[0].actionIntent).savedIntent.action)
+        assertEquals(android.provider.Settings.ACTION_DISPLAY_SETTINGS, shadowOf(n.actions[1].actionIntent).savedIntent.action)
         assertEquals(NotificationManager.IMPORTANCE_LOW, manager.getNotificationChannel(P.CHANNEL).importance)
         assertNull(manager.getNotificationChannel(P.CHANNEL).sound)
         manager.cancel(P.ID)
