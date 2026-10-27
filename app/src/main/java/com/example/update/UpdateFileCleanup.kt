@@ -15,27 +15,6 @@ object UpdateFileCleanup {
         return n
     }
 
-    /** A saved installer for a version newer than the installed one is kept (it was saved in the background); anything else is removed. */
-    fun keep(fileName: String, installedCode: Long, ageMs: Long): Boolean {
-        val code = Regex("battery-sentinel-pro-netra-([0-9]+)\\.apk").matchEntire(fileName)?.groupValues?.get(1)?.toLongOrNull()
-            ?: return ageMs <= 3_600_000L
-        return code > installedCode
-    }
-
-    fun cleanLeftovers(context: Context) {
-        try {
-            val installed = com.example.BuildConfig.VERSION_CODE.toLong()
-            val now = System.currentTimeMillis()
-            File(context.cacheDir, "updates").listFiles()?.forEach { if (!keep(it.name, installed, now - it.lastModified())) it.delete() }
-        } catch (_: Exception) {}
-    }
-
-    /** Called when the app comes back to the front. Removes installer files older than one hour. */
-    fun cleanStale(context: Context) {
-        try {
-            val now = System.currentTimeMillis()
-            val installed = com.example.BuildConfig.VERSION_CODE.toLong()
-            File(context.cacheDir, "updates").listFiles()?.forEach { if (!keep(it.name, installed, now - it.lastModified())) it.delete() }
-        } catch (_: Exception) {}
-    }
+    fun cleanLeftovers(c:Context){File(c.cacheDir,"updates").deleteRecursively()}
+    fun cleanStale(c:Context){cleanLeftovers(c)}
 }
