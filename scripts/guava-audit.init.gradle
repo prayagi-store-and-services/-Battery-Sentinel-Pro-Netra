@@ -1,0 +1,48 @@
+// Runs in each owning project so Gradle's resolution locks are respected.
+gradle.projectsEvaluated {
+    rootProject.allprojects.each { p ->
+        p.tasks.register('verifyGuavaHostScope') {
+            doLast {
+                def failures = []
+                def expected = p.path == ':app' ? [
+                    'kspDebugKotlinProcessorClasspath', 'kspReleaseKotlinProcessorClasspath',
+                    'kspDebugAndroidTestKotlinProcessorClasspath', 'kspDebugUnitTestKotlinProcessorClasspath',
+                    '_agp_internal_debug_kspClasspath', '_agp_internal_release_kspClasspath',
+                    'debugAndroidTestLintChecksClasspath', 'debugUnitTestCompileClasspath', 'debugUnitTestRuntimeClasspath'
+                ] : []
+                def utp = p.configurations.findAll { it.name.startsWith('_internal-unified-test-platform-') }
+                if (p.path == ':app' && utp.size() < 13) failures.add('Expected at least 13 UTP host configurations')
+                expected += utp*.name
+                expected.each { name ->
+                    if (p.configurations.findByName(name)?.canBeResolved != true) failures.add("Missing expected resolvable configuration: ${name}")
+                }
+                def configs = p.configurations.findAll { it.canBeResolved }.collect { [config: it, label: it.name] }
+                if (p == rootProject) {
+                    def cp = p.buildscript.configurations.findByName('classpath')
+                    if (cp == null || !cp.canBeResolved) failures.add('Missing root buildscript classpath')
+                    else configs.add([config: cp, label: 'root-buildscript-classpath'])
+                }
+                configs.each { entry ->
+                    def c = entry.config
+                    def label = entry.label
+                    def graph = c.incoming.resolutionResult
+                    def unresolved = graph.allDependencies.findAll { it instanceof org.gradle.api.artifacts.result.UnresolvedDependencyResult }
+                    if (!unresolved.empty) failures.add("${c.name}: unresolved dependencies: ${unresolved*.attempted}")
+                    def guava = graph.allComponents.findAll { it.moduleVersion?.group == 'com.google.guava' && it.moduleVersion?.name == 'guava' }
+                    println("GUAVA ${p.path} ${label}: ${guava.collect { it.moduleVersion }}")
+                    if ((c.name in expected || label == 'root-buildscript-classpath') && guava.empty) failures.add("Expected Guava edge missing: ${label}")
+                    guava.each { component ->
+                        def version = component.moduleVersion.version
+                        def parts = version.tokenize('-')[0].tokenize('.').collect { it as int }
+                        def safe = parts[0] > 33 || (parts[0] == 33 && (parts[1] > 7 || (parts[1] == 7 && parts.size() > 2 && parts[2] >= 2)))
+                        if (!safe) failures.add("${c.name}: vulnerable Guava ${version}")
+                    }
+                    if (c.name in ['debugRuntimeClasspath', 'releaseRuntimeClasspath', 'debugAndroidTestRuntimeClasspath'] && !guava.empty) {
+                        failures.add("${c.name}: Guava unexpectedly introduced into Android runtime")
+                    }
+                }
+                if (!failures.empty) throw new GradleException(failures.join('\n'))
+            }
+        }
+    }
+}

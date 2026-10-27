@@ -410,3 +410,7 @@ Visible version row now ends with " | Netra Ecosystem" per owner instruction. No
 
 ## Metadata-only Eco updates
 BSPN removes installer permission and PackageInstaller/session receiver/download entry points. Legacy work is inert and updater cache is removed. Version notices read bounded latest.json metadata only and route to exact BSPN Eco page, installed compatible Eco code59+ or a generic HTTPS browser excluding BSPN/Eco. No Play eligibility or warning guarantee.
+
+### Guava alert 55 host-tool follow-up
+
+PR #258 patched the JVM unit-test path but did not cover independent KSP, UTP and lint tool configurations. The follow-up scopes constraints to those host tools and verifies all resolvable app graphs in CI. Android debug/release and instrumentation runtime contain no Guava. This does not claim a shipped APK vulnerability or live alert closure. See docs/GUAVA-DEPENDENCY-EVIDENCE.md.
