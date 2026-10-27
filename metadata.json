@@ -1,6 +1,6 @@
 {
   "name": "Battery Sentinel Pro Netra",
-  "description": "Ultra-low power 24/7 intelligent battery & thermal monitoring sentinel with real-time telemetry, Room historical analytics, and Gemini AI health diagnostics.",
+  "description": "Battery monitoring, protection and power saving: real-time telemetry, heat warnings, charge-target alerts, power-saving tools and local history, within what Android allows and with no guarantee of a set temperature or battery life.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

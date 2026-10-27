@@ -3,9 +3,9 @@
 <head><script src="counter.js"></script>
 <script src="https://prayagi-store-and-services.github.io/netra-eco/geoblock.js"></script>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"><meta property="og:title" content="Battery Sentinel Pro Netra - Monitor, Protect, Save, Stay Cool"><meta property="og:description" content="Battery Sentinel Pro Netra: free Android battery monitor with charging alerts and temperature watch. No account, no ads."><meta property="og:type" content="website"><meta property="og:url" content="https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/">
+<meta name="viewport" content="width=device-width, initial-scale=1"><meta property="og:title" content="Battery Sentinel Pro Netra - Monitor, Protect, Save, Stay Cool"><meta property="og:description" content="Battery Sentinel Pro Netra: free Android battery monitoring, protection and power saving. Heat warnings, charge-target alerts and power-saving tools, within what Android allows. No account, no ads."><meta property="og:type" content="website"><meta property="og:url" content="https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/">
 <title>Netra Battery Sentinel Pro - Monitor, Protect, Save, Stay Cool</title>
-<meta name="description" content="Netra Battery Sentinel Pro watches your phone's battery, charging and temperature using only what Android actually reports. Free APK download.">
+<meta name="description" content="Netra Battery Sentinel Pro monitors your phone's battery, charging and temperature using only what Android reports, and helps protect the battery and save power with heat warnings, charge-target alerts and power-saving tools. It works within what Android allows and does not promise a set temperature or battery life. Free APK download.">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <style>
 :root{--bg:#0b1220;--card:#121c30;--card2:#17233b;--line:#22314f;--text:#e8eefc;--mute:#9db0d3;--accent:#34d399;--accent2:#38bdf8;--warn:#fbbf24}
@@ -102,7 +102,7 @@ section{border-top:1px solid var(--line)}
 <div>
 <h1>Know what your battery is <em>really doing.</em></h1>
 <div class="chips"><span>&#9889; Live charging telemetry</span><span>&#127777; Temperature awareness</span><span>&#128267; Which apps use power</span><span>&#128225; Bluetooth device battery</span></div>
-<p class="lead">Netra Battery Sentinel Pro watches your phone's battery, charging and temperature using only what Android actually reports. If a reading is not available, it says so. No made-up numbers.</p>
+<p class="lead">Netra Battery Sentinel Pro watches your phone's battery, charging and temperature using only what Android actually reports, and helps protect the battery and save power. It warns when the phone gets hot, alerts you at charge targets and offers power-saving tools. It works within what Android allows and does not promise a set temperature or battery life. If a reading is not available, it says so. No made-up numbers.</p>
 <a class="btn" id="dl-main" href="https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/latest/download/app-release.apk">Download latest APK</a>
 <a class="btn alt" href="#features">See what it does</a>
 <div class="stats"><div><b id="visits2">...</b>visits</div><div><b id="dls">...</b>downloads (all releases, from GitHub)</div></div>
@@ -135,7 +135,7 @@ section{border-top:1px solid var(--line)}
 <div class="card"><h3>Voice alerts with quiet hours</h3><p>Spoken alerts for charger and battery events. Routine alerts stay quiet from 11 PM to 6 AM; critical heat alerts still come through. Your music is paused for an alert and resumed only if the app paused it.</p><span class="tag ok">Available</span></div>
 <div class="card"><h3>Which apps use power</h3><p>Per-app usage from Android's Usage Access, so you can see what is draining your phone.</p><span class="tag ok">Available</span></div>
 <div class="card"><h3>Reports you can keep</h3><p>Export recorded readings and charging sessions to PDF or CSV. Values the phone cannot measure are marked unavailable in the report.</p><span class="tag ok">Available</span></div>
-<div class="card"><h3>Safe updates</h3><p>The app checks GitHub Releases for new versions, checks the file's checksum and signature, and only installs after you confirm.</p><span class="tag ok">Available</span></div>
+<div class="card"><h3>Newer-version notice</h3><p>The app reads GitHub release information (the version number only) and tells you when a newer version exists. Update opens the exact BSPN page in Netra Ecosystem or on the Eco website. The app itself does not download or install APKs.</p><span class="tag ok">Available</span></div>
 </div></div></section>
 
 <section id="screens"><div class="wrap"><h2>The app, as it looks</h2>
@@ -194,7 +194,7 @@ section{border-top:1px solid var(--line)}
 <div class="grid">
 <div class="card"><h3>Feedback and crash reports inside the app</h3><p>Send a suggestion or complaint from Settings: the feedback form sends only when you press Send, and you see exactly what goes. A crash report is sent automatically after a crash and contains only the phone model, Android version, app version and stack trace.</p><span class="tag ok">Released</span></div>
 <div class="card"><h3>Charging + screen-off savings</h3><p>Optional, off by default: lowers brightness and pauses auto-sync while charging with the screen off, then restores them (v1.1.3).</p><span class="tag ok">Released</span></div>
-<div class="card"><h3>New-version notification</h3><p>A daily check tells you when a newer version exists. Nothing is downloaded or installed automatically (v1.1.4).</p><span class="tag ok">Released</span></div>
+<div class="card"><h3>New-version notification</h3><p>A check tells you when a newer version exists. From v2.2.12 the notice only opens the exact BSPN page in Netra Ecosystem or the Eco website; the app does not download or install anything.</p><span class="tag ok">Released</span></div>
 </div>
 <h3 style="margin-top:28px">Planned</h3>
 <div class="grid">
@@ -202,7 +202,6 @@ section{border-top:1px solid var(--line)}
 <div class="card"><h3>Festival banner and theme in the app</h3><p>The same festival, Independence Day and condolence banner as this website, with matching colours, working offline.</p><span class="tag plan">Target: 7 Nov 2026</span></div>
 <div class="card"><h3>Seasonal app icon</h3><p>An optional icon that changes with major festivals. Off by default.</p><span class="tag plan">Target: 7 Nov 2026</span></div>
 <div class="card"><h3>Active users, anonymous</h3><p>An opt-in, anonymous count of active installs and app versions, shown here. No personal data. Uninstalls are not tracked.</p><span class="tag plan">Target: 22 Nov 2026</span></div>
-<div class="card"><h3>Force update after 5 versions</h3><p>If an install falls 5 or more versions behind the latest release, the app asks for the update before it can be used again, for security.</p><span class="tag plan">Target: 15 Nov 2026</span></div>
 <div class="card"><h3>Microphone privacy</h3><p>An optional switch that mutes the microphone when the screen is off, and never touches calls or your own manual mute. It tells you if the phone does not allow it.</p><span class="tag plan">Target: 29 Nov 2026</span></div>
 <div class="card"><h3>Privacy monitor</h3><p>An alert when some app is using the microphone or camera. Android does not tell normal apps which app it is, so the app can only say that something is in use and point to Android's Privacy Dashboard.</p><span class="tag plan">Target: 6 Dec 2026</span></div>
 <div class="card"><h3>Regional-language voice announcements</h3><p>English stays the default. Later, an option for Indian regional languages for the spoken battery announcements, chosen by region, with a little local flavour.</p><span class="tag plan">Target: 20 Dec 2026</span></div>
