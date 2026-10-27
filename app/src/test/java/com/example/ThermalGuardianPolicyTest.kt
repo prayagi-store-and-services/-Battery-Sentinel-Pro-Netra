@@ -216,4 +216,43 @@ class ThermalGuardianPolicyTest {
         assertTrue(d.any { it is ThermalGuardianPolicy.Directive.RestoreControls })
         assertFalse(p.controlsApplied)
     }
+
+    @Test
+    fun `spec band edges 39_4 light, 39_5 active, 44_9 severe, 45 critical`() {
+        val p = ThermalGuardianPolicy()
+        assertEquals(ThermalGuardianPolicy.Zone.MONITOR, p.zoneFor(37.9f))
+        assertEquals(ThermalGuardianPolicy.Zone.LIGHT, p.zoneFor(38f))
+        assertEquals(ThermalGuardianPolicy.Zone.LIGHT, p.zoneFor(39.4f))
+        assertEquals(ThermalGuardianPolicy.Zone.ACTIVE, p.zoneFor(39.5f))
+        assertEquals(ThermalGuardianPolicy.Zone.ACTIVE, p.zoneFor(41.9f))
+        assertEquals(ThermalGuardianPolicy.Zone.SEVERE, p.zoneFor(42f))
+        assertEquals(ThermalGuardianPolicy.Zone.SEVERE, p.zoneFor(44.9f))
+        assertEquals(ThermalGuardianPolicy.Zone.CRITICAL, p.zoneFor(45f))
+    }
+
+    @Test
+    fun `critical zone warns once, never claims cooling, and recovers only when cool`() {
+        val p = ThermalGuardianPolicy()
+        val d = p.onSample(0L, 45.5f, true)
+        assertEquals(ThermalGuardianPolicy.Zone.CRITICAL, p.zone)
+        val n = d.filterIsInstance<ThermalGuardianPolicy.Directive.Notify>().single()
+        assertTrue(n.severe)
+        assertTrue(n.body.contains("stop charging", ignoreCase = true))
+        val say = d.filterIsInstance<ThermalGuardianPolicy.Directive.Speak>().single()
+        assertTrue(say.critical)
+        val d2 = p.onSample(5_000L, 45.6f, true)
+        assertTrue(d2.none { it is ThermalGuardianPolicy.Directive.Speak })
+        assertTrue(p.onSample(70_000L, 44f, true).none { it is ThermalGuardianPolicy.Directive.RestoreControls })
+        p.onSample(100_000L, 36f, false)
+        val d3 = p.onSample(170_000L, 36f, false)
+        assertTrue(d3.any { it is ThermalGuardianPolicy.Directive.RestoreControls })
+    }
+
+    @Test
+    fun `no sensor never reports a hot zone or notification`() {
+        val p = ThermalGuardianPolicy()
+        val d = p.onSample(0L, null, null)
+        assertEquals(ThermalGuardianPolicy.Zone.COOL, p.zone)
+        assertTrue(d.none { it is ThermalGuardianPolicy.Directive.Notify })
+    }
 }
