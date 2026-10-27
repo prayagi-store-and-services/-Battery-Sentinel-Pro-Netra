@@ -10,13 +10,14 @@ package com.example.service
  * never overridden, cooling is never guaranteed, and every action the Guardian takes is
  * recorded and lifted again only when it was the Guardian itself that applied it.
  *
- * Thresholds (starter values, not universal): 35-37 monitor, 38-39 light control,
- * 40 active control, 42+ severe. Controls lift only after the phone stays below 37 for
+ * Thresholds (battery-temperature sensor only, starter values, not universal): 35-37 monitor,
+ * 38-39.4 light control, 39.5-41.9 active control (high warning, cut Netra's own work),
+ * 42-44.9 severe, 45+ critical (stop use and charging in a safe place, follow the phone maker). Controls lift only after the phone stays below 37 for
  * a sustained hold, so the screen does not flicker between bright and dim.
  */
 class ThermalGuardianPolicy {
 
-    enum class Zone { COOL, MONITOR, LIGHT, ACTIVE, SEVERE }
+    enum class Zone { COOL, MONITOR, LIGHT, ACTIVE, SEVERE, CRITICAL }
     enum class Phase { IDLE, OBSERVE, IDENTIFY, TREND, RECOVERING }
 
     sealed class Directive {
@@ -44,8 +45,9 @@ class ThermalGuardianPolicy {
     companion object {
         const val MONITOR_C = 35f
         const val LIGHT_C = 38f
-        const val ACTIVE_C = 40f
+        const val ACTIVE_C = 39.5f
         const val SEVERE_C = 42f
+        const val CRITICAL_C = 45f
         const val RECOVER_C = 37f
         const val RECOVER_HOLD_MS = 60_000L
         const val OBSERVE_MS = 30_000L            // phase A: read only
@@ -81,6 +83,7 @@ class ThermalGuardianPolicy {
     private var identifyDone = false
 
     fun zoneFor(tempC: Float): Zone = when {
+        tempC >= CRITICAL_C -> Zone.CRITICAL
         tempC >= SEVERE_C -> Zone.SEVERE
         tempC >= ACTIVE_C -> Zone.ACTIVE
         tempC >= LIGHT_C -> Zone.LIGHT
@@ -94,6 +97,7 @@ class ThermalGuardianPolicy {
         Zone.LIGHT -> GAP_LIGHT_MS
         Zone.ACTIVE -> GAP_ACTIVE_MS
         Zone.SEVERE -> GAP_SEVERE_MS
+        Zone.CRITICAL -> GAP_SEVERE_MS
     }
 
     /**
@@ -167,6 +171,21 @@ class ThermalGuardianPolicy {
                     )
                     speakSevere(out, nowMs, tempC, charging, force = true)
                 }
+                Zone.CRITICAL -> {
+                    if (zone == Zone.COOL || zone == Zone.MONITOR) startEpisode(nowMs, tempC, charging)
+                    zone = Zone.CRITICAL
+                    lastSevereSpeakMs = 0L
+                    out.add(Directive.ApplySevereControls)
+                    out.add(Directive.LogEvent("critical_controls_on"))
+                    out.add(
+                        Directive.Notify(
+                            title = "Critical heat${degC(tempC)}",
+                            body = "Stop using the phone and stop charging it in a safe, shaded place. Follow the phone maker's instructions. Never use a fridge or ice. The phone's own thermal safety stays in charge.",
+                            severe = true
+                        )
+                    )
+                    speakCritical(out, nowMs, tempC, charging, force = true)
+                }
                 else -> { zone = newZone }
             }
         } else {
@@ -174,7 +193,7 @@ class ThermalGuardianPolicy {
         }
 
         // --- phases inside an active/severe episode ---
-        if (zone == Zone.ACTIVE || zone == Zone.SEVERE) {
+        if (zone == Zone.ACTIVE || zone == Zone.SEVERE || zone == Zone.CRITICAL) {
             val elapsed = nowMs - episodeStartMs
             when {
                 phase == Phase.OBSERVE && elapsed >= OBSERVE_MS -> {
@@ -198,6 +217,7 @@ class ThermalGuardianPolicy {
             }
             if (zone == Zone.ACTIVE) speakActive(out, nowMs, tempC, charging)
             if (zone == Zone.SEVERE) speakSevere(out, nowMs, tempC, charging, force = false)
+            if (zone == Zone.CRITICAL) speakCritical(out, nowMs, tempC, charging, force = false)
         }
 
         // --- recovery (phase D), sustained below 37 ---
@@ -273,6 +293,13 @@ class ThermalGuardianPolicy {
         out.add(Directive.Speak("Overheating${deg(tempC)}. Stop heavy use now.$chargeHint Never use a fridge or ice.", critical = true))
     }
 
+    private fun speakCritical(out: ArrayList<Directive>, nowMs: Long, tempC: Float?, charging: Boolean?, force: Boolean) {
+        if (!force && nowMs - lastSevereSpeakMs < SEVERE_SPEAK_COOLDOWN_MS) return
+        lastSevereSpeakMs = nowMs
+        val chargeHint = if (charging == true) " Unplug the charger if you can do so safely." else ""
+        out.add(Directive.Speak("Critical heat${deg(tempC)}. Stop using the phone.$chargeHint Put it in a safe, shaded place and follow the phone maker's instructions.", critical = true))
+    }
+
     /**
      * User-triggered TEST: runs the real detection path once against the real current
      * readings and reports exactly what it found. It never dims the screen in test mode.
@@ -291,6 +318,7 @@ class ThermalGuardianPolicy {
             Zone.LIGHT -> "light control"
             Zone.ACTIVE -> "active control"
             Zone.SEVERE -> "severe"
+            Zone.CRITICAL -> "critical"
         }
         out.add(
             Directive.Speak(
