@@ -30,6 +30,11 @@ jobs:
           gradle --no-daemon :app:dependencies --configuration debugUnitTestRuntimeClasspath > dependency-evidence/unit-test-runtime.txt
           gradle --no-daemon buildEnvironment :app:buildEnvironment > dependency-evidence/build-environment.txt
           printf '%s\n' "$GITHUB_SHA" > dependency-evidence/commit.txt
+      - name: Verify every resolvable host configuration and Android runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon --no-configuration-cache :verifyGuavaHostScope :app:verifyGuavaHostScope -I scripts/guava-audit.init.gradle | tee dependency-evidence/all-configurations.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
