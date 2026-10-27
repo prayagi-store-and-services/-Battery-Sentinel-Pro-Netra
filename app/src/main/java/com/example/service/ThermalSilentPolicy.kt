@@ -1,9 +1,6 @@
 package com.example.service
 
-/**
- * Thermal Guardian runs on its own and does not announce itself. Automatic runs never speak
- * and never post a notification; only a run the user started with the TEST button may speak.
- */
+/** Automatic controls stay silent below critical heat. Critical heat is a safety warning. */
 object ThermalSilentPolicy {
-    fun mayAnnounce(userTest: Boolean): Boolean = userTest
+    fun mayAnnounce(userTest: Boolean, criticalHeat: Boolean = false): Boolean = userTest || criticalHeat
 }
