@@ -1,3 +1,6 @@
+## 2.2.16
+Three 100-dot rings for battery, temperature and supported health percent. Brief blue join/leave motion follows real sample changes, with idle/background/screen-off/power-saving gates. Unsupported health stays Unavailable. Triple rings default on dashboard and charging screen; labelled legacy styles and their colour controls remain available by explicit choice. Not physical-phone tested.
+
 ## 2.2.15
 Configurable, silent battery-level recommendations at 50/30/20/10/5%. Android settings shortcuts only, with persistent deduplication and recommendation dispatch after, and isolated from, thermal safety handling. Not physical-phone tested.
 

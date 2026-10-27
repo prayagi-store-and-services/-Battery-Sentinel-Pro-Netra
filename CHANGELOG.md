@@ -4,6 +4,14 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Battery display now defaults to three concentric rings with 100 fixed dots each: outer battery percent, middle temperature (one degree C per dot), and inner battery health percent. Unsupported health percent stays Unavailable, never a converted Android health label.
+- Real integer sample changes briefly show blue dots moving inward for rises and outward for falls, then settle to the metric colour. No idle charging loop; motion stops offscreen, in the background, with the screen off, on stale readings or in Android power saving.
+- Dashboard replaces its old arc gauge with rings, with no legacy opt-out there. Charging screen shares the rings. Charging screen keeps clock, details, brightness, close/hold behavior and working legacy gauge/color choices. Triple rings become the default; the charging-screen style picker alone offers labelled legacy styles by explicit choice. Existing legacy indices are initially retained, but a later settings save can overwrite that shadowed value. Triple-ring colours follow battery and thermal levels; the legacy colour picker does not override them.
+- Temperature uses an unconfirmed implementation assumption of one degree C per dot. Developer colour thresholds are battery red <=15%, amber <=30%, and temperature amber >=38 C, red >=39.5 C. These are display thresholds, not medical or OEM safety guarantees.
+- No new permissions, dependency, network endpoint or health estimate. Not tested on a physical phone. Automated rendering and motion/stop-gate tests use local fixtures, not live-device measurements.
+
+## [2.2.15]
+
 - Adds configurable, silent power-saving suggestions at 50%, 30%, 20%, 10% and 5% while on battery. Buttons open Android Battery Saver and display settings; no setting changes automatically.
 - Suggestions retain deduplication across restart. Skipped levels show only the most urgent suggestion; a fresh charger connection or a five-point rise rearms eligible levels. Suggestions run after, and are isolated from, thermal safety handling.
 - Not tested on a physical phone. Automated rules, dispatch, recovery and 360dp layout checks cover this release; OEM behavior and power impact still need device validation.

@@ -1,21 +1,18 @@
 package com.example.ui.components
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.SystemClock
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,13 +22,14 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material3.Button
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -255,7 +253,20 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true, pre
                 ChargingClockText(st.clock, SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(now)))
                 Text(SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date(now)), color = Color(0xFF9E9E9E), fontSize = 16.sp, maxLines = 1)
             }
-            ChargingGauge(st.gauge, pct, pctColor, st.gaugeBrightness, if (pct != null) "${pct.toInt()}%" else (u?.percentage ?: "Calculating..."), label)
+            val canonical by com.example.NetraApplication.instance.centralDataCenter.centralState.collectAsState()
+            if (st.gauge == 6) androidx.compose.material3.MaterialTheme(colorScheme = androidx.compose.material3.darkColorScheme()) {
+                BatteryDotRings(canonical.batteryLevel, canonical.temperatureCelsius, canonical.isDataFresh &&
+                    canonical.fieldStates.levelStatus == com.example.model.FieldStatus.LIVE &&
+                    canonical.fieldStates.tempStatus == com.example.model.FieldStatus.LIVE,
+                    canonical.isScreenOn, Modifier.widthIn(max = 300.dp).fillMaxWidth().alpha(st.gaugeBrightness))
+            } else {
+                ChargingGauge(st.gauge, pct, pctColor, st.gaugeBrightness, u?.percentage ?: "Unavailable", label)
+            }
+            if (st.gauge == 6) Text(label, color = pctColor, fontSize = 13.sp)
+            if (!canonical.isDataFresh || canonical.fieldStates.levelStatus != com.example.model.FieldStatus.LIVE ||
+                canonical.fieldStates.tempStatus != com.example.model.FieldStatus.LIVE) {
+                Text("Last known readings or unavailable. Not live measurements.", color = Color.LightGray, fontSize = 11.sp)
+            }
             val entries = ChargingStyleSettings.ITEMS.filter { it.first in st.items }.map { (key, name) ->
                 when (key) {
                     "temp" -> name to (u?.temperature ?: "Unavailable")

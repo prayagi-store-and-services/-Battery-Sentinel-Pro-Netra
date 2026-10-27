@@ -1,5 +1,9 @@
 # Security Policy
 
+## Triple dot rings (v2.2.16)
+
+Presentation and finite-animation change only, not a vulnerability fix. No new permission, library, network endpoint or health estimate. Screen/power state receivers are registered only while the component is composed and removed on disposal. The charging-screen style choice adds one private local preference flag; existing style values are kept. No device-testing claim.
+
 ## Power-saving recommendations and JVM test dependency (v2.2.15)
 
 Recommendations use a dedicated silent notification channel and immutable system-settings PendingIntents. They do not change system settings, add permissions, send network data, or alter thermal safety handling. Per-level settings and deduplication are stored privately. The earlier PR #258 added a Guava 33.7.2 JVM test-only constraint for GHSA-xxph-c9ww-hj94. It does not ship in the APK; releaseRuntimeClasspath contained no Guava. The GitHub alert is not claimed closed until GitHub reports it closed. Physical-device behavior is untested.

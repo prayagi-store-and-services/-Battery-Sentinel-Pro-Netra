@@ -49,7 +49,7 @@ import kotlin.math.sin
 /** Saved choices for the charging screen look. Everything is stored on this phone only. */
 data class ChargingStyleSettings(
     val clock: Int = 3,
-    val gauge: Int = 0,
+    val gauge: Int = 6,
     val details: Int = 0,
     val color: Int = 0,
     val gaugeBrightness: Float = 1f,
@@ -60,7 +60,7 @@ data class ChargingStyleSettings(
     companion object {
         const val PREFS = "netra_charging_style"
         val CLOCKS = listOf("Off", "Light", "Regular", "Bold", "Outline", "Mono")
-        val GAUGES = listOf("Ring", "Dotted ring", "Arc", "Bars", "Battery bar", "Number only")
+        val GAUGES = listOf("Legacy ring", "Legacy dotted ring", "Legacy arc", "Legacy bars", "Legacy battery bar", "Legacy number only", "Triple dot rings")
         val DETAILS = listOf("Plain", "Boxed", "One line")
         val COLORS = listOf(
             "Auto" to Color.Unspecified, "Red" to Color(0xFFFF1744), "Pink" to Color(0xFFE91E63), "Purple" to Color(0xFF9C27B0),
@@ -74,7 +74,9 @@ data class ChargingStyleSettings(
             val items = p.getStringSet("items", null)?.toSet() ?: d.items
             return ChargingStyleSettings(
                 clock = p.getInt("clock", d.clock).coerceIn(0, CLOCKS.size - 1),
-                gauge = p.getInt("gauge", d.gauge).coerceIn(0, GAUGES.size - 1),
+                // Before triple rings, gauge 0 was also the implicit default. Keep its stored
+                // value but require an explicit legacy choice in the new UI.
+                gauge = if (p.getBoolean("triple_rings_style_chosen", false)) p.getInt("gauge", d.gauge).coerceIn(0, GAUGES.size - 1) else d.gauge,
                 details = p.getInt("details", d.details).coerceIn(0, DETAILS.size - 1),
                 color = p.getInt("color", d.color).coerceIn(0, COLORS.size - 1),
                 gaugeBrightness = p.getFloat("gaugeBrightness", d.gaugeBrightness).coerceIn(0.3f, 1f),
@@ -86,6 +88,7 @@ data class ChargingStyleSettings(
 
         fun save(c: Context, s: ChargingStyleSettings) {
             c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putBoolean("triple_rings_style_chosen", true)
                 .putInt("clock", s.clock).putInt("gauge", s.gauge).putInt("details", s.details).putInt("color", s.color)
                 .putFloat("gaugeBrightness", s.gaugeBrightness).putInt("dimPercent", s.dimPercent).putInt("activePercent", s.activePercent)
                 .putStringSet("items", s.items).apply()
@@ -205,6 +208,7 @@ fun ChargingDesignSettings() {
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             ChargingStyleSettings.GAUGES.forEachIndexed { i, n -> FilterChip(selected = s.gauge == i, onClick = { update(s.copy(gauge = i)) }, label = { Text(n, maxLines = 1) }) }
         }
+        Text("Triple rings are the default. A saved legacy style remains available by explicit choice. Ring colours follow battery level and temperature; health % is unavailable without supported data.", fontSize = 11.sp)
         Text("Battery details style", fontSize = 13.sp, fontWeight = FontWeight.Bold)
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             ChargingStyleSettings.DETAILS.forEachIndexed { i, n -> FilterChip(selected = s.details == i, onClick = { update(s.copy(details = i)) }, label = { Text(n, maxLines = 1) }) }
@@ -216,7 +220,7 @@ fun ChargingDesignSettings() {
                 Text(name, fontSize = 14.sp)
             }
         }
-        Text("Gauge colour (Auto follows the battery level)", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text("Legacy gauge colour (triple rings use metric colours)", fontSize = 13.sp, fontWeight = FontWeight.Bold)
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             ChargingStyleSettings.COLORS.forEachIndexed { i, (n, col) ->
                 val swatch = if (col == Color.Unspecified) Color(0xFF8BC34A) else col
