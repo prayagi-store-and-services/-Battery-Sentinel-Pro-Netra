@@ -35,10 +35,9 @@ import kotlinx.coroutines.launch
  *    identify window, and log writes happen only at phase changes;
  *  - names apps recently in the foreground (Usage Access) as suspects - an
  *    estimate, never per-app heat, because Android reports none;
- *  - acts silently: the controls above run by themselves at the threshold, with no
- *    spoken line and no notification (see [ThermalSilentPolicy]); every action is still
- *    written to the thermal log. Only the user-tapped TEST button speaks, through the
- *    existing AnnouncementEngine (transient audio focus, watchdog);
+ *  - controls below critical heat act silently. At critical heat the policy's bounded
+ *    warning reaches notifications and the existing AnnouncementEngine; TEST can speak
+ *    at other levels too. Every control is recorded in the thermal log;
  *  - lifts every control it applied once the phone stays below 37 C for a minute.
  *
  * What it never does: force-stop other apps, change CPU frequency, toggle Battery
@@ -178,7 +177,7 @@ class ThermalGuardianController(private val app: Context) {
         for (d in directives) {
             when (d) {
                 is ThermalGuardianPolicy.Directive.SampleGap -> gap = d.gapMs
-                is ThermalGuardianPolicy.Directive.Speak -> if (ThermalSilentPolicy.mayAnnounce(test)) speak(d.text, d.critical)
+                is ThermalGuardianPolicy.Directive.Speak -> dispatchWarning(d, test, policy.status().zone, ::speak, ::postWarning)
                 is ThermalGuardianPolicy.Directive.LogEvent -> {
                     if (test) testEvents.add(d.event) else {
                         ThermalGuardianLog.addEvent(d.event)
@@ -201,7 +200,7 @@ class ThermalGuardianController(private val app: Context) {
                 is ThermalGuardianPolicy.Directive.ApplySevereControls -> if (!test) dimScreen(ACTIVE_BRIGHTNESS)
                 is ThermalGuardianPolicy.Directive.RestoreControls -> if (!test) restoreBrightnessIfOurs()
                 is ThermalGuardianPolicy.Directive.IdentifyHeavyApps -> identifyHeavyApps(test)
-                is ThermalGuardianPolicy.Directive.Notify -> if (ThermalSilentPolicy.mayAnnounce(test)) postWarning(d.title, d.body, d.severe)
+                is ThermalGuardianPolicy.Directive.Notify -> dispatchWarning(d, test, policy.status().zone, ::speak, ::postWarning)
                 is ThermalGuardianPolicy.Directive.ClearNotification -> clearWarning()
             }
         }
@@ -305,6 +304,22 @@ class ThermalGuardianController(private val app: Context) {
     }
 
     companion object {
+        /** The real controller output boundary, shared by live execution and regression tests. */
+        internal fun dispatchWarning(
+            directive: ThermalGuardianPolicy.Directive,
+            userTest: Boolean,
+            zone: ThermalGuardianPolicy.Zone,
+            speak: (String, Boolean) -> Unit,
+            notify: (String, String, Boolean) -> Unit
+        ) {
+            if (!ThermalSilentPolicy.mayAnnounce(userTest, zone == ThermalGuardianPolicy.Zone.CRITICAL)) return
+            when (directive) {
+                is ThermalGuardianPolicy.Directive.Speak -> speak(directive.text, directive.critical)
+                is ThermalGuardianPolicy.Directive.Notify -> notify(directive.title, directive.body, directive.severe)
+                else -> Unit
+            }
+        }
+
         private const val CHANNEL_ID = "thermal_guardian_channel"
         private const val NOTIF_ID = 42042
         private const val LIGHT_BRIGHTNESS = 102   // ~40%
