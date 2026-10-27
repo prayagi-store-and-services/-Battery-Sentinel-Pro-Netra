@@ -188,3 +188,13 @@ dependencies {
   "ksp"(libs.androidx.room.compiler)
   "ksp"(libs.moshi.kotlin.codegen)
 }
+
+// Host-only tools have independent configurations, outside the root plugin classpath.
+// Constraints upgrade an existing Guava edge without adding it to any APK runtime.
+configurations.configureEach {
+    if (name == "ksp" || name.startsWith("_internal-unified-test-platform-") || name.endsWith("LintChecksClasspath")) {
+        project.dependencies.constraints.add(name, "com.google.guava:guava:33.7.2-jre") {
+            because("GHSA-xxph-c9ww-hj94: patch Guava in host KSP, UTP and lint tools")
+        }
+    }
+}
