@@ -18,6 +18,11 @@ interface BatteryDao {
     @Query("SELECT * FROM battery_telemetry WHERE timestamp >= :sinceTimestamp ORDER BY timestamp ASC")
     fun getRecordsSince(sinceTimestamp: Long): Flow<List<BatteryRecord>>
 
+    // One bounded row per completed UTC day. These are stored observations and may
+    // include older retained readings; never label them measured exposure/capacity.
+    @Query("SELECT timestamp / 86400000 AS utcDay, COUNT(*) AS sampleCount, AVG(temperature) AS meanTemperatureC FROM battery_telemetry WHERE timestamp >= :sinceTimestamp AND timestamp < :beforeTimestamp AND temperature >= -50 AND temperature <= 100 AND level >= 0 AND level <= 100 GROUP BY timestamp / 86400000 ORDER BY utcDay")
+    suspend fun getDailyObservations(sinceTimestamp: Long, beforeTimestamp: Long): List<com.example.ai.DailyBatteryObservation>
+
     @Query("SELECT * FROM battery_telemetry ORDER BY timestamp DESC LIMIT 1")
     fun getLatestRecord(): Flow<BatteryRecord?>
 

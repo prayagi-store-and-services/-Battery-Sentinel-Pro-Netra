@@ -193,6 +193,8 @@ fun GeminiHealthInsightsContent(
 
         Spacer(modifier = Modifier.height(14.dp))
 
+        RecordedObservationTrends(report.observationComparisons)
+
         // Conversational Longevity Blueprint (Firebase AI SDK output)
         if (isLongevityLoading) {
             Row(
@@ -441,5 +443,21 @@ private fun SuggestionChip(text: String, onClick: () -> Unit, modifier: Modifier
         contentAlignment = Alignment.Center
     ) {
         Text(text = text, fontSize = 10.sp, color = NetraCyan, fontWeight = FontWeight.Medium)
+    }
+}
+
+
+@Composable
+internal fun RecordedObservationTrends(comparisons: List<com.example.ai.ObservationComparison>) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Recorded temperature comparisons", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        comparisons.forEach { comparison ->
+            Text(comparison.label + ": " + comparison.coverageLabel, fontSize = 12.sp)
+            Text(comparison.summary, fontSize = 11.sp)
+            Text(comparison.evidence, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (comparisons.isEmpty()) Text("Unavailable: comparison history has not loaded.", fontSize = 11.sp)
+        Text("Stored samples may include last-known readings. Days are equally weighted; sampling, device use and missing days can bias comparisons. This is not heat duration, capacity, degradation, lifespan or a safety diagnosis. Windows use completed UTC days and refresh on screen load. UTC midnight is 05:30 in India, not local midnight.", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Coverage gates are developer rules: each counted day needs at least 6 stored samples; weekly needs 5 of 7 days in each window; monthly needs 21 of 30. No statistical confidence percentage is claimed.", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

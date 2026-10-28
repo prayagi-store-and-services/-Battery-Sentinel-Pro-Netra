@@ -4,6 +4,13 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Adds weekly/monthly comparisons of stored daily-mean battery temperature, separate from capacity health. Each completed UTC day needs at least six stored samples; weekly needs five of seven days in each window, monthly21 of30. These are developer coverage rules, not statistical confidence percentages.
+- Both current and prior window coverage are shown. Sparse history shows unavailable, never a lifespan or measured-capacity prediction. Existing stored rows may include last-known temperatures, so comparisons are observation-only, not heat exposure, safety or degradation diagnosis.
+- The history table has no timestamp index. Aggregation runs once on IO per history-screen subscription, not on each telemetry insert. UTC midnight is05:30IST; comparisons refresh on screen load. Existing five charging tiers are unchanged.
+- No new sampling, permission, dependency, network endpoint or database migration. Not tested on a physical phone; no battery-cost claim.
+
+## [2.2.16]
+
 - Battery display now defaults to three concentric rings with 100 fixed dots each: outer battery percent, middle temperature (one degree C per dot), and inner battery health percent. Unsupported health percent stays Unavailable, never a converted Android health label.
 - Real integer sample changes briefly show blue dots moving inward for rises and outward for falls, then settle to the metric colour. No idle charging loop; motion stops offscreen, in the background, with the screen off, on stale readings or in Android power saving.
 - Dashboard replaces its old arc gauge with rings, with no legacy opt-out there. Charging screen shares the rings. Charging screen keeps clock, details, brightness, close/hold behavior and working legacy gauge/color choices. Triple rings become the default; the charging-screen style picker alone offers labelled legacy styles by explicit choice. Existing legacy indices are initially retained, but a later settings save can overwrite that shadowed value. Triple-ring colours follow battery and thermal levels; the legacy colour picker does not override them.

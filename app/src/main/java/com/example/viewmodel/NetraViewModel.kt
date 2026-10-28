@@ -28,6 +28,7 @@ import com.example.util.PermissionHelper
 import com.example.util.UsageStatsHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -197,9 +198,11 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
     // Machine Learning / Heuristic Degradation & Failure Prediction State
     val degradationReport: StateFlow<DegradationReport> = combine(
         allRecentRecords,
-        recentChargingSessions
-    ) { records, sessions ->
-        val report = BatteryDegradationPredictor.analyzeDegradationAndFailureRisk(records, sessions)
+        recentChargingSessions,
+        repository.dailyObservations().catch { emit(emptyList()) }
+    ) { records, sessions, daily ->
+        val report = BatteryDegradationPredictor.analyzeDegradationAndFailureRisk(records, sessions).copy(
+            observationComparisons = listOf(7, 30).map { com.example.ai.ObservationTrendPolicy.compare(daily, System.currentTimeMillis(), it) })
         // Check and notify user via notification if failure risk is elevated
         BatteryDegradationPredictor.checkAndNotifyFailureRisk(getApplication(), report)
         report
