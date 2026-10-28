@@ -237,7 +237,7 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true, pre
         val u = ui
         val pct = u?.percentage?.trim()?.removeSuffix("%")?.toFloatOrNull()
         val watts = u?.power?.trim()?.removeSuffix(" W")?.toDoubleOrNull()
-        val pctColor = styleColor(st, pct)
+        val pctColor = chargingLevelColor(pct)
         val label = when (u?.mode) {
             PowerMode.CHARGING -> if (watts != null && watts >= FAST_CHARGE_WATTS) "FAST CHARGING" else "CHARGING"
             PowerMode.DISCHARGING -> "NOT ON CHARGER"
@@ -254,15 +254,13 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true, pre
                 Text(SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date(now)), color = Color(0xFF9E9E9E), fontSize = 16.sp, maxLines = 1)
             }
             val canonical by com.example.NetraApplication.instance.centralDataCenter.centralState.collectAsState()
-            if (st.gauge == 6) androidx.compose.material3.MaterialTheme(colorScheme = androidx.compose.material3.darkColorScheme()) {
+            androidx.compose.material3.MaterialTheme(colorScheme = androidx.compose.material3.darkColorScheme()) {
                 BatteryDotRings(canonical.batteryLevel, canonical.temperatureCelsius, canonical.isDataFresh &&
                     canonical.fieldStates.levelStatus == com.example.model.FieldStatus.LIVE &&
                     canonical.fieldStates.tempStatus == com.example.model.FieldStatus.LIVE,
                     canonical.isScreenOn, Modifier.widthIn(max = 300.dp).fillMaxWidth().alpha(st.gaugeBrightness))
-            } else {
-                ChargingGauge(st.gauge, pct, pctColor, st.gaugeBrightness, u?.percentage ?: "Unavailable", label)
             }
-            if (st.gauge == 6) Text(label, color = pctColor, fontSize = 13.sp)
+            Text(label, color = pctColor, fontSize = 13.sp)
             if (!canonical.isDataFresh || canonical.fieldStates.levelStatus != com.example.model.FieldStatus.LIVE ||
                 canonical.fieldStates.tempStatus != com.example.model.FieldStatus.LIVE) {
                 Text("Last known readings or unavailable. Not live measurements.", color = Color.LightGray, fontSize = 11.sp)
