@@ -1,3 +1,6 @@
+## 2.2.22
+Last observed full-charge session after disconnect, with historical first-100% timestamp and connected intervals. Evidence gaps and restarts break continuity. Completed-only private history; one-time speech respects charger/master/mute/media/Night Protection controls. Not exact completion or battery damage. Automated tests/fixtures only, not phone-tested.
+
 ## 2.2.21
 Three fixed straight notification lines use existing battery/temperature readings; missing or stale data and numeric health stay Unavailable. Android still controls notification visibility. Background charging screen now uses an isolated task and closes without launching the main app; underlying-app/OEM behavior needs phone verification. Charging rings unchanged. No new sampler or permission. Automated tests/fixtures only.
 
