@@ -42,6 +42,13 @@ jobs:
           set -o pipefail
           mkdir -p app/build/ci-diagnostics
           gradle --no-daemon :app:assembleDebug :app:testDebugUnitTest --stacktrace 2>&1 | tee app/build/ci-diagnostics/android-build.log
+      - name: Preserve full unit regression XML
+        if: always()
+        run: |
+          mkdir -p app/build/ci-diagnostics/full-unit-results
+          cp app/build/test-results/testDebugUnitTest/*.xml app/build/ci-diagnostics/full-unit-results/ || true
+      - name: Render community links
+        run: gradle --no-daemon :app:testDebugUnitTest --tests com.example.community.CommunityCardTest --stacktrace
       - name: Upload Compose renders for visual review
         if: always()
         uses: actions/upload-artifact@v4
@@ -51,5 +58,7 @@ jobs:
             app/build/outputs/ui-renders/*.png
             app/build/test-results/testDebugUnitTest/*.xml
             app/build/outputs/metadata-update-notice.png
+            app/build/outputs/community-*.png
+            app/build/ci-diagnostics/full-unit-results/
             app/build/ci-diagnostics/android-build.log
           if-no-files-found: warn
