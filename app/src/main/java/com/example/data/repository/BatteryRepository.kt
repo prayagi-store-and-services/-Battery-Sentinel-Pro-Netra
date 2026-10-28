@@ -161,7 +161,7 @@ class BatteryRepository(
             severity = severity,
             dotColor = dotColor
         )
-        activityLogDao.insert(log)
+        activityLogDao.insertBounded(log)
     }
 
     suspend fun clearHistory() = withContext(Dispatchers.IO) {
