@@ -113,6 +113,9 @@
 
         <activity
             android:name=".ui.ChargingScreenActivity"
+            android:taskAffinity="${applicationId}.charging_screen"
+            android:excludeFromRecents="true"
+            android:allowTaskReparenting="false"
             android:exported="false"
             android:showWhenLocked="true"
             android:label="@string/app_name"
