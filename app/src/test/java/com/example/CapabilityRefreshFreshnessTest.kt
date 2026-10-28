@@ -1,6 +1,5 @@
 package com.example
 
-import android.app.Application
 import android.content.Context
 import android.os.BatteryManager
 import androidx.test.core.app.ApplicationProvider
@@ -17,7 +16,9 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], application = Application::class)
+// Raw input initializes the charge learner through NetraApplication.instance.
+// Use the real test application rather than depending on another test initializing the singleton.
+@Config(sdk = [34])
 class CapabilityRefreshFreshnessTest {
     private fun center(): NetraCentralDataCenter {
         val context: Context = ApplicationProvider.getApplicationContext()
