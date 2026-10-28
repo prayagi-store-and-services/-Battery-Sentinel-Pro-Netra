@@ -1,5 +1,7 @@
 package com.example
 
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -131,20 +133,43 @@ class BatteryDotRingsRenderTest {
         rule.mainClock.autoAdvance = true
     }
 
-    @Test fun ringDefaultAndExplicitLegacyChoicePreserveControls() {
-        val c = rule.activity
-        val settings = com.example.ui.components.ChargingStyleSettings
-        val p = c.getSharedPreferences(settings.PREFS, android.content.Context.MODE_PRIVATE)
-        p.edit().clear().putInt("gauge", 2).putInt("color", 4).putFloat("gaugeBrightness", .6f).commit()
-        val loaded = settings.load(c)
-        org.junit.Assert.assertEquals(6, loaded.gauge)
-        org.junit.Assert.assertEquals(4, loaded.color)
-        org.junit.Assert.assertEquals(.6f, loaded.gaugeBrightness, .001f)
-        org.junit.Assert.assertEquals(2, p.getInt("gauge", -1)) // old value not deleted
-        settings.save(c, loaded.copy(gauge = 2))
-        org.junit.Assert.assertEquals(2, settings.load(c).gauge)
-        org.junit.Assert.assertEquals(4, settings.load(c).color)
+    @Test fun removedAndUnknownStyleIdsFallBackWithoutChangingOtherControls() {
+        val c=rule.activity
+        val settings=com.example.ui.components.ChargingStyleSettings
+        val p=c.getSharedPreferences(settings.PREFS, android.content.Context.MODE_PRIVATE)
+        for (old in listOf(-1,0,1,2,3,4,5,6,7,Int.MAX_VALUE)) {
+            p.edit().clear().putInt("gauge",old).putBoolean("triple_rings_style_chosen",true)
+                .putInt("color",4).putInt("clock",5).putInt("details",2).putFloat("gaugeBrightness",.6f)
+                .putInt("activePercent",55).putInt("dimPercent",15).putStringSet("items",setOf("voltage")).commit()
+            val loaded=settings.load(c)
+            org.junit.Assert.assertEquals(6,loaded.gauge)
+            org.junit.Assert.assertEquals(5,loaded.clock)
+            org.junit.Assert.assertEquals(2,loaded.details)
+            org.junit.Assert.assertEquals(.6f,loaded.gaugeBrightness,.001f)
+            org.junit.Assert.assertEquals(55,loaded.activePercent)
+            org.junit.Assert.assertEquals(15,loaded.dimPercent)
+            org.junit.Assert.assertEquals(setOf("voltage"),loaded.items)
+            settings.save(c,loaded.copy(gauge=old))
+            org.junit.Assert.assertEquals(6,p.getInt("gauge",-1))
+            org.junit.Assert.assertEquals(6,settings.load(c).gauge)
+            org.junit.Assert.assertEquals(4,p.getInt("color",-1)) // inert old preference, not repurposed
+        }
         p.edit().clear().commit()
+    }
+
+    @Test fun designSettingsOfferOnlyTripleRingsAndKeepOtherControls() {
+        rule.activity.getSharedPreferences(com.example.ui.components.ChargingStyleSettings.PREFS,0).edit().clear().commit()
+        rule.setContent { MaterialTheme { Surface { Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp)) {
+            com.example.ui.components.ChargingDesignSettings()
+        } } } }
+        rule.onNodeWithText("Triple dot rings").assertIsDisplayed()
+        rule.onNodeWithText("Clock style").assertIsDisplayed()
+        rule.onNodeWithText("Battery details style").assertIsDisplayed()
+        rule.onNodeWithText("Legacy ring").assertDoesNotExist()
+        rule.onNodeWithText("Legacy gauge colour (triple rings use metric colours)").assertDoesNotExist()
+        capture("charging-design-no-legacy")
+        rule.onNodeWithText("Screen brightness when idle (after 15 seconds): 10%").performScrollTo().assertIsDisplayed()
+        capture("charging-design-controls")
     }
 
     @Test fun chargingScreenDefaultRingsRetainsPreviewControls() {
