@@ -60,11 +60,6 @@ private fun batteryStatus(c: Context): String = try {
     if ((c.getSystemService(Context.POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(c.packageName)) "Allowed (unrestricted)" else "Not allowed (Android may limit background work)"
 } catch (e: Exception) { "Unavailable" }
 
-private fun installStatus(c: Context): String = try {
-    if (Build.VERSION.SDK_INT < 26) "Not needed on this Android version"
-    else if (c.packageManager.canRequestPackageInstalls()) "Allowed" else "Not allowed"
-} catch (e: Exception) { "Unavailable" }
-
 private fun bsPermissions(): List<BsPerm> = listOf(
     BsPerm("Notifications", "Used to show battery alerts and the running-service notice.",
         { runtimeFrom(33, it, android.Manifest.permission.POST_NOTIFICATIONS) }, { appDetails(it) }),
@@ -80,8 +75,7 @@ private fun bsPermissions(): List<BsPerm> = listOf(
         { writeSettingsStatus(it) }, { tryOpen(it, Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + it.packageName))) }),
     BsPerm("Battery optimisation", "Lets the battery service keep running in the background. Tap to change it on the Android page.",
         { batteryStatus(it) }, { tryOpen(it, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)) }),
-    BsPerm("Install apps", "Used only when you tap Install on an update, so Android can install the new Battery Sentinel file.",
-        { installStatus(it) }, { if (Build.VERSION.SDK_INT >= 26) tryOpen(it, Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + it.packageName))) else appDetails(it) }),
+
     BsPerm("Internet and network state", "Used to check for updates and festival/region data. Always allowed by Android (normal permission).", { "Always allowed" }, null),
     BsPerm("Run at start, vibrate, foreground service, close background apps, sync settings", "Used so monitoring restarts after a reboot, shows alerts, runs as a service, lets the saver close idle background apps and pauses auto-sync in the screen-off saver. Normal permissions, always allowed.", { "Always allowed" }, null)
 )
