@@ -4,10 +4,19 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-- Removes the six legacy charging-screen gauge styles and their legacy-only colour picker. Triple dot rings are now the only gauge, including for saved removed or unknown style ids. Old ids are not reindexed into new choices.
-- The CHARGING/FAST CHARGING label now always uses battery-level colour; the old custom colour pick is gone.
-- Clock, detail layout, selected details, gauge brightness, active/idle screen brightness and close/hold behavior remain. Ring metric colours are unchanged; unsupported health stays Unavailable. Inert old colour preferences are retained, not repurposed.
-- Automated tests and fixture renders only, not tested on a physical phone. No new permissions, dependencies, network endpoint or schema. Not a security patch.
+- The ongoing notification has three fixed horizontal tracks: top battery percentage, middle temperature (1 C per unit on a 0-100 display scale), bottom supported numeric health. Colours match the charging-screen metric colours. Tracks update from existing readings without an animation or extra sampler. Missing or stale readings have no coloured fill; health stays Unavailable because no numeric health source is exposed here.
+- Compact shows the three metric values; full status/ETA remains in the expanded view and accessibility description because the compact content is limited to 48 dp.
+- Compact and expanded notification layouts use Android's decorated template and native value text. The system controls the header, spacing, permission and visibility; Android 14 can allow the user to dismiss an ongoing notification. This is not an always-visible guarantee.
+- The background charging screen has an isolated task and closes only that task, rather than reusing the main app task. Double-tap does not explicitly launch Netra or another app. Android resumes the underlying task; physical cross-app, lock-screen and OEM behavior is not yet verified. In-app preview still returns to its settings. Charging-screen rings are unchanged.
+- Automated tests and actual RemoteViews fixture renders only, not tested on a physical phone. No new permission, dependency, network endpoint, sampler or database schema. Not a security patch.
+
+## [2.2.21]
+
+- The ongoing notification has three fixed horizontal tracks: top battery percentage, middle temperature (1 C per unit on a 0-100 display scale), bottom supported numeric health. Colours match the charging-screen metric colours. Tracks update from existing readings without an animation or extra sampler. Missing or stale readings have no coloured fill; health stays Unavailable because no numeric health source is exposed here.
+- Compact shows the three metric values; full status/ETA remains in the expanded view and accessibility description because the compact content is limited to 48 dp.
+- Compact and expanded notification layouts use Android's decorated template and native value text. The system controls the header, spacing, permission and visibility; Android 14 can allow the user to dismiss an ongoing notification. This is not an always-visible guarantee.
+- The background charging screen has an isolated task and closes only that task, rather than reusing the main app task. Double-tap does not explicitly launch Netra or another app. Android resumes the underlying task; physical cross-app, lock-screen and OEM behavior is not yet verified. In-app preview still returns to its settings. Charging-screen rings are unchanged.
+- Automated tests and actual RemoteViews fixture renders only, not tested on a physical phone. No new permission, dependency, network endpoint, sampler or database schema. Not a security patch.
 
 ## [2.2.20]
 

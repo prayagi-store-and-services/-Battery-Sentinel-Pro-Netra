@@ -1,3 +1,6 @@
+## 2.2.21
+Three fixed straight notification lines use existing battery/temperature readings; missing or stale data and numeric health stay Unavailable. Android still controls notification visibility. Background charging screen now uses an isolated task and closes without launching the main app; underlying-app/OEM behavior needs phone verification. Charging rings unchanged. No new sampler or permission. Automated tests/fixtures only.
+
 ## 2.2.20
 Legacy gauge styles and legacy-only colour picker removed. CHARGING/FAST CHARGING label now always uses battery-level colour; the old custom colour pick is gone. Saved old/unknown styles use triple dot rings. Other charging-screen controls retained. Automated tests only, not phone-tested.
 
