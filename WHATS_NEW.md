@@ -1,3 +1,6 @@
+## 2.2.20
+Legacy gauge styles and legacy-only colour picker removed. CHARGING/FAST CHARGING label now always uses battery-level colour; the old custom colour pick is gone. Saved old/unknown styles use triple dot rings. Other charging-screen controls retained. Automated tests only, not phone-tested.
+
 ## 2.2.19
 The ordering test proves helper order only. Paused behavior is supported by code reading and automated tests, not a physical phone. Sticky restarts vary by device/OEM; refused foreground promotion is logged and still stops.
 Repeated uncaught crashes pause automatic service starts briefly; prominent in-app warning and explicit retry. Rejected starts are visible. No restart loop or Android restriction bypass. Automated tests only, not tested on a physical phone.
