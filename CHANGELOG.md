@@ -4,10 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-- Last observed full-charge session appears on the dashboard after disconnect: first observed 100% time, observed connected interval from the starting percentage, and connected time afterward. Historical timestamps are labelled. No exact physical completion, battery-damage, capacity or lifespan claim.
-- Existing validated raw battery events only; no new sampler. Unknown input, gaps over 15 minutes, clock discontinuity and app restart break the active observation window. Starting at 100% cannot invent a completion duration.
-- Completed summaries are saved privately only at disconnect. Speech is claimed once before enqueue, uses existing charger/master/mute/media controls and respects Night Protection without catch-up speech. Durations below one minute are described honestly.
-- Automated tests and actual Compose fixture renders only, not physical-phone tested. No new permission, dependency, network endpoint or database schema. Not a security patch.
+- Automatic newer-version popup and notification, with at most one metadata request per day, subject to Android battery/network limits. Not instant release detection.
+- Update opens Battery Sentinel's page in compatible Netra Ecosystem or its Eco website page, falling back to the browser if Eco cannot open. No APK download or install in Battery Sentinel.
+- Removed manual update checking and the obsolete Install apps permission-panel row. Install permission remains absent. Notification denial and disabled channels are respected; duplicate notices are suppressed by version.
+- Legacy installer workers remain inert. Disabled WorkManager startup cannot crash foreground launch. Existing saved user data remains unchanged. No new telemetry, server or dependency. Not a vulnerability patch or physical-device battery claim.
 
 ## [2.2.22]
 
