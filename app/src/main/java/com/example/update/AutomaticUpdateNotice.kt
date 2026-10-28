@@ -64,7 +64,12 @@ object AutomaticUpdateNotice {
             .build()
     fun start(c: Context) {
         AppUpdater.retireLegacyUpdater(c)
-        WorkManager.getInstance(c).enqueueUniquePeriodicWork("eco_metadata_notice_v1", ExistingPeriodicWorkPolicy.KEEP, request())
+        try {
+            WorkManager.getInstance(c).enqueueUniquePeriodicWork("eco_metadata_notice_v1", ExistingPeriodicWorkPolicy.KEEP, request())
+        } catch (e: IllegalStateException) {
+            // Disabled startup/test environments must not crash launch. Foreground checks still work.
+            android.util.Log.w("EcoMetadataNotice", "Background checks unavailable; foreground checks remain", e)
+        }
     }
 }
 class EcoMetadataWorker(c: Context, p: WorkerParameters) : CoroutineWorker(c, p) {
