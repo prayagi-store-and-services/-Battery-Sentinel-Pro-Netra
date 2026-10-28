@@ -39,6 +39,16 @@ object SentinelStatusNotification {
         }
     }
 
+    fun buildPaused(context: Context): Notification {
+        val pendingIntent = PendingIntent.getActivity(context, 0, Brand.launchIntent(context),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val text = "Monitoring paused after repeated crashes. Open app to retry. Thermal alerts may be unavailable."
+        return NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground).setContentTitle(Brand.name)
+            .setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setOngoing(true).setPriority(NotificationCompat.PRIORITY_LOW).setContentIntent(pendingIntent).build()
+    }
+
     fun build(context: Context, state: NetraCentralState): Notification {
         val intent = Brand.launchIntent(context)
         val pendingIntent = PendingIntent.getActivity(
