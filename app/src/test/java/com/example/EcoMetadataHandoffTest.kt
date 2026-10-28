@@ -14,8 +14,8 @@ import org.robolectric.annotation.Config
 @Config(sdk=[34],application=Application::class)
 class EcoMetadataHandoffTest {
  @Test fun metadataIgnoresAllArtifactUrls(){
-  assertEquals("9.9",AppUpdater.parseNewer("""{"versionCode":999,"versionName":"9.9","apkUrl":"https://evil.invalid/payload.apk"}""",1)!!.name)
-  assertNull(AppUpdater.parseNewer("""{"versionCode":1,"versionName":"1"}""",1))
+  assertEquals("9.9",AppUpdater.parseNewer("""{"body":"versionCode: 999","tag_name":"v9.9","apkUrl":"https://evil.invalid/payload.apk"}""",1)!!.name)
+  assertNull(AppUpdater.parseNewer("""{"body":"versionCode: 1","tag_name":"v1"}""",1))
  }
  @Test fun compatibleEcoGetsExactUri(){
   val c=RuntimeEnvironment.getApplication();val pm=Shadows.shadowOf(c.packageManager)
@@ -59,7 +59,7 @@ class EcoMetadataHandoffTest {
  }
  @Test fun malformedAndOversizedMetadataFailClosed(){
   assertThrows(Exception::class.java){AppUpdater.parseNewer("invalid",1)}
-  assertThrows(Exception::class.java){AppUpdater.parseNewer("""{"versionCode":999,"versionName":""}""",1)}
+  assertThrows(Exception::class.java){AppUpdater.parseNewer("""{"body":"versionCode: 999","tag_name":""}""",1)}
   assertThrows(IllegalArgumentException::class.java){AppUpdater.readMetadata(java.io.ByteArrayInputStream(ByteArray(131073)))}
   assertEquals(131072,AppUpdater.readMetadata(java.io.ByteArrayInputStream(ByteArray(131072))).size)
  }
