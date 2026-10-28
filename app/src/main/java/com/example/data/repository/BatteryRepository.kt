@@ -9,6 +9,7 @@ import com.example.model.NetraCentralState
 import com.example.data.local.ChargingSessionDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -30,6 +31,15 @@ class BatteryRepository(
     @Volatile private var lastCanonicalChargingStoppedAt: Long? = null
 
     val recentRecords: Flow<List<BatteryRecord>> = batteryDao.getRecentRecords(100)
+    // Single aggregate query per screen subscription. No Room invalidation observer:
+    // this table has no timestamp index, so never re-scan it on telemetry inserts.
+    // Rows returned are bounded to 60 UTC days; computation stays on Dispatchers.IO.
+    fun dailyObservations(): Flow<List<com.example.ai.DailyBatteryObservation>> = kotlinx.coroutines.flow.flow {
+        val day = com.example.ai.ObservationTrendPolicy.DAY_MS
+        val utcDay = Math.floorDiv(System.currentTimeMillis(), day)
+        emit(batteryDao.getDailyObservations((utcDay - 60L) * day, utcDay * day))
+    }.flowOn(Dispatchers.IO)
+
     val latestRecord: Flow<BatteryRecord?> = batteryDao.getLatestRecord()
     val totalRecordCount: Flow<Int> = batteryDao.getTotalRecordCount()
     val overheatCount: Flow<Int> = batteryDao.getOverheatEventCount()
