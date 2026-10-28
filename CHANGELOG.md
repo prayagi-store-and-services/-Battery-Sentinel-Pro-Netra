@@ -4,11 +4,17 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-- The ongoing notification has three fixed horizontal tracks: top battery percentage, middle temperature (1 C per unit on a 0-100 display scale), bottom supported numeric health. Colours match the charging-screen metric colours. Tracks update from existing readings without an animation or extra sampler. Missing or stale readings have no coloured fill; health stays Unavailable because no numeric health source is exposed here.
-- Compact shows the three metric values; full status/ETA remains in the expanded view and accessibility description because the compact content is limited to 48 dp.
-- Compact and expanded notification layouts use Android's decorated template and native value text. The system controls the header, spacing, permission and visibility; Android 14 can allow the user to dismiss an ongoing notification. This is not an always-visible guarantee.
-- The background charging screen has an isolated task and closes only that task, rather than reusing the main app task. Double-tap does not explicitly launch Netra or another app. Android resumes the underlying task; physical cross-app, lock-screen and OEM behavior is not yet verified. In-app preview still returns to its settings. Charging-screen rings are unchanged.
-- Automated tests and actual RemoteViews fixture renders only, not tested on a physical phone. No new permission, dependency, network endpoint, sampler or database schema. Not a security patch.
+- Last observed full-charge session appears on the dashboard after disconnect: first observed 100% time, observed connected interval from the starting percentage, and connected time afterward. Historical timestamps are labelled. No exact physical completion, battery-damage, capacity or lifespan claim.
+- Existing validated raw battery events only; no new sampler. Unknown input, gaps over 15 minutes, clock discontinuity and app restart break the active observation window. Starting at 100% cannot invent a completion duration.
+- Completed summaries are saved privately only at disconnect. Speech is claimed once before enqueue, uses existing charger/master/mute/media controls and respects Night Protection without catch-up speech. Durations below one minute are described honestly.
+- Automated tests and actual Compose fixture renders only, not physical-phone tested. No new permission, dependency, network endpoint or database schema. Not a security patch.
+
+## [2.2.22]
+
+- Last observed full-charge session appears on the dashboard after disconnect: first observed 100% time, observed connected interval from the starting percentage, and connected time afterward. Historical timestamps are labelled. No exact physical completion, battery-damage, capacity or lifespan claim.
+- Existing validated raw battery events only; no new sampler. Unknown input, gaps over 15 minutes, clock discontinuity and app restart break the active observation window. Starting at 100% cannot invent a completion duration.
+- Completed summaries are saved privately only at disconnect. Speech is claimed once before enqueue, uses existing charger/master/mute/media controls and respects Night Protection without catch-up speech. Durations below one minute are described honestly.
+- Automated tests and actual Compose fixture renders only, not physical-phone tested. No new permission, dependency, network endpoint or database schema. Not a security patch.
 
 ## [2.2.21]
 
