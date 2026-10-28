@@ -1,3 +1,6 @@
+## 2.2.18
+Cache auto-clean only above 200 MiB, at most once per six hours; no 50 MB charging cleanup. Bounded diagnostic logs and honest file-payload counters. Manual cleanup stays explicit. Automated tests only, not tested on a physical phone.
+
 ## 2.2.17
 Weekly/monthly stored-temperature comparisons with explicit day/sample coverage. Sparse data stays unavailable. Observation-only, not measured capacity, lifespan or safety. UTC-day windows; no new sampling. Not physical-phone tested.
 

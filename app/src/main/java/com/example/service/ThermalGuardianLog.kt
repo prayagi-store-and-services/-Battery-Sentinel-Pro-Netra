@@ -40,18 +40,22 @@ object ThermalGuardianLog {
     private const val KEY_START_CHARGING = "session_start_charging"
     private const val KEY_MAX_TEMP = "session_max_temp"
     private const val MAX_SESSIONS = 30
+    private const val MAX_EVENTS = 200
+    private const val MAX_EVENT_CHARS = 500
 
     private var prefs: SharedPreferences? = null
 
     private val _sessions = MutableStateFlow<List<ThermalSession>>(emptyList())
     val sessions: StateFlow<List<ThermalSession>> = _sessions.asStateFlow()
 
+    @Synchronized
     fun init(context: Context) {
         prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         _sessions.value = loadAll()
     }
 
     /** A control episode begins (first light/active/severe escalation). */
+    @Synchronized
     fun beginSession(startMs: Long, startTempC: Float, charging: Boolean?) {
         val p = prefs ?: return
         p.edit()
@@ -64,20 +68,27 @@ object ThermalGuardianLog {
     }
 
     /** Track the hottest reading seen during the open episode. */
+    @Synchronized
     fun trackMax(tempC: Float) {
         val p = prefs ?: return
         if (!p.contains(KEY_START_MS)) return
         if (tempC > p.getFloat(KEY_MAX_TEMP, 0f)) p.edit().putFloat(KEY_MAX_TEMP, tempC).apply()
     }
 
+    @Synchronized
     fun addEvent(event: String) {
         val p = prefs ?: return
         val arr = try { JSONArray(p.getString(KEY_EVENTS, "[]")) } catch (_: Exception) { JSONArray() }
-        arr.put("${System.currentTimeMillis()}: $event")
-        p.edit().putString(KEY_EVENTS, arr.toString()).apply()
+        val bounded = JSONArray()
+        for (i in maxOf(0, arr.length() - MAX_EVENTS + 1) until arr.length()) {
+            bounded.put(arr.optString(i).take(MAX_EVENT_CHARS))
+        }
+        bounded.put("${System.currentTimeMillis()}: $event".take(MAX_EVENT_CHARS))
+        p.edit().putString(KEY_EVENTS, bounded.toString()).apply()
     }
 
     /** Close the open episode. [reachedSafeBand] true when the phone came back under 37 C. */
+    @Synchronized
     fun endSession(endMs: Long, endTempC: Float?, reachedSafeBand: Boolean, isTest: Boolean = false) {
         val p = prefs ?: return
         if (!p.contains(KEY_START_MS)) return
@@ -86,7 +97,7 @@ object ThermalGuardianLog {
         val chargingInt = p.getInt(KEY_START_CHARGING, -1)
         val events = try {
             val arr = JSONArray(p.getString(KEY_EVENTS, "[]"))
-            (0 until arr.length()).map { arr.getString(it) }
+            (maxOf(0, arr.length() - MAX_EVENTS) until arr.length()).map { arr.getString(it).take(MAX_EVENT_CHARS) }
         } catch (_: Exception) { emptyList() }
         val minutes = (endMs - startMs) / 60_000f
         val cooling = if (endTempC != null && minutes > 0.25f) (startTemp - endTempC) / minutes else null
@@ -112,12 +123,13 @@ object ThermalGuardianLog {
     }
 
     /** A test run is stored as a one-shot closed session, flagged, never mixed with real ones. */
+    @Synchronized
     fun recordTest(events: List<String>, tempC: Float?, charging: Boolean?) {
         val p = prefs ?: return
         val now = System.currentTimeMillis()
         val session = ThermalSession(
             startMs = now, startTempC = tempC ?: 0f, chargingAtStart = charging,
-            maxTempC = tempC ?: 0f, events = events, endMs = now, endTempC = tempC,
+            maxTempC = tempC ?: 0f, events = events.takeLast(MAX_EVENTS).map { it.take(MAX_EVENT_CHARS) }, endMs = now, endTempC = tempC,
             coolingRateCPerMin = null, reachedSafeBand = tempC != null && tempC < ThermalGuardianPolicy.RECOVER_C,
             isTest = true
         )
@@ -130,7 +142,7 @@ object ThermalGuardianLog {
         val p = prefs ?: return emptyList()
         return try {
             val arr = JSONArray(p.getString(KEY_SESSIONS, "[]"))
-            (0 until arr.length()).map { fromJson(arr.getJSONObject(it)) }
+            (maxOf(0, arr.length() - MAX_SESSIONS) until arr.length()).map { fromJson(arr.getJSONObject(it)) }
         } catch (_: Exception) { emptyList() }
     }
 
@@ -151,7 +163,7 @@ object ThermalGuardianLog {
             startTempC = o.optDouble("startTempC").toFloat(),
             chargingAtStart = if (o.isNull("charging")) null else o.optBoolean("charging"),
             maxTempC = o.optDouble("maxTempC").toFloat(),
-            events = (0 until arr.length()).map { arr.optString(it) },
+            events = (maxOf(0, arr.length() - MAX_EVENTS) until arr.length()).map { arr.optString(it).take(MAX_EVENT_CHARS) },
             endMs = if (o.isNull("endMs")) null else o.optLong("endMs"),
             endTempC = if (o.isNull("endTempC")) null else o.optDouble("endTempC").toFloat(),
             coolingRateCPerMin = if (o.isNull("cooling")) null else o.optDouble("cooling").toFloat(),

@@ -1,0 +1,11 @@
+# Bounded local maintenance
+
+Automatic cleanup uses strictly more than 200 MiB of removable regular file payload. Charging never lowers the threshold. A persisted six-hour reservation is written before scanning, even if deletion fails or nothing is removable. Failed reservation skips cleanup; clock rollback rebases without cleanup. Explicit manual cleanup can run below threshold. Async initialization and manual refresh can scan separately; no polling loop added. Incomplete/unreadable traversal or more than 10,000 entries/depth 32 is Unavailable and automatic/manual deletion is skipped.
+
+Counted/removed: regular files inside canonical app internal/external cache roots. Excluded: code cache, child symlinks/redirects, database/XML files, databases/shared_prefs directories, saved history/settings/documents. Parent/root paths supplied by Context may use Android platform aliases. Folder allocation is not known and not counted. File payload lengths before a successful delete are the reported value, not disk-block recovery. Concurrent independent writers and filesystem TOCTOU races cannot be eliminated by this Java traversal; no cross-app cleanup capability is claimed.
+
+Activity logs keep newest 2,000 by insertion ID, atomically after insert, with title200/message2000/category80/severity40/color40-character caps. Existing rows trim on next inserted log. Thermal session/event storage keeps newest30 sessions,200 events per open/closed session and500 characters/event; existing closed entries are bounded when loaded and persisted on next session close/test record. No battery/charging history retention change. These are developer storage limits; older diagnostics are deliberately rotated.
+
+Automated tests cover threshold, charging50MiB, exact200MiB, payload-only accounting, code/protected/link exclusions, persisted cooldown and clock rollback, old counter invalidation, real Room trimming and thermal caps. 360dp UI render is a local fixture, not phone data. Real-device power, large-tree soak, recovery, reboot and Doze remain unverified.
+
+Incomplete scans still keep the six-hour reservation to avoid repeating expensive inaccessible/oversized traversal on every telemetry event. Explicit refresh can retry display sooner; explicit Clean re-scans and refuses deletion if still incomplete.
