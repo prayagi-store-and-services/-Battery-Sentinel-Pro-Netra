@@ -4,6 +4,13 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Automatic maintenance no longer cleans at 50 MB during charging. It scans at most once per six hours, across restart, and cleans only when disposable app cache files are strictly above 200 MiB (200 x 1024 x 1024 bytes). Manual Clean Temporary Cache remains an explicit action below the threshold.
+- Only regular disposable files inside this app's internal/external cache are counted and removed. Code cache, child links, database/XML files and saved data are excluded. Removed bytes are file payload lengths only; no invented folder allocation. Incomplete scans show Unavailable and skip deletion; depth/entry traversal is bounded. Old unverified freed-byte counters are hidden until the next cleanup.
+- Diagnostic activity logs retain the latest 2,000 entries in insertion order with bounded text. Thermal logs keep the latest 30 sessions and 200 events per session, with at most 500 characters per event. Older diagnostic entries are rotated; battery and charging history are not deleted.
+- Local maintenance fix, not a security patch or a claim of full reliability acceptance. No physical-phone, power-cost, crash-loop, reboot or Doze acceptance test for this release. No new permission, dependency, network endpoint or database schema.
+
+## [2.2.17]
+
 - Adds weekly/monthly comparisons of stored daily-mean battery temperature, separate from capacity health. Each completed UTC day needs at least six stored samples; weekly needs five of seven days in each window, monthly21 of30. These are developer coverage rules, not statistical confidence percentages.
 - Both current and prior window coverage are shown. Sparse history shows unavailable, never a lifespan or measured-capacity prediction. Existing stored rows may include last-known temperatures, so comparisons are observation-only, not heat exposure, safety or degradation diagnosis.
 - The history table has no timestamp index. Aggregation runs once on IO per history-screen subscription, not on each telemetry insert. UTC midnight is05:30IST; comparisons refresh on screen load. Existing five charging tiers are unchanged.
