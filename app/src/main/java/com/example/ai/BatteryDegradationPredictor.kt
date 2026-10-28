@@ -22,7 +22,8 @@ data class DegradationReport(
     val primaryRiskFactor: String,
     val keyMitigation: String,
     val detailedInsights: List<String>,
-    val requiresAlert: Boolean
+    val requiresAlert: Boolean,
+    val observationComparisons: List<ObservationComparison> = emptyList()
 )
 
 object BatteryDegradationPredictor {
