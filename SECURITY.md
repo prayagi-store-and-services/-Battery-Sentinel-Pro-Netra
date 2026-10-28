@@ -1,5 +1,9 @@
 # Security Policy
 
+## Bounded maintenance (v2.2.18)
+
+Local disposable-cache/log maintenance fix, not a vulnerability fix. No new permissions, endpoints, dependencies or schema. Cache cleanup excludes saved data and child links. Diagnostic retention is bounded (2,000 activity records, 30 thermal sessions, 200 events/session, bounded text). No physical-device, power, crash-loop, boot or Doze acceptance claim.
+
 ## Recorded observation comparisons (v2.2.17)
 
 Local aggregate/read-only UI change, not a vulnerability fix. No new permission, dependency, network endpoint, sampling timer, schema or data deletion. A single IO query per history screen subscription reads existing rows; no per-insert aggregate observer. Stored rows may contain retained values and cannot establish measured capacity, lifespan or safety. Not physical-device tested.
