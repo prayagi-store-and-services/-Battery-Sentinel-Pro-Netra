@@ -74,6 +74,7 @@ class BatteryForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        if (!CrashRecoveryGate.allowed(this)) { PausedServiceStop.stop(this); return }
         batteryManager = getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
         createNotificationChannel()
 
@@ -104,6 +105,8 @@ class BatteryForegroundService : Service() {
             stopForegroundService()
             return START_NOT_STICKY
         }
+
+        if (!CrashRecoveryGate.allowed(this)) { PausedServiceStop.stop(this); return START_NOT_STICKY }
 
         // Re-verify sticky intent on start command
         try {
@@ -314,6 +317,7 @@ class BatteryForegroundService : Service() {
          * Starts the BatteryForegroundService.
          */
         fun startService(context: Context) {
+            if (!CrashRecoveryGate.allowed(context)) return
             val intent = Intent(context, BatteryForegroundService::class.java)
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -321,7 +325,9 @@ class BatteryForegroundService : Service() {
                 } else {
                     context.startService(intent)
                 }
+                CrashRecoveryGate.startResult("battery tracker", true)
             } catch (e: Exception) {
+                CrashRecoveryGate.startResult("battery tracker", false)
                 Log.e(TAG, "Failed to start BatteryForegroundService", e)
             }
         }
