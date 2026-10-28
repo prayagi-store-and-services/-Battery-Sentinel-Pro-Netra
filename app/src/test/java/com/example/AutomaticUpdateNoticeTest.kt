@@ -63,4 +63,10 @@ class AutomaticUpdateNoticeTest {
   assertTrue(spec.constraints.requiresBatteryNotLow())
   assertFalse(spec.constraints.requiresCharging())
  }
+ @Test fun schedulerStartupDoesNotCrashForegroundLaunch(){
+  val c=RuntimeEnvironment.getApplication()
+  AutomaticUpdateNotice.start(c)
+  seed(c)
+  assertNotNull(AutomaticUpdateNotice.check(c))
+ }
 }
