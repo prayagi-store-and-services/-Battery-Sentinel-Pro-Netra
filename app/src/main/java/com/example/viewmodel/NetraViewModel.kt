@@ -121,6 +121,7 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
 
     // Central State
     val canonicalState = NetraApplication.instance.centralDataCenter.centralState
+    val fullChargeSummary = NetraApplication.instance.centralDataCenter.fullChargeSummary
 
     // Live Charging Session State (Charging-only 1s monitor)
     val liveChargingSessionState: StateFlow<com.example.model.LiveChargingSessionState> =

@@ -38,6 +38,7 @@ fun HomeScreen(
     val telemetry by viewModel.liveTelemetry.collectAsStateWithLifecycle()
     val canonical by viewModel.canonicalState.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val fullSummary by viewModel.fullChargeSummary.collectAsStateWithLifecycle()
     
     val scrollState = rememberScrollState()
 
@@ -76,6 +77,8 @@ fun HomeScreen(
                 }
             }
         }
+
+        fullSummary?.let { FullChargeSummaryCard(it) }
 
         // Battery Overview
         SentinelCard(

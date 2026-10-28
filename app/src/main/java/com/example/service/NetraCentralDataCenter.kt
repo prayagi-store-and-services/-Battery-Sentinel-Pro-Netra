@@ -24,12 +24,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.currentTimeMillis() }) {
+class NetraCentralDataCenter(
+    private val telemetryClock: () -> Long = { System.currentTimeMillis() }
+) {
 
+    internal var elapsedClock: () -> Long = { android.os.SystemClock.elapsedRealtime() }
     private val telemetryMutex = Mutex()
     private val mediaMutex = Mutex()
     private val bluetoothMutex = Mutex()
     private val chargingSpeedEngine = ChargingSpeedEngine()
+    private val fullChargeObservation = FullChargeObservation()
+    private var fullChargeSummaryStore: FullChargeSummaryStore? = null
+    private val _fullChargeSummary = MutableStateFlow<FullChargeSummaryStore.Completed?>(null)
+    val fullChargeSummary: StateFlow<FullChargeSummaryStore.Completed?> = _fullChargeSummary.asStateFlow()
+    fun consumeFullChargeSummary(disconnectedAt: Long) = fullChargeSummaryStore?.consume(disconnectedAt)
+
 
     private val _centralState = MutableStateFlow(NetraCentralState())
     val centralState: StateFlow<NetraCentralState> = _centralState.asStateFlow()
@@ -170,6 +179,9 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
     }
 
     fun initPersistence(context: Context) {
+        fullChargeSummaryStore = FullChargeSummaryStore(context)
+        _fullChargeSummary.value = fullChargeSummaryStore?.load()
+
         lastValidStatePrefs = context.getSharedPreferences("netra_last_valid_state_prefs", Context.MODE_PRIVATE)
         val prefs = lastValidStatePrefs ?: return
         if (prefs.contains("saved_battery_level") && _centralState.value.batteryLevel == null) {
@@ -448,6 +460,15 @@ class NetraCentralDataCenter(private val telemetryClock: () -> Long = { System.c
                 plugged > 0 -> true
                 isCharging == true -> true
                 else -> null
+            }
+
+            // Only raw validated evidence enters this policy. Never read merged/stale display values.
+            // Serialized with the raw telemetry mutex, before canonical disconnect event delivery.
+            fullChargeObservation.sample(validatedLevel, isConnected, isCharging, now,
+                elapsedClock())?.let { observation ->
+                val completed = FullChargeSummaryStore.Completed(now, observation)
+                // Only a committed completion can produce UI/announcement claims.
+                if (fullChargeSummaryStore?.save(completed) == true) _fullChargeSummary.value = completed
             }
 
             val pluggedType = when (plugged) {

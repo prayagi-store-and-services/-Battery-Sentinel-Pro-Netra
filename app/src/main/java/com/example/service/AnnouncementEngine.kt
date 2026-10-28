@@ -296,6 +296,17 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 }
             }
             NetraEventType.CHARGER_DISCONNECTED -> {
+                // Claim before enqueue (even when muted/disabled): at most once, no catch-up speech.
+                val observed = NetraApplication.instance.centralDataCenter.consumeFullChargeSummary(event.timestamp)
+                if (settings.announceChargerConnected && observed != null) {
+                    enqueue(AnnouncementItem(
+                        id = "full_observed_${event.timestamp}",
+                        text = fullChargeSummarySpeech(observed.observation),
+                        priority = AnnouncementPriority.CHARGER_STATE,
+                        category = "FULL_OBSERVATION",
+                        isNightException = false
+                    ))
+                }
                 if (settings.announceChargerConnected) {
                     enqueue(
                         AnnouncementItem(
