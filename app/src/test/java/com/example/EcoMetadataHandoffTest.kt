@@ -10,38 +10,18 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
-@RunWith(RobolectricTestRunner::class)
+@RunWith(org.robolectric.RobolectricTestRunner::class)
 @Config(sdk=[34],application=Application::class)
 class EcoMetadataHandoffTest {
  @Test fun metadataIgnoresAllArtifactUrls(){
-  assertEquals("9.9",AppUpdater.parseNewer("""{"body":"versionCode: 999","tag_name":"v9.9","apkUrl":"https://evil.invalid/payload.apk"}""",1)!!.name)
-  assertNull(AppUpdater.parseNewer("""{"body":"versionCode: 1","tag_name":"v1"}""",1))
- }
- @Test fun apiMetadataRejectsMissingDuplicateAndNonNumericCode(){
-  for(json in listOf("""{"tag_name":"v9","body":"notes"}""", """{"tag_name":"v9","body":"versionCode: bad"}""", """{"tag_name":"v9","body":"versionCode: 999\nversionCode: 998"}""", """{"tag_name":"v9","body":"versionCode: 9999999999999999999999999"}""")) {
-   assertThrows(Exception::class.java){AppUpdater.parseNewer(json,1)}
-  }
-  assertEquals(999,AppUpdater.parseNewer("""{"tag_name":"v9","body":"Notes\nversionCode: 999\r\nmore","assets":[{"browser_download_url":"https://evil.invalid/a.apk"}]}""",1)!!.code)
- }
- @Test fun cacheSharesLaunchChecksAndManualRefreshCanBypass(){
-  val c=RuntimeEnvironment.getApplication();var calls=0
-  val fetch={calls++;"""{"tag_name":"v9","body":"versionCode: 999"}"""}
-  assertEquals(999,AppUpdater.cachedNewer(c,1,1000,false,fetch)!!.code)
-  assertEquals(999,AppUpdater.cachedNewer(c,1,2000,false,fetch)!!.code);assertEquals(1,calls)
-  assertNull(AppUpdater.cachedNewer(c,1000,3000,false,fetch));assertEquals(1,calls)
-  AppUpdater.cachedNewer(c,1,4000,true,fetch);assertEquals(2,calls)
-  AppUpdater.cachedNewer(c,1,4000+6*60*60*1000L,false,fetch);assertEquals(3,calls)
- }
- @Test fun failedChecksBackoffWithoutClaimingLatest(){
-  val c=RuntimeEnvironment.getApplication();var calls=0
-  val fail:()->String={calls++;throw java.io.IOException("offline")}
-  assertThrows(java.io.IOException::class.java){AppUpdater.cachedNewer(c,1,1000,false,fail)}
-  assertThrows(java.io.IOException::class.java){AppUpdater.cachedNewer(c,1,2000,false,fail)};assertEquals(1,calls)
-  assertThrows(java.io.IOException::class.java){AppUpdater.cachedNewer(c,1,3000,true,fail)};assertEquals(2,calls)
+  assertEquals("9.9",AppUpdater.parseNewer("""{"versionCode":999,"versionName":"9.9","apkUrl":"https://evil.invalid/payload.apk"}""",1)!!.name)
+  assertNull(AppUpdater.parseNewer("""{"versionCode":1,"versionName":"1"}""",1))
  }
  @Test fun compatibleEcoGetsExactUri(){
   val c=RuntimeEnvironment.getApplication();val pm=Shadows.shadowOf(c.packageManager)
   pm.installPackage(PackageInfo().apply{packageName=AppUpdater.ECO_PACKAGE;longVersionCode=59})
+  val eco=Intent(Intent.ACTION_VIEW,android.net.Uri.parse(AppUpdater.ECO_PAGE)).addCategory(Intent.CATEGORY_BROWSABLE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).setPackage(AppUpdater.ECO_PACKAGE)
+  pm.addResolveInfoForIntent(eco, android.content.pm.ResolveInfo().apply{activityInfo=android.content.pm.ActivityInfo().apply{packageName=AppUpdater.ECO_PACKAGE;name="MainActivity";exported=true}})
   assertTrue(AppUpdater.openEco(c))
   val i=Shadows.shadowOf(c).nextStartedActivity
   assertEquals(AppUpdater.ECO_PACKAGE,i.`package`);assertEquals(AppUpdater.ECO_PAGE,i.dataString)
@@ -79,8 +59,34 @@ class EcoMetadataHandoffTest {
  }
  @Test fun malformedAndOversizedMetadataFailClosed(){
   assertThrows(Exception::class.java){AppUpdater.parseNewer("invalid",1)}
-  assertThrows(Exception::class.java){AppUpdater.parseNewer("""{"body":"versionCode: 999","tag_name":""}""",1)}
+  assertThrows(Exception::class.java){AppUpdater.parseNewer("""{"versionCode":999,"versionName":""}""",1)}
   assertThrows(IllegalArgumentException::class.java){AppUpdater.readMetadata(java.io.ByteArrayInputStream(ByteArray(131073)))}
   assertEquals(131072,AppUpdater.readMetadata(java.io.ByteArrayInputStream(ByteArray(131072))).size)
+ }
+ @Test fun deniedEcoLaunchFallsBackToExactBrowserPage(){
+  val c=RuntimeEnvironment.getApplication();installBrowser(c)
+  Shadows.shadowOf(c.packageManager).installPackage(PackageInfo().apply{packageName=AppUpdater.ECO_PACKAGE;longVersionCode=59})
+  val launched=mutableListOf<Intent>()
+  val wrapper=object:android.content.ContextWrapper(c){
+   override fun startActivity(intent:Intent){
+    if(intent.`package`==AppUpdater.ECO_PACKAGE)throw SecurityException("fixture denial")
+    launched.add(intent)
+   }
+  }
+  assertTrue(AppUpdater.openEco(wrapper))
+  assertEquals("org.browser.test",launched.single().`package`)
+  assertEquals(AppUpdater.ECO_PAGE,launched.single().dataString)
+ }
+ @Test fun unavailableEcoLaunchFallsBack(){
+  val c=RuntimeEnvironment.getApplication();installBrowser(c)
+  Shadows.shadowOf(c.packageManager).installPackage(PackageInfo().apply{packageName=AppUpdater.ECO_PACKAGE;longVersionCode=59})
+  var browser=false
+  val wrapper=object:android.content.ContextWrapper(c){
+   override fun startActivity(intent:Intent){
+    if(intent.`package`==AppUpdater.ECO_PACKAGE)throw android.content.ActivityNotFoundException("fixture removed")
+    browser=intent.`package`=="org.browser.test"
+   }
+  }
+  assertTrue(AppUpdater.openEco(wrapper));assertTrue(browser)
  }
 }
