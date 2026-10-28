@@ -4,6 +4,18 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- Removes the six legacy charging-screen gauge styles and their legacy-only colour picker. Triple dot rings are now the only gauge, including for saved removed or unknown style ids. Old ids are not reindexed into new choices.
+- The CHARGING/FAST CHARGING label now always uses battery-level colour; the old custom colour pick is gone.
+- Clock, detail layout, selected details, gauge brightness, active/idle screen brightness and close/hold behavior remain. Ring metric colours are unchanged; unsupported health stays Unavailable. Inert old colour preferences are retained, not repurposed.
+- Automated tests and fixture renders only, not tested on a physical phone. No new permissions, dependencies, network endpoint or schema. Not a security patch.
+
+## [2.2.20]
+
+- Removes the six legacy charging-screen gauge styles and their legacy-only colour picker. Triple dot rings are now the only gauge, including for saved removed or unknown style ids. Old ids are not reindexed into new choices.
+- The CHARGING/FAST CHARGING label now always uses battery-level colour; the old custom colour pick is gone.
+- Clock, detail layout, selected details, gauge brightness, active/idle screen brightness and close/hold behavior remain. Ring metric colours are unchanged; unsupported health stays Unavailable. Inert old colour preferences are retained, not repurposed.
+- Automated tests and fixture renders only, not tested on a physical phone. No new permissions, dependencies, network endpoint or schema. Not a security patch.
+
 ## [2.2.19]
 
 - Adds a local crash-only service-start breaker: three uncaught crashes within five minutes pause automatic and sticky service starts for two minutes. One or two crashes do not pause starts; ordinary Android process death and rejected starts are not counted. There is no restart timer or alarm. A later normal start can resume after expiry; Android can still refuse it.
