@@ -1,5 +1,9 @@
 # Security Policy
 
+## Notification lines and charging-task isolation (v2.2.21)
+
+Presentation/navigation change, not a security patch. Private non-exported charging activity has a separate package-scoped task affinity and is excluded from Recents; closing removes only its own root task, with no external app launch or guessed package. Native notification text and a small one-entry cached transparent bitmap use existing validated telemetry; no new sampler, timer, permission, dependency, endpoint, persistent record or schema. Missing/stale values have no coloured fill; Android health status is not a health percentage. System notification dismissal/permission rules remain. Physical-device/OEM navigation and power acceptance are pending.
+
 ## Crash-only service-start guard (v2.2.19)
 
 Local engineering recovery guard, not a security patch. No new permission, endpoint, dependency or schema. Three uncaught crashes/5min pause service starts 2 min, no timer/alarm. Does not bypass application-initialization crashes or establish physical-device acceptance. Persistence may fail. Android start restrictions remain in force.
