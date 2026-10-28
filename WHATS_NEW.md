@@ -1,3 +1,6 @@
+## 2.2.23
+Automatic newer-version popup and notification. Metadata is checked at most once daily, subject to Android battery/network limits, not instantly. Update opens this app page in compatible Netra Ecosystem or the Eco website. No manual update check, APK download, installation or unknown-source permission request in this app. Notification denial is respected.
+
 ## 2.2.22
 Last observed full-charge session after disconnect, with historical first-100% timestamp and connected intervals. Evidence gaps and restarts break continuity. Completed-only private history; one-time speech respects charger/master/mute/media/Night Protection controls. Not exact completion or battery damage. Automated tests/fixtures only, not phone-tested.
 
