@@ -1,3 +1,7 @@
+## 2.2.19
+The ordering test proves helper order only. Paused behavior is supported by code reading and automated tests, not a physical phone. Sticky restarts vary by device/OEM; refused foreground promotion is logged and still stops.
+Repeated uncaught crashes pause automatic service starts briefly; prominent in-app warning and explicit retry. Rejected starts are visible. No restart loop or Android restriction bypass. Automated tests only, not tested on a physical phone.
+
 ## 2.2.18
 Cache auto-clean only above 200 MiB, at most once per six hours; no 50 MB charging cleanup. Bounded diagnostic logs and honest file-payload counters. Manual cleanup stays explicit. Automated tests only, not tested on a physical phone.
 
