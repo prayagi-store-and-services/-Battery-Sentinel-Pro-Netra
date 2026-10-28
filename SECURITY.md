@@ -434,3 +434,7 @@ BSPN removes installer permission and PackageInstaller/session receiver/download
 ### Guava alert 55 host-tool follow-up
 
 PR #258 patched the JVM unit-test path but did not cover independent KSP, UTP and lint tool configurations. The follow-up scopes constraints to those host tools and verifies all resolvable app graphs in CI. Android debug/release and instrumentation runtime contain no Guava. This does not claim a shipped APK vulnerability or live alert closure. See docs/GUAVA-DEPENDENCY-EVIDENCE.md.
+
+
+### 2.2.22 observation-only summary
+Completed full-charge observations use a private preference file. Active windows are not persisted; unknown readings, long gaps and clock discontinuities discard continuity. One-time announcement claims commit before enqueue. No new permissions, network calls, third-party dependencies or privileged battery controls. This is not a security patch. Automated checks do not replace physical-device acceptance.
