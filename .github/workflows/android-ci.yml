@@ -50,5 +50,6 @@ jobs:
           path: |
             app/build/outputs/ui-renders/*.png
             app/build/test-results/testDebugUnitTest/*.xml
+            app/build/outputs/metadata-update-notice.png
             app/build/ci-diagnostics/android-build.log
           if-no-files-found: warn
