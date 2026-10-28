@@ -543,17 +543,7 @@ private fun SystemTelemetryTabContent(
                 accentColor = if (cacheStats.isOverThreshold) StatusAmber else NetraEmerald
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TelemetryRow("Internal App Cache", "${cacheStats.internalCacheBytes / 1024} KB")
-                    TelemetryRow("External Cache", "${cacheStats.externalCacheBytes / 1024} KB")
-                    TelemetryRow("Total Cache Usage", "${cacheStats.totalCacheBytes / (1024 * 1024)} MB / 200 MB threshold")
-                    TelemetryRow(
-                        "Cache Status",
-                        if (cacheStats.isOverThreshold) "Exceeds 200 MB Threshold" else "Optimal (< 200 MB)"
-                    )
-                    if (cacheStats.lastCleanupTimestamp > 0L) {
-                        val formattedDate = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(java.util.Date(cacheStats.lastCleanupTimestamp))
-                        TelemetryRow("Last Cleaned", "$formattedDate (${cacheStats.lastFreedBytes / 1024} KB freed)")
-                    }
+                    com.example.ui.components.CacheStorageDetails(cacheStats)
                     val junkCtx = androidx.compose.ui.platform.LocalContext.current
                     val junk by com.example.service.JunkWatcher.reading.collectAsStateWithLifecycle()
                     androidx.compose.runtime.LaunchedEffect(Unit) { com.example.service.JunkWatcher.refreshNow(junkCtx.applicationContext) }
@@ -574,7 +564,7 @@ private fun SystemTelemetryTabContent(
                         )
                         Button(onClick = { com.example.service.JunkWatcher.openStorageSettings(junkCtx) }) { Text("Open storage settings to clear") }
                     }
-                    TelemetryRow("Cleanup scope", "This app's own cache only (the code never touches settings or saved data)")
+                    TelemetryRow("Cleanup scope", "Disposable app cache files only; excludes code cache, links, protected files and saved data")
 
                     if (cleanNotice != null) {
                         Text(
@@ -589,7 +579,9 @@ private fun SystemTelemetryTabContent(
                     Button(
                         onClick = {
                             viewModel.cleanCache { freed ->
-                                cleanNotice = "Cleaned ${freed / 1024} KB of temporary cache safely."
+                                cleanNotice = if (viewModel.cacheStats.value.scanAvailable)
+                                    "Removed ${freed / 1024} KiB of cache file payload. Folder allocation is not counted."
+                                else "Cleanup skipped: cache size is Unavailable because the scan is incomplete."
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = NetraCyan),
