@@ -218,6 +218,8 @@ fun MainAppContent(viewModel: NetraViewModel) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            com.example.ui.components.CrashRecoveryNotice()
+
             Crossfade(
                 targetState = currentTab,
                 label = "tab_transition",

@@ -1,5 +1,9 @@
 # Security Policy
 
+## Crash-only service-start guard (v2.2.19)
+
+Local engineering recovery guard, not a security patch. No new permission, endpoint, dependency or schema. Three uncaught crashes/5min pause service starts 2 min, no timer/alarm. Does not bypass application-initialization crashes or establish physical-device acceptance. Persistence may fail. Android start restrictions remain in force.
+
 ## Bounded maintenance (v2.2.18)
 
 Local disposable-cache/log maintenance fix, not a vulnerability fix. No new permissions, endpoints, dependencies or schema. Cache cleanup excludes saved data and child links. Diagnostic retention is bounded (2,000 activity records, 30 thermal sessions, 200 events/session, bounded text). No physical-device, power, crash-loop, boot or Doze acceptance claim.

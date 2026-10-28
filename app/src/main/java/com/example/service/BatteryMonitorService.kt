@@ -89,6 +89,7 @@ class BatteryMonitorService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        if (!CrashRecoveryGate.allowed(this)) { PausedServiceStop.stop(this); return }
         createNotificationChannels()
         startForeground(NOTIFICATION_ID, buildSentinelNotification(NetraApplication.instance.centralDataCenter.centralState.value))
         startCollectorsAndPolling()
@@ -628,6 +629,7 @@ class BatteryMonitorService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (!CrashRecoveryGate.allowed(this)) { PausedServiceStop.stop(this); return START_NOT_STICKY }
         return START_STICKY
     }
 
@@ -636,7 +638,7 @@ class BatteryMonitorService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         continuousChargeAlert.stop()
-        lifecycleTracker.stop()
+        if (::lifecycleTracker.isInitialized) lifecycleTracker.stop()
         try {
             unregisterReceiver(batteryReceiver)
         } catch (_: Exception) {}
@@ -669,18 +671,16 @@ class BatteryMonitorService : Service() {
         val liveTelemetryFlow: StateFlow<BatteryTelemetry> = _liveTelemetryFlow.asStateFlow()
 
         fun startService(context: Context) {
+            if (!CrashRecoveryGate.allowed(context)) return
             try {
                 val intent = Intent(context, BatteryMonitorService::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    try {
-                        context.startForegroundService(intent)
-                    } catch (e: Exception) {
-                        context.startService(intent)
-                    }
-                } else {
-                    context.startService(intent)
-                }
-            } catch (_: Exception) {}
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) context.startForegroundService(intent)
+                else context.startService(intent)
+                CrashRecoveryGate.startResult("battery monitor", true)
+            } catch (e: Exception) {
+                CrashRecoveryGate.startResult("battery monitor", false)
+                Log.e("BatteryMonitorService", "Failed to start battery monitor", e)
+            }
         }
     }
 }

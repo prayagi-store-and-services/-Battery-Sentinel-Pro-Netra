@@ -63,6 +63,11 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
     lateinit var liveChargingSessionEngine: com.example.service.LiveChargingSessionEngine
         private set
 
+    override fun attachBaseContext(base: android.content.Context) {
+        super.attachBaseContext(base)
+        com.example.service.CrashRecoveryGate.install(base)
+    }
+
     override fun onCreate() {
         super.onCreate()
         try { Brand.applyLauncherName(this) } catch (_: Throwable) { }
