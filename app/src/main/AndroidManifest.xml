@@ -30,7 +30,7 @@
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
 
     <!-- Saver: lets us list launchable apps (not hidden ones) so we can decide which background apps to close. -->
-    <queries>
+    <queries><intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.APP_BROWSER"/></intent>
         <package android:name="com.prayagi.netraeco"/>
         <intent><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="https"/></intent>
         <!-- Netra Hub's read-only driving flag (yes/no only). -->
