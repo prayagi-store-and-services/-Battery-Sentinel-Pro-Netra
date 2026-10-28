@@ -4,12 +4,6 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-- Adds a local crash-only service-start breaker: three uncaught crashes within five minutes pause automatic and sticky service starts for two minutes. One or two crashes do not pause starts; ordinary Android process death and rejected starts are not counted. There is no restart timer or alarm. A later normal start can resume after expiry; Android can still refuse it.
-- A prominent in-app warning says background monitoring and thermal alerts may be unavailable while paused, with an explicit Retry monitoring now button. Rejected service starts also show a retry warning. An accepted start request is not proof of an operational service.
-- Installs the crash counter before application initializers, isolates boot/package/power service starters, guards monitor teardown after partial startup, and removes the immediate ordinary-service retry after a refused foreground-service start. Visible app entry and explicit Retry remain start paths; no Android restriction is bypassed.
-- Engineering recovery guard, not complete crash recovery or a security patch. It does not bypass a crash in application initialization, guarantee reboot/Doze behavior, or measure battery cost. Persistence failure can prevent crash counting. Automated tests only, not tested on a physical phone.
-- Paused O+ service paths attempt the sentinel foreground notification before stopping; promotion failures are logged and still stop. The ordering test proves helper order only. Paused behavior is supported by code reading and automated tests, not a physical-phone test. Sticky-restart behavior is device/OEM-variable.
-
 ## [2.2.19]
 
 - Adds a local crash-only service-start breaker: three uncaught crashes within five minutes pause automatic and sticky service starts for two minutes. One or two crashes do not pause starts; ordinary Android process death and rejected starts are not counted. There is no restart timer or alarm. A later normal start can resume after expiry; Android can still refuse it.
