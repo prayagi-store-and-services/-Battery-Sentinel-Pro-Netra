@@ -14,8 +14,8 @@ class BootCompletedReceiver : BroadcastReceiver() {
             action == Intent.ACTION_POWER_DISCONNECTED
         ) {
             // Restore 24/7 Sentinel service and Battery Foreground Service
-            BatteryMonitorService.startService(context)
-            com.example.service.BatteryForegroundService.startService(context)
+            try { BatteryMonitorService.startService(context) } catch (_: Exception) { }
+            try { com.example.service.BatteryForegroundService.startService(context) } catch (_: Exception) { }
         }
     }
 }
