@@ -26,18 +26,23 @@ class ChargingScreenActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             val live = try { registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
-            if (!G.holdAllowed(GMode.load(this), live, G.isPhoneLocked(this))) { finish(); return }
+            if (!G.holdAllowed(GMode.load(this), live, G.isPhoneLocked(this))) { closeChargingScreen(); return }
             if (intent?.getBooleanExtra(EXTRA_WAKE, false) == true) setTurnScreenOn(true)
         }
         unplugReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                if (intent.action == Intent.ACTION_POWER_DISCONNECTED || !G.keepAwakeAllowed(intent)) { com.example.service.ScreenLock.lockIfAllowed(applicationContext, true); finish(); return }
-                if (intent.action == Intent.ACTION_SCREEN_OFF && GMode.load(context) != GMode.ON) finish()
-                if (GMode.load(context) == GMode.OFF) finish()
+                if (intent.action == Intent.ACTION_POWER_DISCONNECTED || !G.keepAwakeAllowed(intent)) { com.example.service.ScreenLock.lockIfAllowed(applicationContext, true); closeChargingScreen(); return }
+                if (intent.action == Intent.ACTION_SCREEN_OFF && GMode.load(context) != GMode.ON) closeChargingScreen()
+                if (GMode.load(context) == GMode.OFF) closeChargingScreen()
             }
         }
         registerReceiver(unplugReceiver, IntentFilter(Intent.ACTION_POWER_DISCONNECTED).apply { addAction(Intent.ACTION_BATTERY_CHANGED); addAction(Intent.ACTION_SCREEN_OFF) })
-        setContent { ChargingScreenContent(onClose = { finish() }, keepScreenOn = false) }
+        setContent { ChargingScreenContent(onClose = { closeChargingScreen() }, keepScreenOn = false) }
+    }
+
+    /** Close only this isolated task. Android resumes what was below; never launch the app. */
+    internal fun closeChargingScreen() {
+        if (isTaskRoot) finishAndRemoveTask() else finish()
     }
 
     companion object { const val EXTRA_WAKE = "wake_screen" }
