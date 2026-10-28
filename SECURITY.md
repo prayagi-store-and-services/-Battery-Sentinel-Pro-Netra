@@ -1,5 +1,9 @@
 # Security Policy
 
+## Recorded observation comparisons (v2.2.17)
+
+Local aggregate/read-only UI change, not a vulnerability fix. No new permission, dependency, network endpoint, sampling timer, schema or data deletion. A single IO query per history screen subscription reads existing rows; no per-insert aggregate observer. Stored rows may contain retained values and cannot establish measured capacity, lifespan or safety. Not physical-device tested.
+
 ## Triple dot rings (v2.2.16)
 
 Presentation and finite-animation change only, not a vulnerability fix. No new permission, library, network endpoint or health estimate. Screen/power state receivers are registered only while the component is composed and removed on disposal. The charging-screen style choice adds one private local preference flag; existing style values are kept. No device-testing claim.
