@@ -39,6 +39,31 @@ class BatteryDotRingsRenderTest {
             b.recycle()
         }
     }
+    @Test fun inverseTemperatureFixturesKeepNumbersAndUnavailableHonest() {
+        val temperature = mutableStateOf<Float?>(0f)
+        rule.setContent { MaterialTheme { Surface { Column(Modifier.fillMaxSize().padding(20.dp)) {
+            Text("Local fixture, not device readings")
+            BatteryDotRings(64, temperature.value, false, true, Modifier.width(300.dp), 80f)
+        } } } }
+        for ((value, count) in listOf(0f to 100, 37f to 63, 38f to 62, 39.7f to 60, 100f to 0)) {
+            rule.runOnIdle { temperature.value = value }
+            rule.waitForIdle()
+            rule.onNodeWithContentDescription("100 dots each: outer battery 64%; middle temperature " +
+                String.format(java.util.Locale.getDefault(), "%.1f C", value) + ", $count dots remaining; inner health 80%")
+                .assertExists()
+            capture("temperature-inverse-$count")
+        }
+        for (value in 20..45) {
+            rule.runOnIdle { temperature.value = value.toFloat() }
+            rule.waitForIdle()
+            capture("temperature-preview-$value")
+        }
+        rule.runOnIdle { temperature.value = null }
+        rule.waitForIdle()
+        rule.onNodeWithContentDescription("100 dots each: outer battery 64%; middle temperature Unavailable, dots unavailable; inner health 80%")
+            .assertExists()
+        capture("temperature-inverse-unavailable")
+    }
     @Test fun finiteSampleMotionAndScreenOffStopsIt() {
         val power = rule.activity.getSystemService(android.os.PowerManager::class.java)
         org.robolectric.Shadows.shadowOf(power).setIsInteractive(true)
