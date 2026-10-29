@@ -11,6 +11,20 @@ class BatteryDotRingsTest {
         for (i in 0..100) assertEquals(i, ringDots(i.toFloat()))
         assertEquals(40, ringDots(39.7f))
     }
+    @Test fun temperatureRemovesOneDotPerDegreeWithoutChangingOtherRings() {
+        assertNull(temperatureRingDots(null)); assertNull(temperatureRingDots(Float.NaN))
+        assertNull(temperatureRingDots(Float.POSITIVE_INFINITY)); assertNull(temperatureRingDots(Float.NEGATIVE_INFINITY))
+        assertEquals(100, temperatureRingDots(-5f)); assertEquals(0, temperatureRingDots(110f))
+        assertEquals(100, temperatureRingDots(0f)); assertEquals(60, temperatureRingDots(39.7f))
+        assertEquals(63, temperatureRingDots(37f)); assertEquals(62, temperatureRingDots(38f))
+        assertEquals(0, temperatureRingDots(100f))
+        for (i in 0..100) {
+            assertEquals(100-i, temperatureRingDots(i.toFloat()))
+            assertEquals(i, ringDots(i.toFloat()))
+        }
+        assertEquals(1f, ringRadialOffset(63,62,1f),0f) // warmer removes outward
+        assertEquals(0f, ringRadialOffset(62,63,1f),0f) // cooler rejoins inward
+    }
     @Test fun allPauseConditionsGateMotion() {
         assertTrue(ringCanAnimate(true,true,true,false,true))
         assertFalse(ringCanAnimate(false,true,true,false,true))
