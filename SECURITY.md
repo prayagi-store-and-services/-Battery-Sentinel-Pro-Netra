@@ -1,3 +1,7 @@
+## Unreleased inverse temperature display
+
+Presentation change only, not a vulnerability patch. Reuses measured temperature and the existing 0-100 C, 100-slot scale in reverse. No new permission, dependency, endpoint, sampler, persistent record or schema. Unknown/non-finite temperature has no invented fill; warning colours still use measured temperature. Finite animation and idle/background/screen-off/power-saving gates are unchanged. No physical-device or safety-performance claim.
+
 ## 2.2.23 metadata-only notices
 Daily battery/network-constrained WorkManager checks share a persisted attempt gate with foreground checks. Notification permission and blocked channels are respected; notices are version-deduplicated. Update taps resolve at tap time, falling back to the exact Eco website page if compatible Eco cannot open. No APK handling or install permission. No new library, telemetry or server. This is not a vulnerability patch or proof of physical-device battery performance. Release requires final-head CI, independent review and native UI inspection.
 

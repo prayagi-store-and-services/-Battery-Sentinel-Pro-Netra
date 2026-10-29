@@ -30,8 +30,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlin.math.*
 
-/** Fixed slots, not a synthesized health estimate. Temperature scale is one degree C per dot. */
+/** Fixed slots, not a synthesized health estimate. Temperature removes one dot per degree C. */
 internal fun ringDots(value: Float?): Int? = value?.takeIf { it.isFinite() }?.roundToInt()?.coerceIn(0, 100)
+internal fun temperatureRingDots(value: Float?): Int? = ringDots(value)?.let { 100 - it }
 internal fun ringCanAnimate(resumed: Boolean, visible: Boolean, interactive: Boolean, saving: Boolean, fresh: Boolean) =
     resumed && visible && interactive && !saving && fresh
 internal fun ringRadialOffset(previous: Int, current: Int, progress: Float): Float =
@@ -80,7 +81,7 @@ internal fun BatteryDotRings(
     }
     val values = listOf(level?.takeIf { it in 0..100 }?.toFloat(), temperature?.takeIf { it.isFinite() },
         healthPercent?.takeIf { it.isFinite() && it in 0f..100f })
-    val counts = values.map(::ringDots)
+    val counts = values.mapIndexed { ring, value -> if (ring == 1) temperatureRingDots(value) else ringDots(value) }
     var previous by remember { mutableStateOf(counts) }
     var origin by remember { mutableStateOf(counts) }
     val motion = remember { Animatable(1f) }
@@ -102,7 +103,7 @@ internal fun BatteryDotRings(
         Box(Modifier.fillMaxWidth().aspectRatio(1f).onGloballyPositioned {
             val b = it.boundsInWindow()
             visible = b.width > 0f && b.height > 0f && b.bottom > 0f && b.right > 0f && b.top < view.height && b.left < view.width
-        }.semantics { contentDescription = "100 dots each: outer battery $batteryText; middle temperature $tempText; inner health $healthText"
+        }.semantics { contentDescription = "100 dots each: outer battery $batteryText; middle temperature $tempText, ${counts[1]?.let { "$it dots remaining" } ?: "dots unavailable"}; inner health $healthText"
             stateDescription = if (allowed && motion.value < 1f) "Moving blue dots" else "Settled dots" }, contentAlignment = Alignment.Center) {
             Canvas(Modifier.fillMaxSize()) {
                 val center = Offset(size.width / 2, size.height / 2)
@@ -139,6 +140,6 @@ internal fun BatteryDotRings(
             }
         }
         Text("Outer: battery  |  Middle: temperature  |  Core: health", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text("100 dots each. Temperature: 1 C per dot. Health % needs supported data.", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("100 dots each. Temperature: 100 minus C dots; hotter means fewer dots. Health % needs supported data.", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
