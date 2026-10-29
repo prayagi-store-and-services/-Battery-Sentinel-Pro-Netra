@@ -1,3 +1,9 @@
+## Unreleased - inverse temperature dots
+
+- The temperature ring starts with 100 dots at 0 C and removes one dot for each rounded degree as the reading rises. For example, 40 C shows 60 dots. This is a display scale, not a safe-temperature target.
+- Numeric temperature, warning colours, battery/health rings and finite animation gates are unchanged. Missing temperature stays Unavailable.
+- Automated tests and local render fixtures only; not physical-phone tested. No new permission, sampling, telemetry or background work.
+
 ## Unreleased - community links
 
 - Settings has five official Netra social profiles, the Battery website and a separate private complaint/feedback form.
