@@ -121,7 +121,7 @@ fun PowerPreferencesBody() {
         PrefRow(
             "GPS power saving",
             if (gpsGrant) "While you are moving, location stays on; when the phone is still, it turns off and only wakes for a few seconds every 5 minutes to refresh. Uses the accelerometer only for movement; nothing is sent anywhere. Turning this off restores your previous location setting."
-            else "Needs a one-time setup you have already used for automation apps: enable wireless debugging once and run the ADB command "pm grant " + context.packageName + " android.permission.WRITE_SECURE_SETTINGS" from a computer or second device. Without that grant Android does not let any app switch location, and this feature stays off. It never changes anything else.",
+            else "Needs a one-time setup you have already used for automation apps: enable wireless debugging once and run this ADB command from a computer or second device: pm grant " + context.packageName + " android.permission.WRITE_SECURE_SETTINGS - without that grant Android does not let any app switch location, and this feature stays off. It never changes anything else.",
             com.example.service.GpsPowerController.isEnabled(context) && gpsGrant,
             true
         ) { on ->
