@@ -1,3 +1,10 @@
+## 2.2.24 - GPS power saving (opt-in)
+
+- New opt-in switch "GPS power saving" in Power preferences. While you are moving, location stays on; when the phone is still, location turns off and wakes for a few seconds every 5 minutes only to refresh. Movement is read from the accelerometer; nothing is sent anywhere.
+- Android does not let apps switch location by themselves. This feature works only after a one-time ADB grant of WRITE_SECURE_SETTINGS - the same step automation apps like MacroDroid use. Without the grant the switch explains the setup and nothing changes. Turning the feature off restores your previous location setting.
+- New manifest declaration WRITE_SECURE_SETTINGS (not grantable at install; used only for this feature).
+- This release also ships the two previously merged "Unreleased" changes listed below (inverse temperature dots, community links).
+
 ## Unreleased - inverse temperature dots
 
 - The temperature ring starts with 100 dots at 0 C and removes one dot for each rounded degree as the reading rises. For example, 40 C shows 60 dots. This is a display scale, not a safe-temperature target.

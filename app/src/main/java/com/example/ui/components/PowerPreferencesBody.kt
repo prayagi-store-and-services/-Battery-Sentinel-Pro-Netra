@@ -117,6 +117,17 @@ fun PowerPreferencesBody() {
             "Forced from 11 PM to 7 AM, and after the screen has been off 15 minutes. With separate consent, requests dimming, 15 s screen timeout and auto-sync pause; restores saved settings at 7 AM or when the screen turns on. Android does not let apps switch off Wi-Fi, Bluetooth, mobile data or the network type, so no battery-saving figure is promised. If Netra Hub (same phone, offline) says you are driving, this pauses; thermal protection and the charge alarm stay on. " + com.example.service.ActivePowerSaver.statusText(context),
             com.example.service.ActivePowerSaver.isEnabled(context), canWrite
         ) { on -> com.example.service.ActivePowerSaver.setEnabled(context, on); tick++ }
+        val gpsGrant = com.example.service.GpsPowerController.hasGrant(context)
+        PrefRow(
+            "GPS power saving",
+            if (gpsGrant) "While you are moving, location stays on; when the phone is still, it turns off and only wakes for a few seconds every 5 minutes to refresh. Uses the accelerometer only for movement; nothing is sent anywhere. Turning this off restores your previous location setting."
+            else "Needs a one-time setup you have already used for automation apps: enable wireless debugging once and run the ADB command "pm grant " + context.packageName + " android.permission.WRITE_SECURE_SETTINGS" from a computer or second device. Without that grant Android does not let any app switch location, and this feature stays off. It never changes anything else.",
+            com.example.service.GpsPowerController.isEnabled(context) && gpsGrant,
+            true
+        ) { on ->
+            com.example.service.GpsPowerController.setEnabled(context, on)
+            tick++
+        }
         PrefRow(
             "Brightness preference",
             if (canWrite) "Sets brightness to a saving level (" + (PowerPrefs.SAVING_BRIGHTNESS * 100 / 255) + "%). Off restores your saved brightness and mode."

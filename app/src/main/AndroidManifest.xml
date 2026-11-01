@@ -4,6 +4,8 @@
 
     <!-- Normal permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Only grantable by the user through a one-time ADB step; used solely for the opt-in GPS power-saving feature. -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
