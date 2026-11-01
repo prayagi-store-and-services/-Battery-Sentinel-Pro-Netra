@@ -4,6 +4,9 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+- GPS power saving (opt-in): a new switch in Power preferences. While you are moving, location stays on; when the phone is still, location turns off and wakes for a few seconds every 5 minutes to refresh. Movement is read from the accelerometer; nothing is sent anywhere.
+- Android lets no app switch location by itself: this needs the one-time ADB grant of WRITE_SECURE_SETTINGS (the same step automation apps like MacroDroid use). Without the grant the switch explains the setup and nothing changes. Turning the feature off restores your previous location setting.
+- Temperature dot ring inverted: hotter readings now remove dots instead of adding them, so a fuller ring always means more of the metric remains.
 - Automatic newer-version popup and notification, with at most one metadata request per day, subject to Android battery/network limits. Not instant release detection.
 - Update opens Battery Sentinel's page in compatible Netra Ecosystem or its Eco website page, falling back to the browser if Eco cannot open. No APK download or install in Battery Sentinel.
 - Removed manual update checking and the obsolete Install apps permission-panel row. Install permission remains absent. Notification denial and disabled channels are respected; duplicate notices are suppressed by version.
