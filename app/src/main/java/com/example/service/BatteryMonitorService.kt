@@ -94,6 +94,7 @@ class BatteryMonitorService : Service() {
         startForeground(NOTIFICATION_ID, buildSentinelNotification(NetraApplication.instance.centralDataCenter.centralState.value))
         startCollectorsAndPolling()
         startLifecycleSupervisor()
+        GpsPowerController.ensureRunning(this)
         
         // Add thermal status listener
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
