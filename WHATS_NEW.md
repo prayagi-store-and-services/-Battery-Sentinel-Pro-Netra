@@ -1,3 +1,9 @@
+## 2.2.25 - Battery Health Life in the core ring
+
+- The inner dot ring on the dashboard and charging screen now shows Battery Health Life instead of staying empty: the phone's own reported capacity (full-charge vs design) is used when the phone shares it, otherwise the value is estimated from the latest measured temperature and battery level (heat above 30 C, cold below 0 C and deep discharge below 20% each lower the estimate).
+- Estimated values are marked "est." on the gauge; when there are no readings the ring honestly stays Unavailable - nothing is invented.
+- Presentation change only, computed on-device from existing readings. No new permission, sampler, dependency, network endpoint or stored data. Not a physical-device battery claim.
+
 ## 2.2.24 - GPS power saving (opt-in)
 
 - New opt-in switch "GPS power saving" in Power preferences. While you are moving, location stays on; when the phone is still, location turns off and wakes for a few seconds every 5 minutes only to refresh. Movement is read from the accelerometer; nothing is sent anywhere.
