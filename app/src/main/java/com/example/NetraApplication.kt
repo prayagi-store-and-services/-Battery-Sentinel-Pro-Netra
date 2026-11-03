@@ -103,6 +103,10 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         com.example.service.StabilityHealthScheduler.schedule(this)
         com.example.update.UpdateCheckWorker.schedule(this)
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            // Launch-time update-metadata check; self-throttled to one network attempt per 6 hours.
+            try { com.example.update.AutomaticUpdateNotice.check(this@NetraApplication) } catch (_: Exception) { }
+        }
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             stabilitySentinel.flushPendingReports()
         }
         calibrationManager = com.example.ai.BatteryCalibrationManager(this)

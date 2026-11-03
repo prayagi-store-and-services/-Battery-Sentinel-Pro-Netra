@@ -10,9 +10,9 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.*
 import java.util.concurrent.TimeUnit
 
-/** Metadata only, at most one network attempt per 24 hours across UI and worker. */
+/** Metadata only, at most one network attempt per 6 hours across UI and worker. */
 object AutomaticUpdateNotice {
-    internal const val INTERVAL_MS = 24L * 60 * 60 * 1000
+    internal const val INTERVAL_MS = 6L * 60 * 60 * 1000
     private const val PREFS = "eco_metadata_notice_v1"
     private const val CHANNEL = "eco_metadata_notice"
     private const val ID = 7435
@@ -59,7 +59,7 @@ object AutomaticUpdateNotice {
     }
     fun wasDismissed(c: Context, code: Long) = prefs(c).getLong("dismissed", 0) >= code
     fun dismiss(c: Context, code: Long) { prefs(c).edit().putLong("dismissed", code).apply() }
-    internal fun request() = PeriodicWorkRequestBuilder<EcoMetadataWorker>(24, TimeUnit.HOURS)
+    internal fun request() = PeriodicWorkRequestBuilder<EcoMetadataWorker>(AutomaticUpdateNotice.INTERVAL_MS, TimeUnit.MILLISECONDS)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).setRequiresBatteryNotLow(true).build())
             .build()
     fun start(c: Context) {

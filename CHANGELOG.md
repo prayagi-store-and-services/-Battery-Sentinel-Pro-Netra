@@ -4,11 +4,9 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-### Removed
-- **Continuous Unplug Alert ringtone removed - voice only.** The continuous alert at your charge target no longer plays the phone ringtone; only the spoken line repeats about every 10 seconds until you unplug. The separate Target Charge Alarm keeps its ringtone option. Reason: users, especially seniors, switched the whole safety feature off to stop the ringtone noise.
-
-### Added
-- **Battery Percentage Announcement (opt-in).** A new Settings card (master toggle, default OFF) speaks the battery level at each chosen step. Charging section: its own switch (default OFF) with a choice of every 10% (announces 20,30...100) or every 5% (announces 5,10...100). Discharging section: always on at every 5% while the feature is enabled, with a switch to use 10% steps instead. Voice only; announcements fire only when the level crosses a step, with no repeats, and respect the master announcements switch and Night Protection.
+### Changed
+- **Update notices are timely now.** Version metadata checks run at every cold app start and at most once every 6 hours (previously at most once a day), so a new release shows the in-app notice and the notification the same day. Metadata-only as before: a single small GitHub API read, no download, no artifact fields.
+- **The static update explainer card is gone.** Settings shows an update card only when a newer version is verified ("Latest version available: X" + Update). The in-app popup and notification are unchanged.
 
 ## [2.2.22]
 

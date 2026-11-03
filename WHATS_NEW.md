@@ -1,3 +1,8 @@
+## 2.2.28 - Update notices that actually reach you
+
+- New version? The app now checks at every start (and at most every 6 hours), so the in-app notice and notification show up the same day instead of up to a day later.
+- Settings no longer shows the long static update explainer; the update card appears only when a newer version is really available.
+
 ## 2.2.27 - Quieter continuous alert + percentage announcements
 
 - **Continuous Unplug Alert is voice-only now.** No more ringtone loop at your charge target - just the spoken line repeating until you unplug. The Target Charge Alarm keeps its ringtone option.

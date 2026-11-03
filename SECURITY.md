@@ -1,3 +1,7 @@
+## Unreleased timely update notices
+
+Update checks stay metadata-only (one small GitHub releases/latest read; artifact fields are never read, nothing downloads). Cadence rises from once a day to app start plus at most every 6 hours; a failed attempt still backs off and never retries in a tight loop. The settings card no longer renders static explainer text and appears only when a newer version verifies. No new permission, dependency, endpoint or stored data.
+
 ## Unreleased voice-only alert and percentage announcements
 
 - **Ringtone removed from the Continuous Unplug Alert.** No audio playback component remains in the continuous alert path: only the spoken line repeats until unplug. This also removes the alarm-volume media stream use (the ringtone played on USAGE_ALARM) and the risk that users disable the safety feature to stop the noise. The separate Target Charge Alarm ringtone option is unchanged.
