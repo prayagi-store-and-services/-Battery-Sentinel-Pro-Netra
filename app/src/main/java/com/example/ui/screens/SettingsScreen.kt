@@ -205,7 +205,7 @@ fun SettingsScreen(
         item {
             SentinelCard(
                 title = "Animations",
-                icon = Icons.Default.Star,
+                icon = Icons.Default.Bolt,
                 dotState = if (settings.animationsEnabled) DotState.CONNECTED else DotState.STANDBY,
                 accentColor = NetraCyan
             ) {
