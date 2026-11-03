@@ -40,11 +40,9 @@ data class CurrentSampleStats(val minimumMa: Double, val maximumMa: Double, val 
  * Percentages come only from level/scale. Nothing is estimated from voltage.
  */
 class LivePowerTelemetry {
-    private data class Point(val atMs: Long, val percent: Double)
-
+    private val etaEstimator = SessionEtaEstimator()
     private var sessionMode: PowerMode? = null
     private var sessionStartMs = 0L
-    private val window = ArrayDeque<Point>()
     private var currentMode: PowerMode? = null
     private var lastCurrentAt: Long? = null
     private var currentMin = 0.0
@@ -73,12 +71,7 @@ class LivePowerTelemetry {
     /** Charge level the estimate counts down to (the user's target, 100 when not set). */
     var targetPercent: Int = 100
 
-    // The finish time is fixed when a new whole percent arrives and then only counts down,
-    // so the clock never climbs between readings.
-    private var anchorFinishMs: Long? = null
-    private var anchorPercent: Double? = null
-
-    fun reset() { clearCurrentSamples(); sessionMode = null; window.clear(); anchorFinishMs = null; anchorPercent = null }
+    fun reset() { clearCurrentSamples(); sessionMode = null; etaEstimator.reset() }
 
     fun update(s: BatterySnapshot, nowMs: Long): LivePowerUi {
         val mode = classify(s)
@@ -89,23 +82,13 @@ class LivePowerTelemetry {
         val timed = mode == PowerMode.CHARGING || mode == PowerMode.DISCHARGING
         if (!timed) {
             sessionMode = null
-            window.clear()
+            etaEstimator.reset()
         } else if (mode != sessionMode) {
             sessionMode = mode
             sessionStartMs = nowMs
-            window.clear()
+            etaEstimator.reset()
         }
         val duration = if (timed) formatDuration((nowMs - sessionStartMs).coerceAtLeast(0L) / 1000L) else UNAVAILABLE
-
-        if (timed && percent != null) {
-            val last = window.lastOrNull()
-            val inconsistent = last != null && (nowMs <= last.atMs ||
-                (mode == PowerMode.CHARGING && percent < last.percent) ||
-                (mode == PowerMode.DISCHARGING && percent > last.percent))
-            if (inconsistent) window.clear()
-            window.addLast(Point(nowMs, percent))
-            while (window.isNotEmpty() && nowMs - window.first().atMs > WINDOW_MS) window.removeFirst()
-        }
 
         val currentMa = currentMa(s)
         val showCurrent = currentMa != null && (mode == PowerMode.CHARGING || mode == PowerMode.DISCHARGING)
@@ -114,8 +97,8 @@ class LivePowerTelemetry {
         val tempC = s.temperatureTenthsC?.takeIf { it in -400..1000 }?.let { it / 10.0 }
 
         val (label, estimate) = when (mode) {
-            PowerMode.CHARGING -> (if (targetPercent in 1..99) "Estimated Time To $targetPercent%" else "Estimated Time To Full") to estimateText(percent, true, s.status, nowMs)
-            PowerMode.DISCHARGING -> "Estimated Time Until Empty" to estimateText(percent, false, s.status, nowMs)
+            PowerMode.CHARGING -> (if (targetPercent in 1..99) "Estimated Time To $targetPercent%" else "Estimated Time To Full") to estimateText(s, percent, true, nowMs)
+            PowerMode.DISCHARGING -> "Estimated Time Until Empty" to estimateText(s, percent, false, nowMs)
             PowerMode.FULL -> "Estimated Time To Full" to (if (percent != null && percent >= 100.0) "00:00:00" else UNAVAILABLE)
             else -> null to null
         }
@@ -133,38 +116,18 @@ class LivePowerTelemetry {
         )
     }
 
-    private fun estimateText(percent: Double?, charging: Boolean, status: Int, nowMs: Long): String {
+    private fun estimateText(s: BatterySnapshot, percent: Double?, charging: Boolean, nowMs: Long): String {
+        val result = etaEstimator.observe(percent?.toInt(), s.status, s.plugged, nowMs, targetPercent)
         if (percent == null) return UNAVAILABLE
-        if (charging && status == BatteryManager.BATTERY_STATUS_FULL) return "00:00:00"
-        val goal = if (charging) targetPercent.coerceIn(1, 100).toDouble() else 0.0
-        val remaining = if (charging) goal - percent else percent
-        if (charging && remaining <= 0.0) return "00:00:00"
-        if (remaining <= 0.0) return UNAVAILABLE
-        val first = window.firstOrNull() ?: return CALCULATING
-        val last = window.last()
-        val dtSec = (last.atMs - first.atMs) / 1000.0
-        if (dtSec < MIN_SPAN_SEC) return CALCULATING
-        val moved = abs(last.percent - first.percent)
-        // No change yet in the window: keep calculating for a while, then admit we cannot tell.
-        if (moved <= 0.0) return if (dtSec < NO_PROGRESS_SEC) CALCULATING else UNAVAILABLE
-        val seconds = remaining / (moved / dtSec)
-        if (!seconds.isFinite() || seconds <= 0.0 || seconds > MAX_ETA_SEC) return UNAVAILABLE
-        val prevFinish = anchorFinishMs
-        if (prevFinish == null || anchorPercent != percent) {
-            anchorFinishMs = nowMs + (seconds * 1000).toLong()
-            anchorPercent = percent
-        }
-        val left = ((anchorFinishMs ?: (nowMs + (seconds * 1000).toLong())) - nowMs) / 1000L
-        return formatDuration(left.coerceAtLeast(0L))
+        if (charging && percent >= targetPercent.coerceIn(1, 100)) return "00:00:00"
+        val minutes = if (charging) result.chargingMinutes else result.dischargingMinutes
+        return minutes?.let { "~" + formatDuration(it * 60L) + " (est.)" }
+            ?: if (nowMs - sessionStartMs < 120_000L) CALCULATING else UNAVAILABLE
     }
 
     companion object {
         const val UNAVAILABLE = "Unavailable"
         const val CALCULATING = "Calculating..."
-        private const val WINDOW_MS = 10 * 60_000L
-        private const val MIN_SPAN_SEC = 60.0
-        private const val NO_PROGRESS_SEC = 300.0
-        private const val MAX_ETA_SEC = 48 * 3600.0
 
         /** Full and Not charging are their own modes and are never reported as charging or discharging. */
         fun classify(s: BatterySnapshot): PowerMode = when {

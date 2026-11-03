@@ -57,4 +57,45 @@ class SessionEtaEstimatorTest {
         val full = SessionEtaEstimator(); full.charge(98, 0)
         assertNull(full.charge(100, 2).chargingMinutes)
     }
+
+    @Test fun oneSecondPollingPreservesChargingBaseline() {
+        val e = SessionEtaEstimator()
+        for (sec in 0..600) e.observe(50 + sec / 300, charging, ac, sec * 1000L)
+        assertEquals(240, e.observe(52, charging, ac, 600_000L).chargingMinutes)
+    }
+    @Test fun rapidPollingDoesNotInventSixMinuteDischarge() {
+        val e = SessionEtaEstimator()
+        for (sec in 0..600) e.observe(62 - sec / 300, discharge, 0, sec * 1000L)
+        assertEquals(300, e.observe(60, discharge, 0, 600_000L).dischargingMinutes)
+    }
+    @Test fun firstPercentBoundaryAloneCannotEstablishRate() {
+        val e = SessionEtaEstimator()
+        e.observe(62, discharge, 0, 0)
+        assertNull(e.observe(61, discharge, 0, 1000).dischargingMinutes)
+        assertNull(e.observe(61, discharge, 0, 120_000).dischargingMinutes)
+    }
+    @Test fun pollingFrequencyDoesNotChangeSameMeasuredTrend() {
+        val fast = SessionEtaEstimator(); val sparse = SessionEtaEstimator()
+        for (sec in 0..600) fast.observe(80 - sec / 60, discharge, 0, sec * 1000L)
+        for (sec in 0..600 step 60) sparse.observe(80 - sec / 60, discharge, 0, sec * 1000L)
+        assertEquals(sparse.observe(70, discharge, 0, 600_000L), fast.observe(70, discharge, 0, 600_000L))
+    }
+    @Test fun stalledProgressCannotCountdownToFalseZero() {
+        val e = SessionEtaEstimator(); e.charge(96, 0); e.charge(98, 2)
+        assertNull(e.charge(98, 8).chargingMinutes)
+    }
+    @Test fun changedChargeTargetClearsOldFinishAnchor() {
+        val e = SessionEtaEstimator()
+        e.observe(50, charging, ac, 0, 80)
+        assertEquals(28, e.observe(52, charging, ac, 120_000, 80).chargingMinutes)
+        assertNull(e.observe(52, charging, ac, 121_000, 100).chargingMinutes)
+    }
+
+    @Test fun learnedHistoryIsOnlyAllowedDuringInitialWarmupNotAfterStall() {
+        val e = SessionEtaEstimator()
+        org.junit.Assert.assertTrue(e.charge(50, 0).allowHistory)
+        org.junit.Assert.assertFalse(e.charge(50, 3).allowHistory)
+        e.charge(52, 4)
+        org.junit.Assert.assertFalse(e.charge(52, 17).allowHistory)
+    }
 }

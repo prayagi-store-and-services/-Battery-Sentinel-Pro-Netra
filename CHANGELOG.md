@@ -4,6 +4,13 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+### Fixed
+- Charge-to-full/target and remaining battery time use sustained measured battery-level progress. Short polls and one noisy reading do not become a six-minute runtime prediction. Current workload and charging conditions take priority over learned history.
+- The charging screen, live monitor and dashboard share the same bounded trend policy. Warm-up says Calculating briefly; missing or unreliable progress says Unavailable instead of inventing a number. Predictions remain estimates, especially as charging tapers or usage changes.
+- The phone relearns its local charge/discharge history for corrected estimates. No new permission, network transfer or background sampler. Automated tests are not physical-phone validation.
+
+## [2.2.29]
+
 ### Added
 - **Opt-in gauge animations.** A new Settings switch (default OFF) enables effects inside the gauge circles: charging spark, temperature fire/liquid driven by the real measured trend with small hysteresis (flat or unknown trend animates nothing), and a health heartbeat that slows and fades on a falling health trend. The frame clock runs only while the switch is on and the existing freshness, visibility and power gates hold; no new sampler, permission, endpoint or stored data.
 

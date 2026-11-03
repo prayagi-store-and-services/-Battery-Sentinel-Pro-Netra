@@ -97,7 +97,7 @@ fun LivePowerContent(u: LivePowerUi) {
             "Current updates every second while this screen is visible. Values are Android-reported battery current, not charger output. " +
                 "Magnitude is shown because phones differ in sign. Min, max and average describe observed samples only; they reset on a mode change, missing reading or sampling gap over 5 seconds. " +
                 "OEM current reporting can be inaccurate. Battery-side watts are calculated from voltage x current, not wall-adapter watts. " +
-                "Session time starts when this screen sees the mode. Estimates use the last 10 minutes of battery percentage progress.",
+                "Session time starts when this screen sees the mode. Estimates use observed battery-level changes, not instantaneous current. Learning needs at least two percentage points and two minutes. Without a reliable trend no time prediction is shown; an estimate is not a guarantee.",
             fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }

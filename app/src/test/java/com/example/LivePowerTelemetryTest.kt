@@ -61,7 +61,7 @@ class LivePowerTelemetryTest {
         t.update(snap(level = 50), 60_000L)
         // 10 points in 10 minutes => 1 point/min, 40 points left => 40 minutes
         t.update(snap(level = 55), 300_000L)
-        assertEquals("00:40:00", t.update(snap(level = 60), 600_000L).estimate)
+        assertEquals("~00:40:00 (est.)", t.update(snap(level = 60), 600_000L).estimate)
     }
     @Test fun etaCountsDownToTargetAndNeverClimbs() {
         val t = LivePowerTelemetry()
@@ -71,9 +71,9 @@ class LivePowerTelemetryTest {
         t.update(snap(level = 55), 300_000L)
         val first = t.update(snap(level = 60), 600_000L)
         assertEquals("Estimated Time To 80%", first.estimateLabel)
-        assertEquals("00:20:00", first.estimate)
-        assertEquals("00:19:00", t.update(snap(level = 60), 660_000L).estimate)
-        assertEquals("00:18:00", t.update(snap(level = 60), 720_000L).estimate)
+        assertEquals("~00:20:00 (est.)", first.estimate)
+        assertEquals("~00:19:00 (est.)", t.update(snap(level = 60), 660_000L).estimate)
+        assertEquals("~00:18:00 (est.)", t.update(snap(level = 60), 720_000L).estimate)
     }
     @Test fun etaIsZeroOnceTargetReached() {
         val t = LivePowerTelemetry()
@@ -85,7 +85,7 @@ class LivePowerTelemetryTest {
     @Test fun etaUnavailableWhenNoProgress() {
         val t = LivePowerTelemetry()
         t.update(snap(level = 50), 0L)
-        assertEquals("Calculating...", t.update(snap(level = 50), 120_000L).estimate)
+        assertEquals("Unavailable", t.update(snap(level = 50), 120_000L).estimate)
         assertEquals("Unavailable", t.update(snap(level = 50), 360_000L).estimate)
     }
     @Test fun etaResetsWhenChargingPercentFalls() {
@@ -100,7 +100,7 @@ class LivePowerTelemetryTest {
         assertEquals("Unavailable", t.update(snap(d, 0, 0), 600_000L).estimate)
         val t2 = LivePowerTelemetry()
         t2.update(snap(d, 0, 60), 0L)
-        assertEquals("00:50:00", t2.update(snap(d, 0, 50), 600_000L).estimate)
+        assertEquals("~00:50:00 (est.)", t2.update(snap(d, 0, 50), 600_000L).estimate)
     }
     @Test fun fullShowsZeroOnlyWhenDeviceConfirms() {
         assertEquals("00:00:00", LivePowerTelemetry().update(snap(BatteryManager.BATTERY_STATUS_FULL, 1, 100), 0L).estimate)
@@ -134,4 +134,16 @@ class LivePowerTelemetryTest {
         }
     }
 
+
+    @Test fun modeChangeCannotReusePreviousFinishTime() {
+        val t = LivePowerTelemetry()
+        t.update(snap(level = 50), 0)
+        assertEquals("~00:48:00 (est.)", t.update(snap(level = 52), 120_000).estimate)
+        assertEquals("Calculating...", t.update(snap(BatteryManager.BATTERY_STATUS_DISCHARGING, 0, 52), 121_000).estimate)
+    }
+    @Test fun frequentPollsStillYieldMeasuredTrendNotPermanentCalculating() {
+        val t = LivePowerTelemetry()
+        for (sec in 0..600) t.update(snap(level = 60 + sec / 300, raw = 4270), sec * 1000L)
+        assertEquals("~03:10:00 (est.)", t.update(snap(level = 62, raw = 4270), 600_000).estimate)
+    }
 }
