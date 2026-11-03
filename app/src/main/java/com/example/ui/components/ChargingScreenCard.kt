@@ -279,13 +279,18 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true, pre
                     "estimate" -> run {
                         // The on-screen window only fills while this screen is open; the background
                         // service's session estimate covers the rest and is labelled (est.).
-                        val canonicalEta = (if (canonical.isCharging == true) canonical.chargingEtaMinutes else canonical.dischargingEtaMinutes)?.takeIf { it > 0 }
+                        val target = com.example.NetraApplication.instance.settingsRepository.settings.value.chargeTargetPercent
+                        val canonicalEta = (if (canonical.isCharging == true) canonical.chargingEtaMinutes?.let { full ->
+                            val level = canonical.batteryLevel
+                            if (target in (level + 1)..99 && level < 100) kotlin.math.ceil(full.toDouble() * (target - level) / (100 - level)).toInt()
+                            else if (target in 1..99 && target <= level) null else full
+                        } else canonical.dischargingEtaMinutes)?.takeIf { it > 0 }
                         val fallback = canonicalEta?.let { "~" + com.example.service.SentinelStatusNotification.formatMinutes(it) + " (est.)" }
                         val value = when (val e = u?.estimate) {
                             null -> fallback ?: "Unavailable"
                             com.example.service.LivePowerTelemetry.UNAVAILABLE -> fallback ?: e
                             com.example.service.LivePowerTelemetry.CALCULATING -> fallback ?: e
-                            else -> e
+                            else -> fallback ?: e
                         }
                         (u?.estimateLabel ?: name) to value
                     }

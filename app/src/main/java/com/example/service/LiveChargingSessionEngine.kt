@@ -143,6 +143,7 @@ class LiveChargingSessionEngine(
     private var refreshJob: Job? = null
     private var isScreenActive = false
     private val speedEngine = ChargingSpeedEngine()
+    private val measuredEta = SessionEtaEstimator()
     private val rollingHistoryBuffer = ArrayDeque<LiveChargingSample>(300)
     private var sessionStartElapsedRealtime: Long = 0L
     private val dischargeHistoryBuffer = ArrayDeque<LiveChargingSample>(300)
@@ -254,6 +255,7 @@ class LiveChargingSessionEngine(
         dischargeHistoryBuffer.clear()
         val now = clock()
         sessionStartElapsedRealtime = elapsedRealtimeClock()
+        measuredEta.reset()
         val currentLevel = hardwareProvider.getBatteryLevelPercent()
         val currentTemp = hardwareProvider.getTemperatureCelsius()
         val plugged = hardwareProvider.getPluggedType()
@@ -442,8 +444,7 @@ class LiveChargingSessionEngine(
         // Estimated Time to Full computation per Section 9
         val (etaSeconds, etaStatus) = calculateTimeToFull(
             isFull = isFull,
-            currentPercent = levelPercent,
-            samples = rollingHistoryBuffer
+            currentPercent = levelPercent
         )
 
         _sessionState.value = _sessionState.value.copy(
@@ -477,51 +478,25 @@ class LiveChargingSessionEngine(
      */
     private fun calculateTimeToFull(
         isFull: Boolean,
-        currentPercent: Float?,
-        samples: List<LiveChargingSample>
+        currentPercent: Float?
     ): Pair<Long?, String> {
         if (isFull || (currentPercent != null && currentPercent >= 100f)) {
             return 0L to "00:00:00"
         }
 
-        if (currentPercent == null) {
+        if (currentPercent == null || !currentPercent.isFinite() || currentPercent !in 0f..100f) {
+            measuredEta.reset()
             return null to "Unavailable"
         }
 
-        // Look at rolling window of valid observations
-        val validSamples = samples.filter { it.batteryPercent != null && (it.batteryPercent in 0f..100f) }
-        val first = validSamples.firstOrNull()
-        val last = validSamples.lastOrNull()
-
-        if (first != null && last != null && validSamples.size >= 4) {
-            val elapsedSeconds = (last.timestamp - first.timestamp) / 1000.0
-            val deltaPercent = (last.batteryPercent ?: 0f) - (first.batteryPercent ?: 0f)
-
-            // If we have at least 10 seconds of observation and battery has increased
-            if (elapsedSeconds >= 10.0 && deltaPercent > 0.005f) {
-                val ratePercentPerSec = deltaPercent / elapsedSeconds
-                val remainingPercent = (100.0f - (last.batteryPercent ?: 0f)).coerceAtLeast(0f)
-                val etaSeconds = (remainingPercent / ratePercentPerSec).toLong().coerceIn(0L, 86400L)
-                val h = etaSeconds / 3600
-                val m = (etaSeconds % 3600) / 60
-                val s = etaSeconds % 60
-                val formatted = String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
-                return etaSeconds to formatted
-            }
+        val eta = measuredEta.observe(currentPercent.toInt(), BatteryManager.BATTERY_STATUS_CHARGING,
+            when (hardwareProvider.getPluggedType()) { "USB" -> 2; "WIRELESS" -> 4; else -> 1 }, elapsedRealtimeClock())
+        val minutes = eta.chargingMinutes
+        if (minutes != null) {
+            val seconds = minutes * 60L
+            return seconds to LivePowerTelemetry.formatDuration(seconds)
         }
-
-        // Fallback to system hardware estimate if available
-        val sysEstimateMs = hardwareProvider.computeChargeTimeRemainingMillis()
-        if (sysEstimateMs != null && sysEstimateMs > 0L) {
-            val etaSeconds = (sysEstimateMs / 1000L).coerceIn(0L, 86400L)
-            val h = etaSeconds / 3600
-            val m = (etaSeconds % 3600) / 60
-            val s = etaSeconds % 60
-            val formatted = String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
-            return etaSeconds to formatted
-        }
-
-        return null to "Calculating..."
+        return null to if (elapsedRealtimeClock() - sessionStartElapsedRealtime < 120_000L) "Calculating..." else "Unavailable"
     }
 
     /**

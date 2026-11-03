@@ -86,7 +86,7 @@ class ChargeCurveLearnerTest {
 
     @Test
     fun partialCoverageFallsBackToBandAverageAndStaysNotConfident() {
-        feedCharging(50, 52, 30, 25f)
+        feedCharging(49, 52, 30, 25f)
         val eta = ChargeCurveLearner.estimateMinutes(40, 60, true, 25f)
         assertNotNull(eta)
         // Only 2 of the 20 summed levels have their own data.
@@ -106,7 +106,7 @@ class ChargeCurveLearnerTest {
 
     @Test
     fun learnedCurveSurvivesReload() {
-        feedCharging(50, 60, 30, 25f)
+        feedCharging(49, 60, 30, 25f)
         ChargeCurveLearner.saveNow()
         ChargeCurveLearner.resetForTesting(context, prefsName)
         val eta = ChargeCurveLearner.estimateMinutes(50, 60, true, 25f)
@@ -121,5 +121,27 @@ class ChargeCurveLearnerTest {
         ChargeCurveLearner.observeTransition(50, BatteryManager.BATTERY_STATUS_NOT_CHARGING, 1, 25f, 2000L)
         ChargeCurveLearner.observeTransition(60, BatteryManager.BATTERY_STATUS_CHARGING, 1, null, 3000L)
         assertNull(ChargeCurveLearner.estimateMinutes(50, 60, true, 25f))
+    }
+
+    @Test fun repeatedPollsMeasureEntireLevelIntervalInBothModes() {
+        for (charging in listOf(true, false)) {
+            ChargeCurveLearner.resetForTesting(context, "poll_curve_" + charging + System.nanoTime())
+            val status = if (charging) BatteryManager.BATTERY_STATUS_CHARGING else BatteryManager.BATTERY_STATUS_DISCHARGING
+            val plug = if (charging) 1 else 0
+            for (sec in 0..900) {
+                val level = if (charging) 50 + sec / 300 else 70 - sec / 300
+                ChargeCurveLearner.observeTransition(level, status, plug, 33f, sec * 1000L)
+            }
+            val eta = ChargeCurveLearner.estimateMinutes(if (charging) 53 else 67, if (charging) 60 else 60, charging, 33f)
+            assertNotNull(eta)
+            assertEquals(35, eta!!.minutes) // seven real levels at five minutes each, not seconds
+        }
+    }
+    @Test fun initialPartialIntervalAndClockReversalAreNotLearned() {
+        ChargeCurveLearner.observeTransition(50, BatteryManager.BATTERY_STATUS_CHARGING, 1, 33f, 1000)
+        ChargeCurveLearner.observeTransition(51, BatteryManager.BATTERY_STATUS_CHARGING, 1, 33f, 2000)
+        assertNull(ChargeCurveLearner.estimateMinutes(50, 60, true, 33f))
+        ChargeCurveLearner.observeTransition(52, BatteryManager.BATTERY_STATUS_CHARGING, 1, 33f, 500)
+        assertNull(ChargeCurveLearner.estimateMinutes(50, 60, true, 33f))
     }
 }

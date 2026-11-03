@@ -26,11 +26,11 @@ internal object ChargeCurveLearner {
     /** [minutes] is the learned estimate; [confident] means at least 80% of the summed levels have their own observations. */
     data class Eta(val minutes: Int, val confident: Boolean)
 
-    private const val PREFS_NAME = "charge_curve_learner"
+    private const val PREFS_NAME = "charge_curve_learner_v2"
     private const val ALPHA = 0.35f
     private const val MIN_OBSERVATIONS = 2
     private const val MAX_STEP_GAP_MS = 30 * 60_000L
-    private const val MIN_STEP_SECONDS = 1f
+    private const val MIN_STEP_SECONDS = 10f
     private const val MAX_STEP_SECONDS = 3600f
     private const val SAVE_THROTTLE_MS = 60_000L
     private const val MAX_CHARGING_MINUTES = 720
@@ -44,6 +44,7 @@ internal object ChargeCurveLearner {
     private val counts = Array(2) { Array(3) { IntArray(101) } }
     private var lastSaveAtMs = 0L
 
+    private var transitionReady = false
     private var lastLevel: Int? = null
     private var lastAtMs = 0L
     private var lastCharging = false
@@ -66,6 +67,7 @@ internal object ChargeCurveLearner {
                 Arrays.fill(counts[m][b], 0)
             }
         }
+        transitionReady = false
         lastLevel = null
         lastAtMs = 0L
         lastCharging = false
@@ -96,6 +98,7 @@ internal object ChargeCurveLearner {
             (status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL) && plugged > 0 -> true
             status == BatteryManager.BATTERY_STATUS_DISCHARGING && plugged == 0 -> false
             else -> {
+                transitionReady = false
                 lastLevel = null
                 lastBand = null
                 return
@@ -103,6 +106,7 @@ internal object ChargeCurveLearner {
         }
         val band = bandOf(tempC)
         if (level == null || level !in 0..100 || band == null) {
+            transitionReady = false
             lastLevel = null
             lastBand = null
             return
@@ -111,17 +115,19 @@ internal object ChargeCurveLearner {
         if (prev != null && lastCharging == charging && lastBand == band) {
             val dt = nowMs - lastAtMs
             val steps = if (charging) level - prev else prev - level
-            if (steps > 0 && dt in 1..MAX_STEP_GAP_MS) {
-                val perStepSec = dt.toFloat() / 1000f / steps
+            // Preserve the level's first observation through all identical polls. The old
+            // code measured only the final polling interval, learning seconds instead of minutes.
+            if (steps == 0 && dt in 0..MAX_STEP_GAP_MS) return
+            // Only a whole single-level interval is trustworthy. Initial partial interval,
+            // jumps, clock changes and long gaps start a fresh baseline without teaching.
+            if (steps == 1 && dt in 10_000..MAX_STEP_GAP_MS && transitionReady) {
+                val perStepSec = dt.toFloat() / 1000f
                 val mode = if (charging) 0 else 1
-                if (charging) {
-                    for (l in (prev + 1)..level) update(mode, band.id, l, perStepSec)
-                } else {
-                    for (l in (prev - 1) downTo level) update(mode, band.id, l, perStepSec)
-                }
+                update(mode, band.id, if (charging) level else prev, perStepSec)
                 maybeSave(nowMs)
             }
-        }
+            transitionReady = steps == 1 && dt in 10_000..MAX_STEP_GAP_MS
+        } else transitionReady = false
         lastLevel = level
         lastAtMs = nowMs
         lastCharging = charging

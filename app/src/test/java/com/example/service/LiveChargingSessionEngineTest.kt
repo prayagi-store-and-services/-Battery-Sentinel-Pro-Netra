@@ -465,12 +465,11 @@ class LiveChargingSessionEngineTest {
             engine.onScreenResumed()
             testScheduler.runCurrent()
 
-            // 10 samples over 20 seconds, rising from 80% to 81% (rate = 1% per 20 seconds = 0.05% / sec)
-            // Remaining 19% / 0.05% = 380 seconds = 00:06:20
+            // Real whole-level changes over two minutes, not interpolated fake sub-percent telemetry.
             for (i in 1..10) {
-                simulatedTimeMs += 2000L
-                simulatedRealtimeMs += 2000L
-                fakeHardware.batteryLevelPercentState = 80.0f + (i * 0.1f)
+                simulatedTimeMs += 12_000L
+                simulatedRealtimeMs += 12_000L
+                fakeHardware.batteryLevelPercentState = 80.0f + (i / 5)
                 engine.sampleOnce()
                 testScheduler.runCurrent()
             }
