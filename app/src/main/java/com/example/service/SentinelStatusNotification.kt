@@ -100,6 +100,8 @@ object SentinelStatusNotification {
      * The single status line: '<pct>% - <temp>C - ~<eta> to full' while charging,
      * '~<eta> remaining' on battery. An estimate is shown only when the learned curve is
      * confident; until then the line says so honestly. Stale data is labelled, never hidden.
+     * Single-session estimates show immediately, labelled (est.); only with no estimate at all
+     * does the line say it is still learning.
      */
     fun buildLine(
         level: Int?,
@@ -115,12 +117,18 @@ object SentinelStatusNotification {
         tempC?.let { parts.add(String.format(Locale.US, "%.1f°C", it)) }
         when (mode) {
             StatusLineMode.CHARGING -> parts.add(
-                if (etaMinutes != null && etaConfident) "~${formatMinutes(etaMinutes)} to full"
-                else "learning your phone's pattern"
+                when {
+                    etaMinutes != null && etaConfident -> "~${formatMinutes(etaMinutes)} to full"
+                    etaMinutes != null -> "~${formatMinutes(etaMinutes)} to full (est.)"
+                    else -> "learning your phone's pattern"
+                }
             )
             StatusLineMode.ON_BATTERY -> parts.add(
-                if (etaMinutes != null && etaConfident) "~${formatMinutes(etaMinutes)} remaining"
-                else "learning your phone's pattern"
+                when {
+                    etaMinutes != null && etaConfident -> "~${formatMinutes(etaMinutes)} remaining"
+                    etaMinutes != null -> "~${formatMinutes(etaMinutes)} remaining (est.)"
+                    else -> "learning your phone's pattern"
+                }
             )
             StatusLineMode.CONNECTED_NOT_CHARGING -> parts.add("connected, not charging")
             StatusLineMode.UNKNOWN -> { }
@@ -128,6 +136,6 @@ object SentinelStatusNotification {
         return parts.joinToString(" - ")
     }
 
-    private fun formatMinutes(minutes: Int): String =
+    internal fun formatMinutes(minutes: Int): String =
         if (minutes >= 60) "${minutes / 60}h ${minutes % 60}m" else "$minutes min"
 }

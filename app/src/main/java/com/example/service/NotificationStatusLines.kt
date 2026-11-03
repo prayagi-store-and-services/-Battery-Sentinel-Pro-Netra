@@ -53,13 +53,22 @@ internal object NotificationStatusLines {
         value <= 30f -> Color.rgb(244,186,61)
         else -> Color.rgb(53,200,144)
     }
+    /** Compact second row: the time estimate (est.) when there is one; the health row otherwise. */
+    internal fun etaRow(s: NetraCentralState): String? {
+        if (!s.isDataFresh) return null
+        return when {
+            s.isCharging == true -> s.chargingEtaMinutes?.takeIf { it > 0 }?.let { "EST ~${SentinelStatusNotification.formatMinutes(it)} to full" }
+            s.isCharging == false && s.isChargerConnected == false -> s.dischargingEtaMinutes?.takeIf { it > 0 }?.let { "EST ~${SentinelStatusNotification.formatMinutes(it)} left" }
+            else -> null
+        }
+    }
     fun views(c: Context, s: NetraCentralState, line: String, expanded: Boolean): RemoteViews {
         val v = values(s)
         return RemoteViews(c.packageName, if (expanded) R.layout.notification_lines_expanded else R.layout.notification_lines_compact).apply {
             setImageViewBitmap(R.id.status_lines, bitmap(v))
             setContentDescription(R.id.status_lines, "Top battery, middle temperature, bottom health. ${v.text}")
             setTextViewText(R.id.status_values, if (expanded) v.text else
-                "${v.battery?.let { "$it%" } ?: "Battery Unavailable"} · ${v.temp?.let { String.format(Locale.US,"%.1f°C",it) } ?: "Temperature Unavailable"}\nHealth Unavailable")
+                "${v.battery?.let { "$it%" } ?: "Battery Unavailable"} · ${v.temp?.let { String.format(Locale.US,"%.1f°C",it) } ?: "Temperature Unavailable"}\n${etaRow(s) ?: "Health Unavailable"}")
             setContentDescription(R.id.status_values, v.text + ". " + line)
             if (expanded) setTextViewText(R.id.status_detail, line)
         }

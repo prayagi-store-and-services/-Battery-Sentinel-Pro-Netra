@@ -1,8 +1,13 @@
 package com.example
 
+import com.example.model.NetraCentralState
+import com.example.service.NotificationStatusLines
 import com.example.service.SentinelStatusNotification
+import com.example.model.NetraCentralState
+import com.example.service.NotificationStatusLines
 import com.example.service.SentinelStatusNotification.StatusLineMode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class SentinelNotificationTextTest {
@@ -26,7 +31,7 @@ class SentinelNotificationTextTest {
     @Test
     fun chargingWithoutConfidenceSaysLearning() {
         assertEquals(
-            "62% - 34.2°C - learning your phone's pattern",
+            "62% - 34.2°C - ~48 min to full (est.)",
             SentinelStatusNotification.buildLine(62, 34.2f, StatusLineMode.CHARGING, 48, false)
         )
     }
@@ -77,5 +82,27 @@ class SentinelNotificationTextTest {
             "Battery - 34.2°C - ~48 min to full",
             SentinelStatusNotification.buildLine(null, 34.2f, StatusLineMode.CHARGING, 48, true)
         )
+    }
+
+    @Test
+    fun onBatterySessionEstimateIsLabelledEstimate() {
+        assertEquals(
+            "62% - 34.2°C - ~3h 20m remaining (est.)",
+            SentinelStatusNotification.buildLine(62, 34.2f, StatusLineMode.ON_BATTERY, 200, false)
+        )
+    }
+
+    @Test
+    fun compactEtaRowShowsEstimateOnlyFromFreshData() {
+        val charging = NetraCentralState(batteryLevel = 62, isCharging = true, isChargerConnected = true,
+            chargingEtaMinutes = 48, isDataFresh = true)
+        assertEquals("EST ~48 min to full", NotificationStatusLines.etaRow(charging))
+        val discharging = NetraCentralState(batteryLevel = 62, isCharging = false, isChargerConnected = false,
+            dischargingEtaMinutes = 200, isDataFresh = true)
+        assertEquals("EST ~3h 20m left", NotificationStatusLines.etaRow(discharging))
+        assertNull(NotificationStatusLines.etaRow(charging.copy(isDataFresh = false)))
+        assertNull(NotificationStatusLines.etaRow(charging.copy(chargingEtaMinutes = null)))
+        assertNull(NotificationStatusLines.etaRow(charging.copy(chargingEtaMinutes = 0)))
+        assertNull(NotificationStatusLines.etaRow(discharging.copy(isChargerConnected = true)))
     }
 }
