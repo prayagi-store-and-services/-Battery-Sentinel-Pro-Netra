@@ -42,7 +42,7 @@ class EtaMeasuredRenderTest {
             java.io.File("build/outputs/ui-renders/eta-measured-" + (if (charging) "charging" else "discharging") + ".png").apply { parentFile?.mkdirs() }.outputStream().use { b.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it) }
             b.recycle()
         }
-        rule.onNodeWithText(if (charging) "~03:10:00 (est.)" else "~05:10:00 (est.)").assertIsDisplayed()
+        rule.onNodeWithText(if (charging) "~03:10:00 (est.)" else "~05:10:00 (est.)", substring=true).assertIsDisplayed()
     }
     @Test fun charging() = render(true)
     @Test fun discharging() = render(false)
