@@ -58,8 +58,8 @@ fun CircularBatteryGauge(
             null -> "Status unavailable"
         }
         Text(status, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        val eta = if (canonical.isCharging == true) canonical.chargingEtaMinutes?.let { "Full in ~$it min" }
-            else canonical.dischargingEtaMinutes?.let { "~$it min remaining" }
+        val eta = if (canonical.isCharging == true) canonical.chargingEtaMinutes?.let { "Full in ~$it min" + if (canonical.chargingEtaConfident) "" else " (est.)" }
+            else canonical.dischargingEtaMinutes?.let { "~$it min remaining" + if (canonical.dischargingEtaConfident) "" else " (est.)" }
         Text(eta ?: "ETA unavailable", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         Spacer(modifier = Modifier.height(16.dp))

@@ -1,3 +1,7 @@
+## Unreleased EST estimate visibility
+
+Presentation change only, not a vulnerability patch. Time estimates that already existed (single-session progression and the learned charge curve) are now displayed instead of being hidden behind a confidence gate; session-based values are labelled (est.) and missing estimates still say the app is learning. No new permission, dependency, endpoint, sampler, persistent record or schema. Estimates are computed on-device from existing readings; no guarantee or physical-device claim.
+
 ## Unreleased battery health life core ring
 
 Presentation change only, not a vulnerability patch. The third dot ring now shows Battery Health Life: phone-reported capacity (full-charge vs design) when the phone shares it, otherwise a documented on-device estimate from the latest measured temperature and battery level. Estimated values are labelled "est."; missing readings stay Unavailable with no invented fill. No new permission, dependency, endpoint, sampler, persistent record or schema. No physical-device battery, lifespan or safety claim.

@@ -4,9 +4,9 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-- Core dot ring now shows Battery Health Life instead of staying empty: the phone's own reported capacity (full-charge vs design) is used when the phone shares it, otherwise the value is estimated from the latest temperature and battery level, where heat above 30 C, cold below 0 C and deep discharge below 20% each lower the estimate.
-- Estimated values are marked "est." on the gauge and the footer explains the source; nothing is invented when no readings exist (the ring stays Unavailable). Charging screen and dashboard behave the same.
-- Presentation change only, computed on-device from existing readings; no new permission, sampler, dependency, network endpoint or stored data. Not a physical-device battery claim.
+- The estimated time (EST) now actually shows. The notification status line previously waited for the learned curve to become fully confident and only said it was learning; it now shows the single-session estimate right away, labelled (est.), and still says it is learning only when there is no estimate at all.
+- The collapsed notification's second row now reads EST ~time to full / EST ~time left when an estimate exists (the always-unavailable health row appears otherwise). The charging screen's Estimate row falls back to the background session estimate, labelled (est.), when the on-screen window cannot compute one yet. The dashboard gauge marks non-learned ETAs with (est.).
+- All estimates come from on-device readings only (session percentage progression and the learned charge curve); nothing is invented when there is no data. No new permission, sampler, dependency, endpoint or stored data.
 
 ## [2.2.22]
 

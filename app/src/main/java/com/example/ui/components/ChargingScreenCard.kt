@@ -274,7 +274,19 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true, pre
                     "voltage" -> name to (u?.voltage ?: "Unavailable")
                     "watt" -> name to (u?.power ?: "Unavailable")
                     "current" -> name to (u?.current ?: "Unavailable")
-                    "estimate" -> (u?.estimateLabel ?: name) to (u?.estimate ?: "Unavailable")
+                    "estimate" -> run {
+                        // The on-screen window only fills while this screen is open; the background
+                        // service's session estimate covers the rest and is labelled (est.).
+                        val canonicalEta = (if (canonical.isCharging == true) canonical.chargingEtaMinutes else canonical.dischargingEtaMinutes)?.takeIf { it > 0 }
+                        val fallback = canonicalEta?.let { "~" + com.example.service.SentinelStatusNotification.formatMinutes(it) + " (est.)" }
+                        val value = when (val e = u?.estimate) {
+                            null -> fallback ?: "Unavailable"
+                            com.example.service.LivePowerTelemetry.UNAVAILABLE -> fallback ?: e
+                            com.example.service.LivePowerTelemetry.CALCULATING -> fallback ?: e
+                            else -> e
+                        }
+                        (u?.estimateLabel ?: name) to value
+                    }
                     else -> name to (u?.sessionDuration ?: "Unavailable")
                 }
             }
