@@ -87,7 +87,7 @@ class TruthfulnessCardRenderTest {
                 }
             }
         }
-        compose.onNodeWithText("Full in ~48 min").assertIsDisplayed()
+        compose.onNodeWithText("Full in ~48 min (est.)").assertIsDisplayed()
         captureCard("eta-session-observed.png")
     }
 
