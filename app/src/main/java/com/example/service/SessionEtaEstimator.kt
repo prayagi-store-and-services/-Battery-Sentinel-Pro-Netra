@@ -6,7 +6,7 @@ import kotlin.math.ceil
 
 /** Measured level trend in one uninterrupted session. Never derives runtime from one current reading. */
 internal class SessionEtaEstimator {
-    data class Estimate(val chargingMinutes: Int? = null, val dischargingMinutes: Int? = null)
+    data class Estimate(val chargingMinutes: Int? = null, val dischargingMinutes: Int? = null, val allowHistory: Boolean = false)
     private data class Sample(val level: Int, val at: Long)
     private data class Session(val charging: Boolean, val plugged: Int, val target: Int)
     private var session: Session? = null
@@ -53,13 +53,13 @@ internal class SessionEtaEstimator {
         val stepMs = if (last.level != baseline.level) (last.at - baseline.at) / abs(last.level - baseline.level) else 0L
         val stallLimit = maxOf(5 * 60_000L, stepMs * 3)
         if (now - last.at > stallLimit) { finishAt = null; return Estimate() }
-        val left = finishAt?.minus(now)?.takeIf { it > 0 } ?: return Estimate()
+        val left = finishAt?.minus(now)?.takeIf { it > 0 } ?: return Estimate(allowHistory = now - samples.first().at < 120_000L)
         val minutes = ceil(left / 60_000.0).toInt()
         return if (incoming.charging) Estimate(chargingMinutes = minutes) else Estimate(dischargingMinutes = minutes)
     }
 
     companion object {
         private const val MAX_GAP_MS = 30 * 60_000L
-        private const val WINDOW_MS = 60 * 60_000L
+        private const val WINDOW_MS = 15 * 60_000L
     }
 }

@@ -474,7 +474,7 @@ class LiveChargingSessionEngine(
      * - If full -> "00:00:00"
      * - Uses rolling observations to compute charging rate (% per second)
      * - Formula: Estimated Time (seconds) = (100 - Current Percentage) / Charging Rate (% per second)
-     * - Falls back to hardware estimate or "Calculating..." / "Unavailable"
+     * - Uses the shared sustained whole-level trend, otherwise a bounded warm-up or "Unavailable"
      */
     private fun calculateTimeToFull(
         isFull: Boolean,

@@ -90,4 +90,12 @@ class SessionEtaEstimatorTest {
         assertEquals(28, e.observe(52, charging, ac, 120_000, 80).chargingMinutes)
         assertNull(e.observe(52, charging, ac, 121_000, 100).chargingMinutes)
     }
+
+    @Test fun learnedHistoryIsOnlyAllowedDuringInitialWarmupNotAfterStall() {
+        val e = SessionEtaEstimator()
+        org.junit.Assert.assertTrue(e.charge(50, 0).allowHistory)
+        org.junit.Assert.assertFalse(e.charge(50, 3).allowHistory)
+        e.charge(52, 4)
+        org.junit.Assert.assertFalse(e.charge(52, 17).allowHistory)
+    }
 }

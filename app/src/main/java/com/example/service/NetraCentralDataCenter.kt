@@ -659,18 +659,18 @@ class NetraCentralDataCenter(
             // The learned charge curve (phone's own history, temperature-banded) wins when it
             // has data; the single-session linear estimate remains the honest fallback.
             ChargeCurveLearner.init(com.example.NetraApplication.instance)
-            ChargeCurveLearner.observeTransition(validatedLevel, status, plugged, mergedTempCelsius, now)
-            val learnedCharge = if (mergedIsCharging == true && validatedLevel != null) {
-                ChargeCurveLearner.estimateMinutes(validatedLevel, 100, true, mergedTempCelsius)
+            ChargeCurveLearner.observeTransition(validatedLevel, status, plugged, tempCelsius, now)
+            val learnedCharge = if (status == BatteryManager.BATTERY_STATUS_CHARGING && plugged > 0 && validatedLevel != null) {
+                ChargeCurveLearner.estimateMinutes(validatedLevel, 100, true, tempCelsius)
             } else null
-            val learnedDischarge = if (isDischarging && validatedLevel != null) {
-                ChargeCurveLearner.estimateMinutes(validatedLevel, 0, false, mergedTempCelsius)
+            val learnedDischarge = if (status == BatteryManager.BATTERY_STATUS_DISCHARGING && plugged == 0 && validatedLevel != null) {
+                ChargeCurveLearner.estimateMinutes(validatedLevel, 0, false, tempCelsius)
             } else null
             val eta = sessionEtaEstimator.observe(validatedLevel, status, plugged, now)
             // Prefer this session's measured workload/charger trend. A confident historical
             // curve can cover warm-up only; it must not override changed conditions.
-            val mergedChargingEta = eta.chargingMinutes ?: learnedCharge?.takeIf { it.confident }?.minutes
-            val mergedDischargingEta = eta.dischargingMinutes ?: learnedDischarge?.takeIf { it.confident }?.minutes
+            val mergedChargingEta = eta.chargingMinutes ?: learnedCharge?.takeIf { it.confident && eta.allowHistory }?.minutes
+            val mergedDischargingEta = eta.dischargingMinutes ?: learnedDischarge?.takeIf { it.confident && eta.allowHistory }?.minutes
             val chargingEtaConfidentNow = learnedCharge?.confident == true
             val dischargingEtaConfidentNow = learnedDischarge?.confident == true
 
