@@ -4,9 +4,11 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-- The estimated time (EST) now actually shows. The notification status line previously waited for the learned curve to become fully confident and only said it was learning; it now shows the single-session estimate right away, labelled (est.), and still says it is learning only when there is no estimate at all.
-- The collapsed notification's second row now reads EST ~time to full / EST ~time left when an estimate exists (the always-unavailable health row appears otherwise). The charging screen's Estimate row falls back to the background session estimate, labelled (est.), when the on-screen window cannot compute one yet. The dashboard gauge marks non-learned ETAs with (est.).
-- All estimates come from on-device readings only (session percentage progression and the learned charge curve); nothing is invented when there is no data. No new permission, sampler, dependency, endpoint or stored data.
+### Removed
+- **Continuous Unplug Alert ringtone removed - voice only.** The continuous alert at your charge target no longer plays the phone ringtone; only the spoken line repeats about every 10 seconds until you unplug. The separate Target Charge Alarm keeps its ringtone option. Reason: users, especially seniors, switched the whole safety feature off to stop the ringtone noise.
+
+### Added
+- **Battery Percentage Announcement (opt-in).** A new Settings card (master toggle, default OFF) speaks the battery level at each chosen step. Charging section: its own switch (default OFF) with a choice of every 10% (announces 20,30...100) or every 5% (announces 5,10...100). Discharging section: always on at every 5% while the feature is enabled, with a switch to use 10% steps instead. Voice only; announcements fire only when the level crosses a step, with no repeats, and respect the master announcements switch and Night Protection.
 
 ## [2.2.22]
 

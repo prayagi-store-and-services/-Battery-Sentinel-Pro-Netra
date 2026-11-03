@@ -455,9 +455,12 @@ class BatteryMonitorService : Service() {
             }
         }
 
-        // Continuous 80/85/90/95/100% unplug alert: ringtone loop + repeating voice line until the
-        // charger is unplugged. Evaluated on every state update; it stops the moment the charger goes.
+        // Continuous 80/85/90/95/100% unplug alert: repeating voice line until the charger is
+        // unplugged (voice only, no ringtone). Evaluated on every state update.
         continuousChargeAlert.onState(state.batteryLevel, state.isCharging, state.isChargerConnected)
+
+        // Opt-in battery percentage voice announcement at each crossed 5/10% step.
+        percentAnnouncement.onState(state.batteryLevel, state.isCharging, state.isChargerConnected)
 
         // Critical Overheat Alarm (>45°C)
         if (state.temperatureCelsius?.let { it >= 45f } == true && (now - lastOverheatAlertTime > 120_000L)) {

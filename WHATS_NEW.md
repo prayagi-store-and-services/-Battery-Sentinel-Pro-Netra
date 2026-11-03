@@ -1,3 +1,8 @@
+## 2.2.27 - Quieter continuous alert + percentage announcements
+
+- **Continuous Unplug Alert is voice-only now.** No more ringtone loop at your charge target - just the spoken line repeating until you unplug. The Target Charge Alarm keeps its ringtone option.
+- **New: Battery Percentage Announcement (opt-in).** Turn it on in Settings and hear the level at each step: every 5% while discharging (switchable to 10%), and while charging too if you switch that on (every 10% or 5%).
+
 ## 2.2.26 - Estimated time (EST) actually shows
 
 - The notification status line showed an estimated time only after the learned charge curve became fully confident, so it kept saying it was learning. It now shows the single-session estimate right away, labelled (est.), and says it is learning only when there is no estimate at all.
