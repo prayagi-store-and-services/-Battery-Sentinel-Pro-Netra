@@ -221,7 +221,9 @@ jobs:
       run: |
         set -euo pipefail
         awk '/^## \[Unreleased\]/{flag=1;next}/^## /{flag=0}flag' CHANGELOG.md > /tmp/release-notes.md
-        { printf "versionCode: %s\n\n" "$VERSION_CODE"; cat /tmp/release-notes.md; } > /tmp/body.md
+        MIN_SDK="$(sed -n 's/^ *minSdk = \([0-9]*\).*/\1/p' app/build.gradle.kts | head -1)"
+        test -n "$MIN_SDK"
+        { printf "versionCode: %s\nminSdk: %s\n\n" "$VERSION_CODE" "$MIN_SDK"; cat /tmp/release-notes.md; } > /tmp/body.md
         if gh release view "v$VERSION_NAME" >/dev/null 2>&1; then
           echo "Version already published. Increment the version in a reviewed PR."
           exit 1
