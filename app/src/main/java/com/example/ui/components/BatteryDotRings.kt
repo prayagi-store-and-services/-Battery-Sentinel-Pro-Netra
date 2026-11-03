@@ -163,6 +163,6 @@ internal fun BatteryDotRings(
             }
         }
         Text("Outer: battery  |  Middle: temperature  |  Core: battery health life", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text("100 dots each. Temperature: 100 minus C dots; hotter means fewer dots. Health life uses phone-reported capacity when shared, otherwise it is estimated from the latest temperature and level; an estimate, not a lab measurement.", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("100 dots each. Temperature drops dots as it heats. Health life: phone-reported or estimated (est.).", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
