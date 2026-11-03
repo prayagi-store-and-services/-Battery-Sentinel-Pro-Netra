@@ -201,6 +201,113 @@ fun SettingsScreen(
             }
         }
 
+        // 5b. Battery Percentage Announcement (opt-in master; Charging and Discharging sections)
+        item {
+            SentinelCard(
+                title = "Battery Percentage Announcement",
+                icon = Icons.Default.BatteryAlert,
+                dotState = if (settings.percentAnnouncementEnabled) DotState.CONNECTED else DotState.STANDBY,
+                accentColor = NetraCyan
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = "Announce battery level", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            text = "Off unless you turn it on. Speaks the level at each chosen percentage step.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = settings.percentAnnouncementEnabled,
+                        onCheckedChange = { viewModel.setPercentAnnouncementEnabled(it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = NetraCyan, checkedTrackColor = NetraCyan.copy(alpha = 0.3f)),
+                        modifier = Modifier.testTag("percent_announcement_toggle")
+                    )
+                }
+
+                if (settings.percentAnnouncementEnabled) {
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(text = "Charging", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = NetraCyan)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "While charging", fontSize = 13.sp)
+                            Text(
+                                text = "Off by default. Turn on to hear the level while the charger is in.",
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = settings.percentChargingEnabled,
+                            onCheckedChange = { viewModel.setPercentChargingEnabled(it) },
+                            colors = SwitchDefaults.colors(checkedThumbColor = NetraCyan, checkedTrackColor = NetraCyan.copy(alpha = 0.3f)),
+                            modifier = Modifier.testTag("percent_charging_toggle")
+                        )
+                    }
+                    if (settings.percentChargingEnabled) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(10 to "Every 10% (20,30...100)", 5 to "Every 5% (5,10...100)").forEach { (step, label) ->
+                                val selected = settings.percentChargingStep == step
+                                androidx.compose.material3.OutlinedButton(
+                                    onClick = { viewModel.setPercentChargingStep(step) },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .testTag("percent_charging_step_$step"),
+                                    colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                                        containerColor = if (selected) NetraCyan.copy(alpha = 0.15f) else Color.Transparent
+                                    )
+                                ) {
+                                    Text(text = label, fontSize = 10.sp, maxLines = 2, color = if (selected) NetraCyan else MaterialTheme.colorScheme.onSurface)
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(text = "Discharging", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = NetraCyan)
+                    Text(
+                        text = "Always on at every 5% (5,10...100) while this feature is enabled.",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "Use 10% steps instead", fontSize = 13.sp)
+                            Text(
+                                text = "Announces 20,30...100 and replaces the 5% steps.",
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = settings.percentDischargingStep10,
+                            onCheckedChange = { viewModel.setPercentDischargingStep10(it) },
+                            colors = SwitchDefaults.colors(checkedThumbColor = NetraCyan, checkedTrackColor = NetraCyan.copy(alpha = 0.3f)),
+                            modifier = Modifier.testTag("percent_discharging_step10_toggle")
+                        )
+                    }
+                }
+            }
+        }
+
         item { com.example.ui.components.TargetAlertStatusCard() }
         item { com.example.ui.components.ScreenLockCard() }
 

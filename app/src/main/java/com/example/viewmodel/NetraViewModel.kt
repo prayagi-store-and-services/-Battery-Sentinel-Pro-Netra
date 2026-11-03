@@ -284,6 +284,22 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
         settingsRepository.setContinuousChargeAlertEnabled(enabled)
     }
 
+    fun setPercentAnnouncementEnabled(enabled: Boolean) {
+        settingsRepository.setPercentAnnouncementEnabled(enabled)
+    }
+
+    fun setPercentChargingEnabled(enabled: Boolean) {
+        settingsRepository.setPercentChargingEnabled(enabled)
+    }
+
+    fun setPercentChargingStep(step: Int) {
+        settingsRepository.setPercentChargingStep(step)
+    }
+
+    fun setPercentDischargingStep10(enabled: Boolean) {
+        settingsRepository.setPercentDischargingStep10(enabled)
+    }
+
     fun setPowerSaverEnabled(enabled: Boolean) {
         settingsRepository.setPowerSaverEnabled(enabled)
     }

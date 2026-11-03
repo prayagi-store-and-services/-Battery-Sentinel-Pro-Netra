@@ -3,7 +3,7 @@ package com.example.service
 /**
  * Rules for the continuous unplug alert at the user's charge target. When the battery reaches the
  * user-selected target (80/85/90/95/100 percent) while a charger is attached, the spoken level
- * alert and the phone's ringtone repeat until the charger is unplugged. The alert never fires
+ * alert repeats until the charger is unplugged. Voice only: no ringtone. The alert never fires
  * below the target: the repeat steps are the fixed levels at or above the target, so a 95 percent
  * target stays silent at 80, 85 and 90. Unplugging is the only way to stop it: there is no dismiss
  * and no snooze. All state is kept in memory, so a reboot can never leave the alert stuck; it runs

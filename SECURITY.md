@@ -1,3 +1,9 @@
+## Unreleased voice-only alert and percentage announcements
+
+- **Ringtone removed from the Continuous Unplug Alert.** No audio playback component remains in the continuous alert path: only the spoken line repeats until unplug. This also removes the alarm-volume media stream use (the ringtone played on USAGE_ALARM) and the risk that users disable the safety feature to stop the noise. The separate Target Charge Alarm ringtone option is unchanged.
+- **Battery Percentage Announcement is opt-in, on-device voice.** The master toggle defaults to OFF. Step crossing is evaluated in memory only; nothing is recorded, synced, or sent anywhere. Announcements go through the existing engine, so the master announcements switch and Night Protection rules apply unchanged.
+- **No new permission, dependency, endpoint, sampler, persistent record or schema.** Both changes reuse the existing foreground service and Text-to-Speech announcement engine.
+
 ## Unreleased EST estimate visibility
 
 Presentation change only, not a vulnerability patch. Time estimates that already existed (single-session progression and the learned charge curve) are now displayed instead of being hidden behind a confidence gate; session-based values are labelled (est.) and missing estimates still say the app is learning. No new permission, dependency, endpoint, sampler, persistent record or schema. Estimates are computed on-device from existing readings; no guarantee or physical-device claim.

@@ -37,7 +37,12 @@ data class SentinelSettings(
     val screenOffNetworkOptEnabled: Boolean = true,
     val announcementMutedUntilMs: Long = 0L, // 0 = not muted; critical alerts always play
     val networkTrafficThresholdBytesPerSec: Long = 2_097_152L, // 2 MB/s
-    val continuousChargeAlertEnabled: Boolean = true, // 80/85/90/95/100% ringtone + repeating voice line until unplug
+    val continuousChargeAlertEnabled: Boolean = true, // 80/85/90/95/100% repeating voice line until unplug (voice only)
+    // Battery Percentage Announcement (opt-in master; discharging always on at 5% once enabled)
+    val percentAnnouncementEnabled: Boolean = false,
+    val percentChargingEnabled: Boolean = false,
+    val percentChargingStep: Int = 10, // 10 announces 20,30...100; 5 announces 5,10...100
+    val percentDischargingStep10: Boolean = false, // false = every 5%; true = every 10% replaces 5%
     val thermalGuardianEnabled: Boolean = true // Thermal Guardian: dim + own-load cut + warnings when the phone is hot
 )
 
@@ -86,6 +91,10 @@ class SettingsRepository(context: Context) {
             announcementMutedUntilMs = prefs.getLong("announcement_muted_until", 0L),
             networkTrafficThresholdBytesPerSec = prefs.getLong("network_traffic_threshold", 2_097_152L),
             continuousChargeAlertEnabled = prefs.getBoolean("continuous_charge_alert_enabled", true),
+            percentAnnouncementEnabled = prefs.getBoolean("percent_announcement_enabled", false),
+            percentChargingEnabled = prefs.getBoolean("percent_charging_enabled", false),
+            percentChargingStep = prefs.getInt("percent_charging_step", 10).let { if (it == 5) 5 else 10 },
+            percentDischargingStep10 = prefs.getBoolean("percent_discharging_step10", false),
             thermalGuardianEnabled = prefs.getBoolean("thermal_guardian_enabled", true)
         )
     }
@@ -108,6 +117,27 @@ class SettingsRepository(context: Context) {
     fun setContinuousChargeAlertEnabled(enabled: Boolean) {
         prefs.edit().putBoolean("continuous_charge_alert_enabled", enabled).apply()
         _settings.value = _settings.value.copy(continuousChargeAlertEnabled = enabled)
+    }
+
+    fun setPercentAnnouncementEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("percent_announcement_enabled", enabled).apply()
+        _settings.value = _settings.value.copy(percentAnnouncementEnabled = enabled)
+    }
+
+    fun setPercentChargingEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("percent_charging_enabled", enabled).apply()
+        _settings.value = _settings.value.copy(percentChargingEnabled = enabled)
+    }
+
+    fun setPercentChargingStep(step: Int) {
+        val v = if (step == 5) 5 else 10
+        prefs.edit().putInt("percent_charging_step", v).apply()
+        _settings.value = _settings.value.copy(percentChargingStep = v)
+    }
+
+    fun setPercentDischargingStep10(enabled: Boolean) {
+        prefs.edit().putBoolean("percent_discharging_step10", enabled).apply()
+        _settings.value = _settings.value.copy(percentDischargingStep10 = enabled)
     }
 
     fun setThermalGuardianEnabled(enabled: Boolean) {
