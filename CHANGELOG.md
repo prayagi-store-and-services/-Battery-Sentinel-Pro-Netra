@@ -4,13 +4,9 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
-- GPS power saving (opt-in): a new switch in Power preferences. While you are moving, location stays on; when the phone is still, location turns off and wakes for a few seconds every 5 minutes to refresh. Movement is read from the accelerometer; nothing is sent anywhere.
-- Android lets no app switch location by itself: this needs the one-time ADB grant of WRITE_SECURE_SETTINGS (the same step automation apps like MacroDroid use). Without the grant the switch explains the setup and nothing changes. Turning the feature off restores your previous location setting.
-- Temperature dot ring inverted: hotter readings now remove dots instead of adding them, so a fuller ring always means more of the metric remains.
-- Automatic newer-version popup and notification, with at most one metadata request per day, subject to Android battery/network limits. Not instant release detection.
-- Update opens Battery Sentinel's page in compatible Netra Ecosystem or its Eco website page, falling back to the browser if Eco cannot open. No APK download or install in Battery Sentinel.
-- Removed manual update checking and the obsolete Install apps permission-panel row. Install permission remains absent. Notification denial and disabled channels are respected; duplicate notices are suppressed by version.
-- Legacy installer workers remain inert. Disabled WorkManager startup cannot crash foreground launch. Existing saved user data remains unchanged. No new telemetry, server or dependency. Not a vulnerability patch or physical-device battery claim.
+- Core dot ring now shows Battery Health Life instead of staying empty: the phone's own reported capacity (full-charge vs design) is used when the phone shares it, otherwise the value is estimated from the latest temperature and battery level, where heat above 30 C, cold below 0 C and deep discharge below 20% each lower the estimate.
+- Estimated values are marked "est." on the gauge and the footer explains the source; nothing is invented when no readings exist (the ring stays Unavailable). Charging screen and dashboard behave the same.
+- Presentation change only, computed on-device from existing readings; no new permission, sampler, dependency, network endpoint or stored data. Not a physical-device battery claim.
 
 ## [2.2.22]
 

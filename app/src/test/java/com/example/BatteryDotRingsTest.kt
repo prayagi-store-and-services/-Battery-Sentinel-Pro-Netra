@@ -44,4 +44,28 @@ class BatteryDotRingsTest {
         assertNotEquals(ringColor(39.5f,true),ringColor(37f,true))
         assertNotEquals(ringColor(38f,true),ringColor(37f,true))
     }
+    @Test fun healthLifePrefersReportedThenEstimatesHonestly() {
+        // No readings at all: nothing invented.
+        assertNull(healthLifePercent(null, null, null))
+        assertNull(healthLifePercent(null, Float.NaN, null))
+        // Phone-reported capacity wins and is clamped to the 0-100 ring.
+        assertEquals(92f, healthLifePercent(50, 25f, 92)!!, 0f)
+        assertEquals(100f, healthLifePercent(50, 25f, 118)!!, 0f)
+        assertEquals(100f, healthLifePercent(null, null, 100)!!, 0f)
+        // Comfortable readings keep the full estimate.
+        assertEquals(100f, healthLifePercent(60, 25f, null)!!, 0f)
+        // Heat removes points: 2 per degree above 30 C.
+        assertEquals(80f, healthLifePercent(60, 40f, null)!!, 0f)
+        assertEquals(60f, healthLifePercent(60, 50f, null)!!, 0f)
+        // Deep discharge removes points: 1.5 per point below 20.
+        assertEquals(85f, healthLifePercent(10, 25f, null)!!, 0f)
+        // Heat and deep discharge combine.
+        assertEquals(65f, healthLifePercent(10, 40f, null)!!, 0f)
+        // Heat deduction caps at 45 points; cold also removes points.
+        assertEquals(55f, healthLifePercent(60, 60f, null)!!, 0f)
+        assertEquals(90f, healthLifePercent(60, -5f, null)!!, 0f)
+        // Out-of-range readings are ignored rather than misread.
+        assertNull(healthLifePercent(null, 200f, null))
+        assertEquals(100f, healthLifePercent(60, 200f, null)!!, 0f)
+    }
 }
