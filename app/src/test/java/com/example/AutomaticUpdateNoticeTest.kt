@@ -56,7 +56,7 @@ class AutomaticUpdateNoticeTest {
   AutomaticUpdateNotice.check(c)
   assertTrue(manager.activeNotifications.isEmpty())
  }
- @Test fun workerUsesDailyNetworkAndBatteryConstraints(){
+ @Test fun workerUsesNoticeIntervalNetworkAndBatteryConstraints(){
   val spec=AutomaticUpdateNotice.request().workSpec
   assertEquals(AutomaticUpdateNotice.INTERVAL_MS,spec.intervalDuration)
   assertEquals(androidx.work.NetworkType.CONNECTED,spec.constraints.requiredNetworkType)
