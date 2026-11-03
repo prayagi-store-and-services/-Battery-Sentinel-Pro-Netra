@@ -282,8 +282,8 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true, pre
                         val target = com.example.NetraApplication.instance.settingsRepository.settings.value.chargeTargetPercent
                         val canonicalEta = (if (canonical.isCharging == true) canonical.chargingEtaMinutes?.let { full ->
                             val level = canonical.batteryLevel
-                            if (target in (level + 1)..99 && level < 100) kotlin.math.ceil(full.toDouble() * (target - level) / (100 - level)).toInt()
-                            else if (target in 1..99 && target <= level) null else full
+                            if (level != null && target in (level + 1)..99 && level < 100) kotlin.math.ceil(full.toDouble() * (target - level) / (100 - level)).toInt()
+                            else if (level != null && target in 1..99 && target <= level) null else full
                         } else canonical.dischargingEtaMinutes)?.takeIf { it > 0 }
                         val fallback = canonicalEta?.let { "~" + com.example.service.SentinelStatusNotification.formatMinutes(it) + " (est.)" }
                         val value = when (val e = u?.estimate) {
