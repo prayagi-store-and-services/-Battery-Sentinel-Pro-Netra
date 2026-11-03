@@ -1,3 +1,7 @@
+## Unreleased opt-in gauge animations
+
+Gauge animations are off by default and purely presentational: they read the same in-memory central state (charging, temperature, health life) as the gauges, compute rising/falling trends with small hysteresis in memory, and draw only while the app is resumed, visible, interactive and the data is fresh. Flat, missing or unknown readings animate nothing. No new permission, sampler, dependency, network endpoint, or stored data beyond the one stored switch.
+
 ## Unreleased timely update notices
 
 Update checks stay metadata-only (one small GitHub releases/latest read; artifact fields are never read, nothing downloads). Cadence rises from once a day to app start plus at most every 6 hours; a failed attempt still backs off and never retries in a tight loop. The settings card no longer renders static explainer text and appears only when a newer version verifies. No new permission, dependency, endpoint or stored data.

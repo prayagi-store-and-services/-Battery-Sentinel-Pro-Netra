@@ -73,7 +73,8 @@ internal fun ringColor(value: Float?, thermal: Boolean): Color = when {
 @Composable
 internal fun BatteryDotRings(
     level: Int?, temperature: Float?, fresh: Boolean, screenOn: Boolean,
-    modifier: Modifier = Modifier, healthPercent: Float? = null, healthIsEstimate: Boolean = false
+    modifier: Modifier = Modifier, healthPercent: Float? = null, healthIsEstimate: Boolean = false,
+    charging: Boolean? = null, animationsEnabled: Boolean = false
 ) {
     val c = LocalContext.current
     val view = LocalView.current
@@ -109,6 +110,19 @@ internal fun BatteryDotRings(
     var origin by remember { mutableStateOf(counts) }
     val motion = remember { Animatable(1f) }
     val allowed = ringCanAnimate(resumed, visible, interactive && screenOn, saving, fresh)
+    // Opt-in gauge animations: a frame clock runs only while the switch is on and the same
+    // lifecycle/freshness gates as the ring transitions hold. Trends come from real readings.
+    var fxTick by remember { mutableStateOf(0L) }
+    val fxOn = animationsEnabled && allowed
+    LaunchedEffect(fxOn) {
+        if (!fxOn) return@LaunchedEffect
+        val start = System.nanoTime()
+        while (true) { androidx.compose.runtime.withFrameNanos { fxTick = (it - start) / 33_000_000L } }
+    }
+    val tempTrend = remember { TrendTracker(0.3f) }
+    val healthTrend = remember { TrendTracker(1f) }
+    LaunchedEffect(temperature) { tempTrend.update(temperature) }
+    LaunchedEffect(healthPercent) { healthTrend.update(healthPercent) }
     LaunchedEffect(counts, allowed) {
         // Only a measured change starts one finite transition. No idle/charging loop.
         val old = previous
@@ -153,6 +167,20 @@ internal fun BatteryDotRings(
                         }
                         drawCircle(color, unit * .008f, center + Offset((cos(angle) * radius).toFloat(), (sin(angle) * radius).toFloat()))
                     }
+                }
+                if (fxOn) {
+                    val t = fxTick
+                    // Charging spark inside the outer ring band, only from the real charging state.
+                    if (charging == true) drawSpark(center, unit, t)
+                    // Temperature trend: rising -> fire, falling -> liquid, flat/unknown -> nothing.
+                    when (tempTrend.current()) {
+                        GaugeTrend.RISING -> drawFlames(center, unit, t)
+                        GaugeTrend.FALLING -> drawWave(center, unit, t)
+                        GaugeTrend.FLAT -> {}
+                    }
+                    // Health heartbeat inside the inner band; slowing and fading when the
+                    // (often estimated) health trend falls, normal pulse otherwise.
+                    drawEcg(center, unit, t, healthTrend.current() == GaugeTrend.FALLING)
                 }
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.widthIn(max = 132.dp)) {
