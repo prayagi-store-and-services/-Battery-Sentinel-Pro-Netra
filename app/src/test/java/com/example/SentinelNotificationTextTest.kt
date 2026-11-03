@@ -3,8 +3,6 @@ package com.example
 import com.example.model.NetraCentralState
 import com.example.service.NotificationStatusLines
 import com.example.service.SentinelStatusNotification
-import com.example.model.NetraCentralState
-import com.example.service.NotificationStatusLines
 import com.example.service.SentinelStatusNotification.StatusLineMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
