@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,10 +44,13 @@ fun CircularBatteryGauge(
             .fillMaxWidth()
             .testTag("circular_battery_gauge")
     ) {
+        val healthReading = remember(canonical.batteryLevel) { readBatteryHealth(com.example.NetraApplication.instance) }
         BatteryDotRings(canonical.batteryLevel, canonical.temperatureCelsius,
             canonical.isDataFresh && canonical.fieldStates.levelStatus == com.example.model.FieldStatus.LIVE &&
                 canonical.fieldStates.tempStatus == com.example.model.FieldStatus.LIVE,
-            canonical.isScreenOn, Modifier.widthIn(max = 300.dp).fillMaxWidth())
+            canonical.isScreenOn, Modifier.widthIn(max = 300.dp).fillMaxWidth(),
+            healthPercent = healthLifePercent(canonical.batteryLevel, canonical.temperatureCelsius, healthReading.healthPct),
+            healthIsEstimate = healthReading.healthPct == null || healthReading.fullChargeIsEstimate)
         val status = when(canonical.isCharging) {
             true -> listOfNotNull(canonical.pluggedType?.name, canonical.chargingSpeed.displayLabel,
                 canonical.powerWatts?.let { String.format(java.util.Locale.getDefault(), "%.1f W", it) }).joinToString(" | ")

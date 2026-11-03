@@ -1,3 +1,7 @@
+## Unreleased battery health life core ring
+
+Presentation change only, not a vulnerability patch. The third dot ring now shows Battery Health Life: phone-reported capacity (full-charge vs design) when the phone shares it, otherwise a documented on-device estimate from the latest measured temperature and battery level. Estimated values are labelled "est."; missing readings stay Unavailable with no invented fill. No new permission, dependency, endpoint, sampler, persistent record or schema. No physical-device battery, lifespan or safety claim.
+
 ## Unreleased inverse temperature display
 
 Presentation change only, not a vulnerability patch. Reuses measured temperature and the existing 0-100 C, 100-slot scale in reverse. No new permission, dependency, endpoint, sampler, persistent record or schema. Unknown/non-finite temperature has no invented fill; warning colours still use measured temperature. Finite animation and idle/background/screen-off/power-saving gates are unchanged. No physical-device or safety-performance claim.

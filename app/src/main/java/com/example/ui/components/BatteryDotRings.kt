@@ -33,6 +33,29 @@ import kotlin.math.*
 /** Fixed slots, not a synthesized health estimate. Temperature removes one dot per degree C. */
 internal fun ringDots(value: Float?): Int? = value?.takeIf { it.isFinite() }?.roundToInt()?.coerceIn(0, 100)
 internal fun temperatureRingDots(value: Float?): Int? = ringDots(value)?.let { 100 - it }
+/**
+ * Battery Health Life for the core ring. Capacity the phone itself reports
+ * (full-charge vs design, [reportedHealthPct]) wins when present. Otherwise a
+ * stress index from the latest readings: heat above 30 C, cold below 0 C and
+ * deep discharge below 20% each remove points from 100. An estimate from the
+ * latest temperature and level only, never a measured capacity; null when
+ * there are no readings at all.
+ */
+internal fun healthLifePercent(level: Int?, temperatureC: Float?, reportedHealthPct: Int?): Float? {
+    reportedHealthPct?.takeIf { it in 1..120 }?.let { return it.coerceIn(1, 100).toFloat() }
+    var score = 100f
+    var used = false
+    temperatureC?.takeIf { it.isFinite() && it in -20f..80f }?.let { t ->
+        used = true
+        if (t > 30f) score -= ((t - 30f) * 2f).coerceAtMost(45f)
+        if (t < 0f) score -= (-t * 2f).coerceAtMost(20f)
+    }
+    level?.takeIf { it in 0..100 }?.let { l ->
+        used = true
+        if (l < 20) score -= ((20 - l) * 1.5f).coerceAtMost(25f)
+    }
+    return if (used) score.coerceIn(5f, 100f) else null
+}
 internal fun ringCanAnimate(resumed: Boolean, visible: Boolean, interactive: Boolean, saving: Boolean, fresh: Boolean) =
     resumed && visible && interactive && !saving && fresh
 internal fun ringRadialOffset(previous: Int, current: Int, progress: Float): Float =
@@ -50,7 +73,7 @@ internal fun ringColor(value: Float?, thermal: Boolean): Color = when {
 @Composable
 internal fun BatteryDotRings(
     level: Int?, temperature: Float?, fresh: Boolean, screenOn: Boolean,
-    modifier: Modifier = Modifier, healthPercent: Float? = null
+    modifier: Modifier = Modifier, healthPercent: Float? = null, healthIsEstimate: Boolean = false
 ) {
     val c = LocalContext.current
     val view = LocalView.current
@@ -98,7 +121,7 @@ internal fun BatteryDotRings(
     }
     val batteryText = level?.takeIf { it in 0..100 }?.let { "$it%" } ?: "Unavailable"
     val tempText = temperature?.takeIf { it.isFinite() }?.let { String.format(java.util.Locale.getDefault(), "%.1f C", it) } ?: "Unavailable"
-    val healthText = healthPercent?.takeIf { it.isFinite() && it in 0f..100f }?.let { "${it.roundToInt()}%" } ?: "Unavailable"
+    val healthText = healthPercent?.takeIf { it.isFinite() && it in 0f..100f }?.let { "${it.roundToInt()}%" + if (healthIsEstimate) " est." else "" } ?: "Unavailable"
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Box(Modifier.fillMaxWidth().aspectRatio(1f).onGloballyPositioned {
             val b = it.boundsInWindow()
@@ -139,7 +162,7 @@ internal fun BatteryDotRings(
                 Text(healthText, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
             }
         }
-        Text("Outer: battery  |  Middle: temperature  |  Core: health", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text("100 dots each. Temperature: 100 minus C dots; hotter means fewer dots. Health % needs supported data.", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Outer: battery  |  Middle: temperature  |  Core: battery health life", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("100 dots each. Temperature: 100 minus C dots; hotter means fewer dots. Health life uses phone-reported capacity when shared, otherwise it is estimated from the latest temperature and level; an estimate, not a lab measurement.", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
