@@ -206,7 +206,7 @@ fun SettingsScreen(
             SentinelCard(
                 title = "Battery Percentage Announcement",
                 icon = Icons.Default.BatteryAlert,
-                dotState = if (settings.percentAnnouncementEnabled) DotState.CONNECTED else DotState.OFFLINE,
+                dotState = if (settings.percentAnnouncementEnabled) DotState.CONNECTED else DotState.STANDBY,
                 accentColor = NetraCyan
             ) {
                 Row(

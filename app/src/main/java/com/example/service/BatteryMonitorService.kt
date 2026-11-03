@@ -49,6 +49,7 @@ class BatteryMonitorService : Service() {
     private var lastTemp: Float = 0f
     private var lastTempTimestamp: Long = 0L
     private val continuousChargeAlert = ContinuousChargeAlertController(this, serviceScope)
+    private val percentAnnouncement = PercentAnnouncementController(this)
     private var lastNotified80PercentSession = false
     private var lastNotifiedTargetValue = -1
     private var lastTargetAlarmAt = 0L

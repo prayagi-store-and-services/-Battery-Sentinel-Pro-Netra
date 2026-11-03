@@ -42,7 +42,7 @@ data class SentinelSettings(
     val percentAnnouncementEnabled: Boolean = false,
     val percentChargingEnabled: Boolean = false,
     val percentChargingStep: Int = 10, // 10 announces 20,30...100; 5 announces 5,10...100
-    val percentDischargingStep10: Boolean = false // false = every 5%; true = every 10% replaces 5%
+    val percentDischargingStep10: Boolean = false, // false = every 5%; true = every 10% replaces 5%
     val thermalGuardianEnabled: Boolean = true // Thermal Guardian: dim + own-load cut + warnings when the phone is hot
 )
 
