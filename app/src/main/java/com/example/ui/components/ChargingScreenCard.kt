@@ -256,12 +256,14 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true, pre
             val canonical by com.example.NetraApplication.instance.centralDataCenter.centralState.collectAsState()
             androidx.compose.material3.MaterialTheme(colorScheme = androidx.compose.material3.darkColorScheme()) {
                 val healthReading = remember(canonical.batteryLevel) { readBatteryHealth(com.example.NetraApplication.instance) }
+                val animSettings by com.example.NetraApplication.instance.settingsRepository.settings.collectAsState()
                 BatteryDotRings(canonical.batteryLevel, canonical.temperatureCelsius, canonical.isDataFresh &&
                     canonical.fieldStates.levelStatus == com.example.model.FieldStatus.LIVE &&
                     canonical.fieldStates.tempStatus == com.example.model.FieldStatus.LIVE,
                     canonical.isScreenOn, Modifier.widthIn(max = 300.dp).fillMaxWidth().alpha(st.gaugeBrightness),
                     healthPercent = healthLifePercent(canonical.batteryLevel, canonical.temperatureCelsius, healthReading.healthPct),
-                    healthIsEstimate = healthReading.healthPct == null || healthReading.fullChargeIsEstimate)
+                    healthIsEstimate = healthReading.healthPct == null || healthReading.fullChargeIsEstimate,
+                    charging = canonical.isCharging, animationsEnabled = animSettings.animationsEnabled)
             }
             Text(label, color = pctColor, fontSize = 13.sp)
             if (!canonical.isDataFresh || canonical.fieldStates.levelStatus != com.example.model.FieldStatus.LIVE ||

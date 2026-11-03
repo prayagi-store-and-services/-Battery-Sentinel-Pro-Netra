@@ -43,6 +43,8 @@ data class SentinelSettings(
     val percentChargingEnabled: Boolean = false,
     val percentChargingStep: Int = 10, // 10 announces 20,30...100; 5 announces 5,10...100
     val percentDischargingStep10: Boolean = false, // false = every 5%; true = every 10% replaces 5%
+    // Gauge animations (opt-in; effects inside the gauge circles follow real readings only)
+    val animationsEnabled: Boolean = false,
     val thermalGuardianEnabled: Boolean = true // Thermal Guardian: dim + own-load cut + warnings when the phone is hot
 )
 
@@ -95,6 +97,7 @@ class SettingsRepository(context: Context) {
             percentChargingEnabled = prefs.getBoolean("percent_charging_enabled", false),
             percentChargingStep = prefs.getInt("percent_charging_step", 10).let { if (it == 5) 5 else 10 },
             percentDischargingStep10 = prefs.getBoolean("percent_discharging_step10", false),
+            animationsEnabled = prefs.getBoolean("animations_enabled", false),
             thermalGuardianEnabled = prefs.getBoolean("thermal_guardian_enabled", true)
         )
     }
@@ -138,6 +141,11 @@ class SettingsRepository(context: Context) {
     fun setPercentDischargingStep10(enabled: Boolean) {
         prefs.edit().putBoolean("percent_discharging_step10", enabled).apply()
         _settings.value = _settings.value.copy(percentDischargingStep10 = enabled)
+    }
+
+    fun setAnimationsEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("animations_enabled", enabled).apply()
+        _settings.value = _settings.value.copy(animationsEnabled = enabled)
     }
 
     fun setThermalGuardianEnabled(enabled: Boolean) {

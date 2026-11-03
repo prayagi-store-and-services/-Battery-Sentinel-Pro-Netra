@@ -4,6 +4,9 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+### Added
+- **Opt-in gauge animations.** A new Settings switch (default OFF) enables effects inside the gauge circles: charging spark, temperature fire/liquid driven by the real measured trend with small hysteresis (flat or unknown trend animates nothing), and a health heartbeat that slows and fades on a falling health trend. The frame clock runs only while the switch is on and the existing freshness, visibility and power gates hold; no new sampler, permission, endpoint or stored data.
+
 ### Changed
 - **Update notices are timely now.** Version metadata checks run at every cold app start and at most once every 6 hours (previously at most once a day), so a new release shows the in-app notice and the notification the same day. Metadata-only as before: a single small GitHub API read, no download, no artifact fields.
 - **The static update explainer card is gone.** Settings shows an update card only when a newer version is verified ("Latest version available: X" + Update). The in-app popup and notification are unchanged.

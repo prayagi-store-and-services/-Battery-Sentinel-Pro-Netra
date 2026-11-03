@@ -201,6 +201,37 @@ fun SettingsScreen(
             }
         }
 
+        // 5a2. Animations (opt-in; effects inside the gauge circles follow real readings only)
+        item {
+            SentinelCard(
+                title = "Animations",
+                icon = Icons.Default.Bolt,
+                dotState = if (settings.animationsEnabled) DotState.CONNECTED else DotState.STANDBY,
+                accentColor = NetraCyan
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = "Gauge animations", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            text = "Off unless you turn it on. Charging spark, temperature fire or liquid by the real rising/falling trend, and a health heartbeat inside the gauge circles. Nothing moves when readings are flat or unknown.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = settings.animationsEnabled,
+                        onCheckedChange = { viewModel.setAnimationsEnabled(it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = NetraCyan, checkedTrackColor = NetraCyan.copy(alpha = 0.3f)),
+                        modifier = Modifier.testTag("animations_toggle")
+                    )
+                }
+            }
+        }
+
         // 5b. Battery Percentage Announcement (opt-in master; Charging and Discharging sections)
         item {
             SentinelCard(

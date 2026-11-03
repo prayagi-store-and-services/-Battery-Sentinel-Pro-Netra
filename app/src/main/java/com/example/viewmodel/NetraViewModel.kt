@@ -300,6 +300,10 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
         settingsRepository.setPercentDischargingStep10(enabled)
     }
 
+    fun setAnimationsEnabled(enabled: Boolean) {
+        settingsRepository.setAnimationsEnabled(enabled)
+    }
+
     fun setPowerSaverEnabled(enabled: Boolean) {
         settingsRepository.setPowerSaverEnabled(enabled)
     }

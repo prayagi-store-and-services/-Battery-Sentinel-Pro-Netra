@@ -1,3 +1,8 @@
+## 2.2.29 - Opt-in gauge animations
+
+- New off-by-default switch "Animations" in Settings. While on, the dashboard and charging gauges show small effects INSIDE the circles: a spark while charging, fire when the measured temperature trend is rising and liquid when it is falling (small hysteresis; flat or unknown trends animate nothing), and a heartbeat for battery health life that slows and fades when the health trend falls.
+- Every effect follows real on-device readings and the existing freshness/lifecycle gates; nothing is simulated and nothing extra is sampled. Health remains labelled est. when estimated.
+
 ## 2.2.28 - Update notices that actually reach you
 
 - New version? The app now checks at every start (and at most every 6 hours), so the in-app notice and notification show up the same day instead of up to a day later.
