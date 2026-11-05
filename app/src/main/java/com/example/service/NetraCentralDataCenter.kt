@@ -323,20 +323,15 @@ class NetraCentralDataCenter(
         val availMem = memInfo.availMem.toFloat()
         val ramPercent = (availMem / totalMem) * 100f
 
-        // Simple CPU headroom estimation: 1.0 - (uptime / duration)
-        // Public Android API only allows process-level or aggregate loadavg.
-        // We will use a lightweight aggregate check.
-        val cpuLoad = try {
-            java.io.File("/proc/loadavg").readText().split(" ")[0].toFloatOrNull() ?: 0f
-        } catch (e: Exception) { 0f }
-
-        val cpuHeadroom = (100f - (cpuLoad * 10f)).coerceIn(0f, 100f)
+        // /proc/loadavg is scheduler load, not CPU utilization/headroom.
+        // No validated device-wide CPU measurement is available on this path.
+        val cpuHeadroom: Float? = null
 
         _centralState.update { current -> current.copy(
             availableRamPercent = ramPercent,
             isMemoryOptimizationNeeded = ramPercent < 40f,
             cpuHeadroomPercent = cpuHeadroom,
-            isCpuOptimizationNeeded = cpuHeadroom < 60f
+            isCpuOptimizationNeeded = false // Unknown is not evidence that CPU work is needed.
         ) }
     }
 

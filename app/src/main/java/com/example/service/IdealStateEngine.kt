@@ -32,7 +32,7 @@ class IdealStateEngine(private val application: NetraApplication) {
         // Ideal State: Screen Off, Low Temp (<= 30°C), Efficient CPU/RAM
         val isScreenOff = !state.isScreenOn && state.isScreenOffConfirmed
         val isTempIdeal = (state.temperatureCelsius ?: 99f) <= 30f
-        val isResourcesIdeal = !state.isMemoryOptimizationNeeded && !state.isCpuOptimizationNeeded
+        val isResourcesIdeal = IdealResourcePolicy.satisfied(state.availableRamPercent, state.cpuHeadroomPercent)
         
         val isIdeal = isScreenOff && isTempIdeal && isResourcesIdeal
         
