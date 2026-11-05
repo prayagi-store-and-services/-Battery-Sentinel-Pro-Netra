@@ -2,9 +2,9 @@
 
 Android battery monitoring, heat and charge-target alerts, consent-based power-saving tools, and observed charging history.
 
-Current public release: [v2.2.22](https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/tag/v2.2.22), versionCode 102. [Website](https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/) | [Privacy](https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/privacy.html)
+Current public release: [v2.2.30](https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/tag/v2.2.30), versionCode 110. [Website](https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/) | [Privacy](https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/privacy.html)
 
-## Current protection and power-saving scope (v2.2.22)
+## Current protection and power-saving scope (v2.2.30)
 
 - Heat and charge-target warnings, battery/charging readings, voice controls, Bluetooth readings when available, and local history. These do not stop charging at a hardware limit or guarantee cooling, battery life or battery health.
 - Optional power-saving controls can lower display brightness/timeout and pause auto-sync only within their separate opt-ins and Android permissions. Their write-ahead restoration ledger tracks saved values and respects later user edits. Restore failures and unknown older-version settings need user attention; exact recovery is not promised for missing originals.
@@ -36,6 +36,6 @@ Weather, optional usage counting, feedback/crash reporting and update metadata h
 
 `gradle :app:assembleDebug :app:testDebugUnitTest`
 
-The 2.2.22 CI suite ran 776 tests with no failures/errors/skips. Automated policy tests and Compose fixture renders are not physical-phone acceptance, OEM drain measurements or proof of cooling. Low resource use and bounded latency are goals, not verified device-wide guarantees. Android/OEM background limits apply.
+The inspected main CI run [41707233064](https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/actions/runs/41707233064) produced full unit XML with 827 tests across 136 suites and no failures/errors/skips. This is existing CI evidence, not a new physical-device run. Automated policy tests and Compose fixture renders are not physical-phone acceptance, OEM drain measurements or proof of cooling. Low resource use and bounded latency are goals, not verified device-wide guarantees. Android/OEM background limits apply.
 
 Use reviewable branches and PRs, not direct main pushes. Merge only after green checks at the exact reviewed head. Before publication, compare the signed APK's package/version, signer, manifest and contents with the reviewed source and prior public baseline. SECURITY.md, What's new, changelog and published descriptions must agree. Keep unfinished roadmap items visible.
