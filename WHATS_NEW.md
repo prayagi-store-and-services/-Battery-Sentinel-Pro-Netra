@@ -1,3 +1,11 @@
+## 2.2.31 - Crash reports only when you send them
+
+- Crash reports stay on your phone now. After a crash you can preview the report and choose Send or Delete - nothing uploads by itself.
+- CPU headroom honestly says Unavailable on phones that cannot report it, instead of a wrong warning.
+- The app no longer asks for the battery-optimization exemption; it opens Android's own battery settings page instead.
+- Thermal alerts say "battery temperature" honestly and never claim the app cools your phone; the 40C marker is an app-chosen reference, not a manufacturer limit.
+- Background battery monitoring deduplicated - same tracking, less duplicate work.
+
 ## 2.2.29 - Opt-in gauge animations
 
 - New off-by-default switch "Animations" in Settings. While on, the dashboard and charging gauges show small effects INSIDE the circles: a spark while charging, fire when the measured temperature trend is rising and liquid when it is falling (small hysteresis; flat or unknown trends animate nothing), and a heartbeat for battery health life that slows and fades when the health trend falls.
