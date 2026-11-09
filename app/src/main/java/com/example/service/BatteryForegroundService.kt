@@ -16,6 +16,12 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.MainActivity
 import com.example.R
+import com.example.model.BatteryTelemetry
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,17 +38,14 @@ class BatteryForegroundService : Service() {
 
     private var isReceiverRegistered = false
     private var batteryManager: BatteryManager? = null
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val batteryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent == null) return
             val action = intent.action
-            if (action == Intent.ACTION_BATTERY_CHANGED ||
-                action == Intent.ACTION_POWER_CONNECTED ||
-                action == Intent.ACTION_POWER_DISCONNECTED
-            ) {
-                updateBatteryStateFromIntent(intent)
-            }
+            // Battery telemetry no longer parsed here: the state flow below derives it from
+            // BatteryMonitorService.liveTelemetryFlow (single ingestion point, plan item 3).
             if (action == Intent.ACTION_POWER_CONNECTED) { openChargingScreenIfAllowed(wake = true) }
             if (action == Intent.ACTION_SCREEN_ON) { try { ActivePowerSaver.onScreenOn(this@BatteryForegroundService) } catch (_: Exception) {} }
             if (action == Intent.ACTION_SCREEN_OFF) {
@@ -98,6 +101,7 @@ class BatteryForegroundService : Service() {
         startForeground(NOTIFICATION_ID, notification)
 
         registerBatteryBroadcastReceiver()
+        startTelemetryDerivation()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -108,14 +112,6 @@ class BatteryForegroundService : Service() {
 
         if (!CrashRecoveryGate.allowed(this)) { PausedServiceStop.stop(this); return START_NOT_STICKY }
 
-        // Re-verify sticky intent on start command
-        try {
-            val sticky = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-            if (sticky != null) {
-                updateBatteryStateFromIntent(sticky)
-            }
-        } catch (_: Exception) {}
-
         return START_STICKY
     }
 
@@ -123,9 +119,7 @@ class BatteryForegroundService : Service() {
         if (!isReceiverRegistered) {
             try {
                 val filter = IntentFilter().apply {
-                    addAction(Intent.ACTION_BATTERY_CHANGED)
                     addAction(Intent.ACTION_POWER_CONNECTED)
-                    addAction(Intent.ACTION_POWER_DISCONNECTED)
                     addAction(Intent.ACTION_SCREEN_OFF)
                     addAction(Intent.ACTION_SCREEN_ON)
                 }
@@ -141,10 +135,20 @@ class BatteryForegroundService : Service() {
         }
     }
 
-    private fun updateBatteryStateFromIntent(intent: Intent) {
-        val newState = parseBatteryData(intent, batteryManager).copy(isTrackingActive = true)
-        _batteryStateFlow.value = newState
-        updateNotification(newState)
+    /**
+     * Single ingestion point: track state derives from BatteryMonitorService's telemetry flow
+     * instead of a second ACTION_BATTERY_CHANGED receiver + parse (plan item 3). This service
+     * keeps its unique responsibilities: the user-toggleable tracking notification and the
+     * screen/charging hooks in the receiver above.
+     */
+    private fun startTelemetryDerivation() {
+        serviceScope.launch {
+            BatteryMonitorService.liveTelemetryFlow.collect { telemetry ->
+                val newState = telemetry.toTrackState(isTrackingActive = true)
+                _batteryStateFlow.value = newState
+                updateNotification(newState)
+            }
+        }
     }
 
     private fun updateNotification(state: BatteryTrackState) {
@@ -169,6 +173,7 @@ class BatteryForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        serviceScope.cancel()
         if (isReceiverRegistered) {
             try {
                 unregisterReceiver(batteryReceiver)
@@ -364,3 +369,25 @@ data class BatteryTrackState(
     val timestamp: Long = 0L,
     val isTrackingActive: Boolean = false
 )
+
+/**
+ * Maps the canonical telemetry (single ingestion point in BatteryMonitorService) onto the
+ * tracking state this service publishes. currentMa (milliamps) converts to microamps.
+ */
+internal fun BatteryTelemetry.toTrackState(isTrackingActive: Boolean): BatteryTrackState =
+    BatteryTrackState(
+        percentage = level.coerceIn(0, 100),
+        temperatureCelsius = temperature,
+        isCharging = isCharging,
+        status = if (isCharging) "Charging" else "Discharging",
+        pluggedSource = when (pluggedType) {
+            "AC" -> "AC Charger"
+            "USB" -> "USB Port"
+            "WIRELESS" -> "Wireless"
+            else -> if (isCharging) "Connected" else "Unplugged"
+        },
+        voltageMv = voltageMv,
+        currentMicroAmps = currentMa * 1000,
+        timestamp = System.currentTimeMillis(),
+        isTrackingActive = isTrackingActive
+    )
