@@ -3,11 +3,8 @@ package com.example.service
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import android.os.BatteryManager
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
@@ -74,17 +71,7 @@ class ThermalGuardianController(private val app: Context) {
     @Volatile private var thermalStatus: Int = -1
     private var thermalListener: PowerManager.OnThermalStatusChangedListener? = null
 
-    private val batteryReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val t = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
-            val tempC = if (t == Int.MIN_VALUE || t <= 0) null else t / 10.0f
-            val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
-            val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-            val charging = plugged != 0 || status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
-            lastTempC = tempC
-            lastCharging = charging
-        }
-    }
+    private var telemetryJob: Job? = null
 
     @Volatile private var lastTempC: Float? = null
     @Volatile private var lastCharging: Boolean? = null
@@ -94,9 +81,19 @@ class ThermalGuardianController(private val app: Context) {
         if (loopJob != null) return
         _ui.value = _ui.value.copy(enabled = true)
         ThermalGuardianLog.init(app)
-        try {
-            app.registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        } catch (_: Exception) {}
+        // Event-driven ingestion (plan item 6): battery temperature and charging state arrive
+        // from BatteryMonitorService's telemetry flow instead of a duplicate broadcast receiver
+        // plus per-tick sticky reads. The loop below stays as the policy clock only (phase
+        // windows, recovery holds, escalation cooldowns) and does no hardware reads.
+        telemetryJob = scope.launch {
+            BatteryMonitorService.liveTelemetryFlow.collect { telemetry ->
+                if (telemetry.temperature > 0f) {
+                    lastTempC = telemetry.temperature
+                    lastValidReadAtMs = System.currentTimeMillis()
+                }
+                lastCharging = telemetry.isCharging
+            }
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
                 val pm = app.getSystemService(Context.POWER_SERVICE) as? PowerManager
@@ -121,7 +118,7 @@ class ThermalGuardianController(private val app: Context) {
 
     fun stop() {
         loopJob?.cancel(); loopJob = null
-        try { app.unregisterReceiver(batteryReceiver) } catch (_: Exception) {}
+        telemetryJob?.cancel(); telemetryJob = null
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
                 val pm = app.getSystemService(Context.POWER_SERVICE) as? PowerManager
@@ -135,19 +132,9 @@ class ThermalGuardianController(private val app: Context) {
     @Volatile private var lastGapMs: Long = ThermalGuardianPolicy.GAP_COOL_MS
 
     private fun tick() {
-        // A fresh sticky read every tick: EXTRA_TEMPERATURE is a snapshot, the cadence is ours.
-        val snapshot = try { app.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
-        if (snapshot != null) {
-            val t = snapshot.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
-            if (t != Int.MIN_VALUE && t > 0) {
-                lastTempC = t / 10.0f
-                lastValidReadAtMs = System.currentTimeMillis()
-            }
-            val plugged = snapshot.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
-            val status = snapshot.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-            lastCharging = plugged != 0 || status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
-        }
-        // A reading older than STALE_READ_MS is not a reading: safety decisions never reuse it.
+        // Readings arrive via the telemetry flow collector started in start(); this clock only
+        // advances the policy. A reading older than STALE_READ_MS is not a reading: safety
+        // decisions never reuse it.
         val fresh = System.currentTimeMillis() - lastValidReadAtMs <= STALE_READ_MS
         val tempC = if (fresh) lastTempC else null
         val charging = lastCharging
