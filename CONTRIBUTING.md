@@ -37,3 +37,7 @@ Every new product and every release is checked against these 20 points before it
 18. No source maps and no debug symbols published with a release.
 19. No personal data in logs: no names, voice text, locations, PINs or tokens. Log events, not content.
 20. Dependencies are kept current. Open security alerts are read every day and fixed or dated. Alerts are never dismissed to make a list look clean.
+
+## Bug/regression protocol: git bisect (owner rule, 9 Nov 2026)
+
+For any bug or regression with a known-good past state, use `git bisect` to find the exact culprit commit before fixing. Record the culprit commit hash in the fix report/PR body. Bisect checkouts are local and read-only in effect: reset (`git bisect reset`) after the run. If bisect is not possible (no known-good state, unbuildable history), say so explicitly in the report instead of skipping silently.
