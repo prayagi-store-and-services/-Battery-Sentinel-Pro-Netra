@@ -4,17 +4,24 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+## [2.2.31]
+
 ### Fixed
 - Crash reports are never uploaded automatically. A crash report stays on the phone until you preview it and tap Send; Delete removes it. Health and incident telemetry are unchanged.
 - CPU headroom shows Unavailable when the phone cannot report it; Ideal State no longer warns about unknown CPU load.
-- Charge-to-full/target and remaining battery time use sustained measured battery-level progress. Short polls and one noisy reading do not become a six-minute runtime prediction. Current workload and charging conditions take priority over learned history.
-- The charging screen, live monitor and dashboard share the same bounded trend policy. Warm-up says Calculating briefly; missing or unreliable progress says Unavailable instead of inventing a number. Predictions remain estimates, especially as charging tapers or usage changes.
-- The phone relearns its local charge/discharge history for corrected estimates. No new permission, network transfer or background sampler. Automated tests are not physical-phone validation.
 
 ### Changed
 - Battery-optimization exemption is no longer requested in-app or during onboarding. Android's own battery settings page opens instead, so the choice and wording stay with the system.
 - Thermal and spoken alerts name the battery temperature as battery temperature and no longer claim the app cools the phone. The 40C marker is labelled an app-chosen reference, not a manufacturer safety limit.
 - The two battery monitors now share one battery-data ingestion point; the tracking notification and charging-screen behavior are unchanged.
+- The thermal guardian now receives battery temperature and charging state event-driven from the shared ingestion point; its duplicate battery receiver and per-tick sticky reads are removed. Hot-phone response cadence is unchanged.
+
+## [2.2.30]
+
+### Fixed
+- Charge-to-full/target and remaining battery time use sustained measured battery-level progress. Short polls and one noisy reading do not become a six-minute runtime prediction. Current workload and charging conditions take priority over learned history.
+- The charging screen, live monitor and dashboard share the same bounded trend policy. Warm-up says Calculating briefly; missing or unreliable progress says Unavailable instead of inventing a number. Predictions remain estimates, especially as charging tapers or usage changes.
+- The phone relearns its local charge/discharge history for corrected estimates. No new permission, network transfer or background sampler. Automated tests are not physical-phone validation.
 
 ## [2.2.29]
 
