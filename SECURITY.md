@@ -337,15 +337,16 @@ No solar provider is enabled in the app today. Before any provider ships, these 
 ### Update check
 - The app checks GitHub (the public release API, with a backup file on the project website) for a newer version. It sends no user data. Settings has a "Check for updates" button that shows the real status or error.
 
-### Automatic crash reports
+### Crash reports (user-reviewed only)
 
-- Version 1.2.5: Feedback has a manual "Send crash report" button that shows the exact text first. An automatic or manual send now counts as sent only when the forwarding service answers success=true; before, any HTTP 200 reply was enough and the saved report was deleted. The last crash is kept on the device so it can be sent again.
+- When the app crashes, it saves a short report on the device. It is never sent automatically: not at startup, not in the background, not by any worker. The saved report is sent only when the user opens the feedback card, reviews the exact text, and presses Send. Delete removes it without sending.
+- The report contains only: phone model, Android version, app version, and the crash stack trace (exception class names and code locations; exception messages are dropped on purpose). It contains no name, email, location, files, device IDs or battery history.
+- It goes through the same form pipeline as the website forms (FormSubmit) to the developer's email, and only on that explicit Send. The optional "Send feedback" form also sends only when the user presses Send.
+- Version 1.2.5: Feedback has a manual "Send crash report" button that shows the exact text first. A send counts as sent only when the forwarding service answers success=true; before, any HTTP 200 reply was enough and the saved report was deleted. The last crash is kept on the device so it can be sent again.
 - Version 1.2.5: Power Preferences use `WRITE_SETTINGS` (user allows it on an Android screen) for brightness, and `WRITE_SECURE_SETTINGS` only if the owner granted it with a computer command; no new permission is declared.
 - Version 1.2.9: new Permissions list in Settings. It only reads the status of permissions already declared and opens Android settings pages; no new permission, no network call, no background work.
 - Version 1.2.10: wording fix only on the Monitoring screen (Cleanup scope: cache files only). No new permission, no network call.
-- When the app crashes, it saves a short report on the device. The next time the app opens, it sends that report by itself, with no button and no question. After a successful send the file is deleted; after a failed send it is kept and retried at the next start.
-- The report contains only: phone model, Android version, app version, and the crash stack trace (exception class names and code locations; exception messages are dropped on purpose). It contains no name, email, location, files, device IDs or battery history.
-- It goes through the same form pipeline as the website forms (FormSubmit) to the developer's email. The optional "Send feedback" form still sends only when the user presses Send.
+- Historical note: versions before this change auto-sent the saved report at the next app start. That behavior is removed.
 
 ### Honest data: no fake values
 The app must not invent telemetry. A reading the phone or provider does not give is shown as `Unavailable`, never as a fake zero, a sample value or a guess. Readings differ between phones, and the app does not claim every reading works on every device.

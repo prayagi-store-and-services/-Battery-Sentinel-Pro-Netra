@@ -32,7 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** Optional feedback sender (sent only when the user presses Send). Crash reports are sent automatically by CrashAutoSender. */
+/** Optional feedback sender (sent only when the user presses Send). Crash reports are saved locally on crash and are sent only when the user reviews one here and presses Send; Delete removes it without sending. */
 @Composable
 fun FeedbackCard() {
     val context = LocalContext.current
