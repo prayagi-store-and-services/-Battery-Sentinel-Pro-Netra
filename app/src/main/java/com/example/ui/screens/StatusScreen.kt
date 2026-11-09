@@ -167,7 +167,7 @@ fun StatusScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "🔥 CRITICAL OVERHEAT: ${canonical.temperatureCelsius?.let { String.format("%.1f", it) } ?: "Unavailable"}°C",
+                            text = "🔥 CRITICAL BATTERY TEMPERATURE: ${canonical.temperatureCelsius?.let { String.format("%.1f", it) } ?: "Unavailable"}°C",
                             color = DangerRed,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.ExtraBold
@@ -484,7 +484,7 @@ fun StatusScreen(
             }
 
             Spacer(modifier = Modifier.height(10.dp))
-            Text(text = "1-Hour Thermal Trend (40°C Red Safety Limit)", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = "1-Hour Battery Temperature Trend (40°C reference line, app-chosen)", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(4.dp))
             SparklineChart(records = sparklineRecords, dangerThreshold = 40.0f)
         }

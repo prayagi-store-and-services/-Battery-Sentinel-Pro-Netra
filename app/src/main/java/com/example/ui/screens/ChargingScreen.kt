@@ -142,9 +142,9 @@ fun ChargingScreen(
 
                     Text(
                         text = if (telemetry.distanceTo40C > 0)
-                            "${String.format("%.1f", telemetry.distanceTo40C)}°C safe margin from 40°C threshold"
+                            "Battery temperature ${String.format("%.1f", telemetry.distanceTo40C)}°C below the 40°C reference"
                         else
-                            "⚠️ ${String.format("%.1f", kotlin.math.abs(telemetry.distanceTo40C))}°C OVER 40°C safety limit!",
+                            "⚠️ Battery temperature ${String.format("%.1f", kotlin.math.abs(telemetry.distanceTo40C))}°C above the 40°C reference (app-chosen, not a manufacturer limit)",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = if (telemetry.distanceTo40C > 0) NetraEmerald else DangerRed

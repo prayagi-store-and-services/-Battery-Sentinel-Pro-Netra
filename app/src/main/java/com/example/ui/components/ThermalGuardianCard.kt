@@ -72,8 +72,8 @@ fun ThermalGuardianCard(modifier: Modifier = Modifier) {
             Column {
                 Text(
                     text = when {
-                        ui.lastTempC == null -> "Temperature: Unavailable on this phone"
-                        else -> "Temperature: ${String.format(Locale.US, "%.1f", ui.lastTempC)}°C"
+                        ui.lastTempC == null -> "Battery temperature: Unavailable on this phone"
+                        else -> "Battery temperature: ${String.format(Locale.US, "%.1f", ui.lastTempC)}°C (not the phone's internal temperature)"
                     },
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
@@ -128,7 +128,7 @@ fun ThermalGuardianCard(modifier: Modifier = Modifier) {
         val lastReal = sessions.lastOrNull { !it.isTest }
         if (lastReal != null) {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Last cooling session", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text(text = "Last high-temperature session", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             val fmt = SimpleDateFormat("dd MMM HH:mm", Locale.US)
             Text(
                 text = buildString {

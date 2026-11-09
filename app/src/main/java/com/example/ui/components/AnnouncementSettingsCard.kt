@@ -307,7 +307,7 @@ fun AnnouncementSettingsCard(
                     icon = Icons.Default.Thermostat,
                     iconTint = DangerRed,
                     title = "Thermal Protection Warnings",
-                    subtitle = "Speaks: 'Thermal warning. Your phone temperature is [XX.X] degrees. Please stop using the phone. Nethra is cooling down the device.'",
+                    subtitle = "Speaks 'Battery temperature high, [XX.X] degrees.', 'Battery temperature critical, [XX.X] degrees.' and 'Thermal protection on.' Netra cannot cool the phone; the phone's own safety stays in charge.",
                     checked = settings.announceThermalWarning,
                     onCheckedChange = { viewModel.setAnnounceThermalWarning(it) },
                     testTag = "announce_thermal_warning_switch"
