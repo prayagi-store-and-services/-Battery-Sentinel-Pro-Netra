@@ -385,8 +385,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             NetraEventType.THERMAL_WARNING -> {
                 if (settings.announceThermalWarning) {
                     val temp = event.newValue?.toFloatOrNull() ?: 40.0f
-                    val tempFormatted = String.format(Locale.US, "%.1f", temp)
-                    val text = "Phone hot, $tempFormatted degrees."
+                    val text = ThermalAnnouncementText.warning(temp)
                     enqueue(
                         AnnouncementItem(
                             id = "thermal_warn_$now",
@@ -401,8 +400,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             NetraEventType.THERMAL_CRITICAL -> {
                 if (settings.announceThermalWarning) {
                     val temp = event.newValue?.toFloatOrNull() ?: 45.0f
-                    val tempFormatted = String.format(Locale.US, "%.1f", temp)
-                    val text = "Overheating, $tempFormatted degrees."
+                    val text = ThermalAnnouncementText.critical(temp)
                     enqueue(
                         AnnouncementItem(
                             id = "thermal_crit_$now",
@@ -418,7 +416,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 enqueue(
                     AnnouncementItem(
                         id = "thermal_prot_start_$now",
-                        text = "Cooling on.",
+                        text = ThermalAnnouncementText.PROTECTION_ON,
                         priority = AnnouncementPriority.CRITICAL_THERMAL,
                         category = "THERMAL_PROTECTION",
                         isNightException = true
