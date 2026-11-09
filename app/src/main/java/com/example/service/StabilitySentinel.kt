@@ -27,6 +27,9 @@ import java.util.UUID
 class StabilitySentinel(private val app: NetraApplication) {
 
     companion object {
+        /** Crash report files stay local for explicit user review; incident/health files may auto-flush. */
+        @JvmStatic internal fun isUserReviewOnlyReport(fileName: String): Boolean = fileName.startsWith("crash-")
+
         private const val TAG = "NetraStability"
         private const val ROOT_DIR = "stability"
         private const val PENDING_DIR = "pending"
@@ -99,6 +102,9 @@ class StabilitySentinel(private val app: NetraApplication) {
 
         pending.listFiles()?.sortedBy { it.lastModified() }?.forEach { file ->
             if (!file.isFile || !file.name.endsWith(".json")) return@forEach
+            // Crash reports are user-review-only: they stay on the phone until the user sends them
+            // from the feedback card. Only health/incident telemetry is flushed automatically.
+            if (isUserReviewOnlyReport(file.name)) return@forEach
             try {
                 val accepted = StabilityReportTransport.post(endpoint, file.readText(Charsets.UTF_8))
                 if (accepted) file.delete()
@@ -155,6 +161,7 @@ class StabilitySentinel(private val app: NetraApplication) {
     }
 
     fun lastCheckTimestamp(): Long = prefs.getLong(KEY_LAST_CHECK, 0L)
+
 
     private fun baseReport(type: String, component: String): JSONObject = JSONObject()
         .put("reportId", UUID.randomUUID().toString())
