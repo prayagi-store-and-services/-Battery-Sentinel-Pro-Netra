@@ -316,6 +316,36 @@ class TruthfulnessCardRenderTest {
         captureCard("hardware-facts-real-subzero.png")
     }
 
+    @Test
+    fun renderOptionalBatterySettingsOptimized() {
+        compose.setContent {
+            MyApplicationTheme {
+                Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+                    com.example.ui.screens.AndroidBatterySettingsCard(false) {}
+                }
+            }
+        }
+        compose.onNodeWithText("Android Battery Settings (Optional)").assertIsDisplayed()
+        compose.onNodeWithText("Review Android Battery Settings").assertIsDisplayed()
+        compose.onNodeWithText("Changing them is optional", substring = true).assertIsDisplayed()
+        captureCard("optional-battery-settings-optimized.png")
+    }
+
+    @Test
+    fun renderOptionalBatterySettingsAlreadyUnrestricted() {
+        compose.setContent {
+            MyApplicationTheme {
+                Column(Modifier.width(380.dp).background(MaterialTheme.colorScheme.background).padding(16.dp)) {
+                    com.example.ui.screens.AndroidBatterySettingsCard(true) {}
+                }
+            }
+        }
+        compose.onNodeWithText("Android Battery Settings (Optional)").assertIsDisplayed()
+        compose.onNodeWithText("continuous monitoring is not guaranteed", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Review Android Battery Settings").assertDoesNotExist()
+        captureCard("optional-battery-settings-unrestricted.png")
+    }
+
     private fun captureCard(filename: String) {
         compose.waitForIdle()
         // WindowCapture's PixelCopy/redraw wait is not supported reliably by Robolectric.

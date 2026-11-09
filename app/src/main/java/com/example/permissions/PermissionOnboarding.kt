@@ -54,6 +54,8 @@ object PermissionCheck {
 
     /** Only core permissions, or ones tied to a feature the user switched on. */
     fun isRelevant(c: Context, p: Perm): Boolean = when (p) {
+        // Battery settings are an optional, user-opened choice, never an onboarding requirement.
+        Perm.BATTERY_OPT -> false
         Perm.WRITE_SETTINGS ->
             c.getSharedPreferences("netra_sentinel_prefs", Context.MODE_PRIVATE).getBoolean("screen_off_saver_enabled", false)
         else -> true
@@ -71,7 +73,7 @@ object PermissionCheck {
     fun settingsIntent(c: Context, p: Perm): Intent? {
         val pkg = Uri.parse("package:" + c.packageName)
         return when (p) {
-            Perm.BATTERY_OPT -> Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkg)
+            Perm.BATTERY_OPT -> Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
             Perm.WRITE_SETTINGS -> Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, pkg)
             else -> null
         }
@@ -118,7 +120,7 @@ object PermissionCopy {
     fun title(p: Perm) = when (p) {
         Perm.NOTIFICATIONS -> "Notifications allow karein"
         Perm.BLUETOOTH -> "Bluetooth devices dekhne ki permission"
-        Perm.BATTERY_OPT -> "Battery optimization se chhoot"
+        Perm.BATTERY_OPT -> "Battery settings (optional)"
         Perm.WRITE_SETTINGS -> "Brightness control ki permission"
         Perm.LOCATION -> "Location permission"
     }
@@ -126,7 +128,7 @@ object PermissionCopy {
     fun benefit(p: Perm) = when (p) {
         Perm.NOTIFICATIONS -> "Battery alerts aur announcements notification mein dikhane ke liye."
         Perm.BLUETOOTH -> "Connected Bluetooth devices aur unki battery dikhane ke liye (jahan device batata hai)."
-        Perm.BATTERY_OPT -> "Taaki Android background mein monitoring ko band na kare. Battery ki readings zyada lagataar milengi."
+        Perm.BATTERY_OPT -> "Optional Android battery settings. Background work can still be delayed or stopped; this does not guarantee continuous monitoring."
         Perm.WRITE_SETTINGS -> "Charging + screen off savings mein brightness kam aur wapas karne ke liye. Aapne ye feature on kiya hai."
         Perm.LOCATION -> "Kuch phones par Android Wi-Fi/Bluetooth ki jankari ke liye location permission maangta hai. App aapki location save ya bhejti nahi."
     }

@@ -121,22 +121,14 @@ object PermissionHelper {
         }
     }
 
+    /** Optional settings only. No direct exemption request or guarantee of background execution. */
     fun openBatteryOptimizationSettings(context: Context) {
         try {
-            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                data = Uri.parse("package:${context.packageName}")
+            context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            context.startActivity(intent)
+            })
         } catch (_: Exception) {
-            try {
-                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                }
-                context.startActivity(intent)
-            } catch (_: Exception) {
-                openAppDetailsSettings(context, context.packageName)
-            }
+            openAppDetailsSettings(context, context.packageName)
         }
     }
 
