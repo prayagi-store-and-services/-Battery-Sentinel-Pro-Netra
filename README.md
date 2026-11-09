@@ -2,7 +2,7 @@
 
 Android battery monitoring, heat and charge-target alerts, consent-based power-saving tools, and observed charging history.
 
-Current public release: [v2.2.22](https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/tag/v2.2.22), versionCode 102. [Website](https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/) | [Privacy](https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/privacy.html)
+Current public release: [v2.2.30](https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/tag/v2.2.30). The scope section below was written for v2.2.22 and has not been re-verified line by line for later releases. [Website](https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/) | [Privacy](https://prayagi-store-and-services.github.io/-Battery-Sentinel-Pro-Netra/privacy.html)
 
 ## Current protection and power-saving scope (v2.2.22)
 
