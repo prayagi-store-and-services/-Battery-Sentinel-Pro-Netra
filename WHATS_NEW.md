@@ -3,6 +3,8 @@
 - Crash reports stay on your phone now. After a crash you can preview the report and choose Send or Delete - nothing uploads by itself.
 - CPU headroom honestly says Unavailable on phones that cannot report it, instead of a wrong warning.
 - The app no longer asks for the battery-optimization exemption; it opens Android's own battery settings page instead.
+- Thermal alerts say "battery temperature" honestly and never claim the app cools your phone; the 40C marker is an app-chosen reference, not a manufacturer limit.
+- Background battery monitoring deduplicated - same tracking, less duplicate work.
 
 ## 2.2.29 - Opt-in gauge animations
 

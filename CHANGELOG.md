@@ -13,6 +13,8 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ### Changed
 - Battery-optimization exemption is no longer requested in-app or during onboarding. Android's own battery settings page opens instead, so the choice and wording stay with the system.
+- Thermal and spoken alerts name the battery temperature as battery temperature and no longer claim the app cools the phone. The 40C marker is labelled an app-chosen reference, not a manufacturer safety limit.
+- The two battery monitors now share one battery-data ingestion point; the tracking notification and charging-screen behavior are unchanged.
 
 ## [2.2.29]
 
