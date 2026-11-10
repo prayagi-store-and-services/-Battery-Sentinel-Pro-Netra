@@ -62,17 +62,17 @@ class BatteryMonitorService : Service() {
                 Intent.ACTION_BATTERY_CHANGED -> batteryInputs.trySend(intent)
                 Intent.ACTION_POWER_CONNECTED -> {
                     lastNotified80PercentSession = false; lastTargetAlarmAt = 0L; TargetAlarmRepeat.resetForNewSession()
-                    if (BatteryTracker.isEnabled(this)) openChargingScreenIfAllowed(wake = true)
+                    if (BatteryTracker.isEnabled(applicationContext)) openChargingScreenIfAllowed(wake = true)
                 }
                 Intent.ACTION_SCREEN_ON -> {
-                    if (BatteryTracker.isEnabled(this)) { try { ActivePowerSaver.onScreenOn(this) } catch (_: Exception) {} }
+                    if (BatteryTracker.isEnabled(applicationContext)) { try { ActivePowerSaver.onScreenOn(applicationContext) } catch (_: Exception) {} }
                 }
                 Intent.ACTION_SCREEN_OFF -> {
-                    if (BatteryTracker.isEnabled(this)) {
-                        try { ActivePowerSaver.onScreenOff(this) } catch (_: Exception) {}
+                    if (BatteryTracker.isEnabled(applicationContext)) {
+                        try { ActivePowerSaver.onScreenOff(applicationContext) } catch (_: Exception) {}
                         // Screen off while the charger is connected: bring the charging screen back. It stays dark and shows when the phone is next woken.
                         val sticky = try { registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
-                        if ((sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0 && com.example.ui.components.ChargingScreenGuard.Mode.load(this) == com.example.ui.components.ChargingScreenGuard.Mode.ON) {
+                        if ((sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0 && com.example.ui.components.ChargingScreenGuard.Mode.load(applicationContext) == com.example.ui.components.ChargingScreenGuard.Mode.ON) {
                             openChargingScreenIfAllowed(wake = false)
                         }
                     }
