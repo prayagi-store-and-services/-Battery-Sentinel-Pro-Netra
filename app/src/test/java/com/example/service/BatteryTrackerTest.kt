@@ -1,26 +1,30 @@
 package com.example.service
 
-import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
-import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
-import org.robolectric.shadows.ShadowNotificationManager
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
-class BatteryForegroundServiceTest {
+class BatteryTrackerTest {
+
+    private val context: Context = ApplicationProvider.getApplicationContext()
+
+    @Before
+    fun clearTrackerPrefs() {
+        context.getSharedPreferences("battery_tracker", Context.MODE_PRIVATE).edit().clear().commit()
+    }
 
     @Test
     fun parseBatteryData_chargingAc_calculatesCorrectPercentageAndTemperature() {
@@ -33,7 +37,7 @@ class BatteryForegroundServiceTest {
             putExtra(BatteryManager.EXTRA_VOLTAGE, 4200)
         }
 
-        val data = BatteryForegroundService.parseBatteryData(intent, null)
+        val data = BatteryTracker.parseBatteryData(intent, null)
 
         assertEquals(75, data.percentage)
         assertEquals(31.5f, data.temperatureCelsius, 0.001f)
@@ -54,7 +58,7 @@ class BatteryForegroundServiceTest {
             putExtra(BatteryManager.EXTRA_VOLTAGE, 3850)
         }
 
-        val data = BatteryForegroundService.parseBatteryData(intent, null)
+        val data = BatteryTracker.parseBatteryData(intent, null)
 
         assertEquals(42, data.percentage)
         assertEquals(26.4f, data.temperatureCelsius, 0.001f)
@@ -74,7 +78,7 @@ class BatteryForegroundServiceTest {
             putExtra(BatteryManager.EXTRA_PLUGGED, BatteryManager.BATTERY_PLUGGED_USB)
         }
 
-        val data = BatteryForegroundService.parseBatteryData(intent, null)
+        val data = BatteryTracker.parseBatteryData(intent, null)
 
         assertEquals(100, data.percentage)
         assertEquals(28.0f, data.temperatureCelsius, 0.001f)
@@ -91,7 +95,7 @@ class BatteryForegroundServiceTest {
             putExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_NOT_CHARGING)
         }
 
-        val data = BatteryForegroundService.parseBatteryData(intent, null)
+        val data = BatteryTracker.parseBatteryData(intent, null)
 
         assertEquals(50, data.percentage)
         assertEquals(25.0f, data.temperatureCelsius, 0.001f)
@@ -100,7 +104,6 @@ class BatteryForegroundServiceTest {
 
     @Test
     fun buildTrackingNotification_containsPercentageTemperatureAndStatus() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
         val state = BatteryTrackState(
             percentage = 88,
             temperatureCelsius = 29.5f,
@@ -110,7 +113,7 @@ class BatteryForegroundServiceTest {
             isTrackingActive = true
         )
 
-        val notification = BatteryForegroundService.buildTrackingNotification(context, state)
+        val notification = BatteryTracker.buildTrackingNotification(context, state)
 
         assertNotNull(notification)
         val shadowNotification = shadowOf(notification)
@@ -127,24 +130,40 @@ class BatteryForegroundServiceTest {
     }
 
     @Test
-    fun serviceLifecycle_startsAsForegroundServiceAndHandlesIntent() {
-        val controller = Robolectric.buildService(BatteryForegroundService::class.java)
-        val service = controller.create().get()
+    fun toggle_defaultsToEnabledAndPersistsAcrossReads() {
+        assertTrue("Tracker defaults to enabled", BatteryTracker.isEnabled(context))
 
-        assertNotNull(service)
+        BatteryTracker.setEnabled(context, false)
+        assertFalse(BatteryTracker.isEnabled(context))
+        assertFalse("Toggle persists in prefs", context.getSharedPreferences("battery_tracker", Context.MODE_PRIVATE).getBoolean("enabled", true))
+        assertFalse("Published state reflects the toggle", BatteryTracker.batteryState.value.isTrackingActive)
 
-        // Start command
-        controller.startCommand(0, 0)
-        assertTrue(BatteryForegroundService.isRunning())
-
-        // Stop command
-        val stopIntent = Intent().apply {
-            action = BatteryForegroundService.ACTION_STOP_SERVICE
-        }
-        controller.startCommand(0, 1)
-
-        // Destroy
-        controller.destroy()
-        assertFalse(BatteryForegroundService.isRunning())
+        BatteryTracker.setEnabled(context, true)
+        assertTrue(BatteryTracker.isEnabled(context))
+        assertTrue(BatteryTracker.batteryState.value.isTrackingActive)
     }
+
+    @Test
+    fun onTelemetry_updatesStateOnlyWhenEnabled() {
+        BatteryTracker.setEnabled(context, true)
+        BatteryTracker.onTelemetry(context, telemetry(level = 67))
+        assertEquals(67, BatteryTracker.batteryState.value.percentage)
+        assertTrue(BatteryTracker.batteryState.value.isTrackingActive)
+
+        BatteryTracker.setEnabled(context, false)
+        BatteryTracker.onTelemetry(context, telemetry(level = 10))
+        assertEquals("Disabled tracker does not republish telemetry", 67, BatteryTracker.batteryState.value.percentage)
+        assertFalse(BatteryTracker.batteryState.value.isTrackingActive)
+
+        BatteryTracker.setEnabled(context, true)
+    }
+
+    private fun telemetry(level: Int) = com.example.model.BatteryTelemetry(
+        level = level,
+        isCharging = true,
+        pluggedType = "AC",
+        temperature = 30.0f,
+        voltageMv = 4000,
+        currentMa = 500
+    )
 }

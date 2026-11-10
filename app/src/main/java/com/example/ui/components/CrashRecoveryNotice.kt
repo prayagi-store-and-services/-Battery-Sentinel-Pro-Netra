@@ -19,7 +19,6 @@ fun CrashRecoveryNotice() {
     val retry: () -> Unit = {
         if (CrashRecoveryGate.retry(context)) {
             BatteryMonitorService.startService(context)
-            BatteryForegroundService.startService(context)
         } else message = "Retry could not be saved. Monitoring remains paused."
     }
     if (until <= 0L && failures.isNotEmpty()) {
