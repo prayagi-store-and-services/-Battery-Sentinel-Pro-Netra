@@ -117,14 +117,9 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
             com.example.util.BluetoothHelper.initialize(this)
         } catch (_: Exception) {}
 
-        // Start 24/7 low-power service safely
+        // Start the single 24/7 low-power foreground service safely (tracker hooks included, BS-002)
         try {
             BatteryMonitorService.startService(this)
-        } catch (_: Exception) {}
-
-        // Start Battery Foreground Service tracking percentage, temperature, and charging status
-        try {
-            com.example.service.BatteryForegroundService.startService(this)
         } catch (_: Exception) {}
     }
 

@@ -57,16 +57,15 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
     // Live Telemetry from 24/7 Foreground Service
     val liveTelemetry: StateFlow<BatteryTelemetry> = BatteryMonitorService.liveTelemetryFlow
 
-    // Battery Foreground Service State
+    // Battery tracker state (BS-002: single foreground service; toggle gates the tracker extras)
     val batteryForegroundState: StateFlow<com.example.service.BatteryTrackState> =
-        com.example.service.BatteryForegroundService.batteryState
+        com.example.service.BatteryTracker.batteryState
 
     fun toggleBatteryForegroundService(enabled: Boolean) {
         val app = getApplication<Application>()
+        com.example.service.BatteryTracker.setEnabled(app, enabled)
         if (enabled) {
-            com.example.service.BatteryForegroundService.startService(app)
-        } else {
-            com.example.service.BatteryForegroundService.stopService(app)
+            com.example.service.BatteryMonitorService.startService(app)
         }
     }
 

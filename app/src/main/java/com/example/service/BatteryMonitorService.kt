@@ -60,7 +60,23 @@ class BatteryMonitorService : Service() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 Intent.ACTION_BATTERY_CHANGED -> batteryInputs.trySend(intent)
-                Intent.ACTION_POWER_CONNECTED -> { lastNotified80PercentSession = false; lastTargetAlarmAt = 0L; TargetAlarmRepeat.resetForNewSession() }
+                Intent.ACTION_POWER_CONNECTED -> {
+                    lastNotified80PercentSession = false; lastTargetAlarmAt = 0L; TargetAlarmRepeat.resetForNewSession()
+                    if (BatteryTracker.isEnabled(applicationContext)) openChargingScreenIfAllowed(wake = true)
+                }
+                Intent.ACTION_SCREEN_ON -> {
+                    if (BatteryTracker.isEnabled(applicationContext)) { try { ActivePowerSaver.onScreenOn(applicationContext) } catch (_: Exception) {} }
+                }
+                Intent.ACTION_SCREEN_OFF -> {
+                    if (BatteryTracker.isEnabled(applicationContext)) {
+                        try { ActivePowerSaver.onScreenOff(applicationContext) } catch (_: Exception) {}
+                        // Screen off while the charger is connected: bring the charging screen back. It stays dark and shows when the phone is next woken.
+                        val sticky = try { registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
+                        if ((sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0 && com.example.ui.components.ChargingScreenGuard.Mode.load(applicationContext) == com.example.ui.components.ChargingScreenGuard.Mode.ON) {
+                            openChargingScreenIfAllowed(wake = false)
+                        }
+                    }
+                }
                 Intent.ACTION_POWER_DISCONNECTED -> {
                     lastNotified80PercentSession = false
                     lastTargetAlarmAt = 0L
@@ -79,6 +95,21 @@ class BatteryMonitorService : Service() {
         }
     }
 
+    /** Charging screen from the background: only when the user turned it on AND Android's Display over other apps is granted. */
+    private fun openChargingScreenIfAllowed(wake: Boolean) {
+        try {
+            val prefs = getSharedPreferences(com.example.ui.components.CHARGING_SCREEN_PREFS, Context.MODE_PRIVATE)
+            val on = prefs.getBoolean(com.example.ui.components.KEY_BACKGROUND, true)
+            val enabled = prefs.getBoolean(com.example.ui.components.KEY_SCREEN_ENABLED, true)
+            val live = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            if (enabled && on && android.provider.Settings.canDrawOverlays(this) && com.example.ui.components.ChargingScreenGuard.holdAllowed(com.example.ui.components.ChargingScreenGuard.Mode.load(this), live, com.example.ui.components.ChargingScreenGuard.isPhoneLocked(this))) {
+                startActivity(Intent(this, com.example.ui.ChargingScreenActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra(com.example.ui.ChargingScreenActivity.EXTRA_WAKE, wake))
+            }
+        } catch (e: Exception) {
+            Log.w("BatteryMonitorService", "Could not open the charging screen", e)
+        }
+    }
+
     private fun checkBluetoothUpdates() {
         serviceScope.launch {
             try {
@@ -92,6 +123,7 @@ class BatteryMonitorService : Service() {
         super.onCreate()
         if (!CrashRecoveryGate.allowed(this)) { PausedServiceStop.stop(this); return }
         createNotificationChannels()
+        BatteryTracker.setEnabled(this, BatteryTracker.isEnabled(this)) // publish persisted tracker toggle state
         startForeground(NOTIFICATION_ID, buildSentinelNotification(NetraApplication.instance.centralDataCenter.centralState.value))
         startCollectorsAndPolling()
         startLifecycleSupervisor()
@@ -157,6 +189,8 @@ class BatteryMonitorService : Service() {
                     addAction(Intent.ACTION_BATTERY_CHANGED)
                     addAction(Intent.ACTION_POWER_CONNECTED)
                     addAction(Intent.ACTION_POWER_DISCONNECTED)
+                    addAction(Intent.ACTION_SCREEN_ON)
+                    addAction(Intent.ACTION_SCREEN_OFF)
                     addAction(Intent.ACTION_BATTERY_LOW)
                     addAction(Intent.ACTION_BATTERY_OKAY)
                     addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED)
@@ -334,6 +368,7 @@ class BatteryMonitorService : Service() {
 
         // Publish live telemetry immediately!
         _liveTelemetryFlow.value = telemetry
+        BatteryTracker.onTelemetry(this, telemetry)
 
         // Offload ALL secondary background work (notifications, safety alerts, widgets, DB)
         serviceScope.launch(Dispatchers.Default) {

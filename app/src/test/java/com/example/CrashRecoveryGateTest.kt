@@ -43,14 +43,6 @@ class CrashRecoveryGateTest {
         assertTrue(monitorShadow.isStoppedBySelf)
         assertTrue(monitorShadow.lastForegroundNotification.extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString().contains("paused"))
         monitor.destroy()
-        val tracker=org.robolectric.Robolectric.buildService(BatteryForegroundService::class.java).create()
-        assertNotNull(org.robolectric.Shadows.shadowOf(tracker.get()).lastForegroundNotification)
-        assertTrue(org.robolectric.Shadows.shadowOf(tracker.get()).isStoppedBySelf)
-        assertEquals(android.app.Service.START_NOT_STICKY,tracker.get().onStartCommand(null,0,1))
-        val trackerShadow=org.robolectric.Shadows.shadowOf(tracker.get())
-        assertNotNull(trackerShadow.lastForegroundNotification)
-        assertTrue(trackerShadow.isStoppedBySelf)
-        tracker.destroy()
     }
     @Test fun pausedForegroundPromotionPrecedesStop() {
         val order=mutableListOf<String>()
@@ -73,9 +65,8 @@ class CrashRecoveryGateTest {
             }
         }
         BatteryMonitorService.startService(rejecting)
-        BatteryForegroundService.startService(rejecting)
-        assertEquals(2,foreground);assertEquals(0,ordinary)
-        assertTrue(CrashRecoveryGate.startFailures.value.containsAll(listOf("battery monitor","battery tracker")))
+        assertEquals(1,foreground);assertEquals(0,ordinary)
+        assertTrue(CrashRecoveryGate.startFailures.value.contains("battery monitor"))
         assertEquals(0,c.getSharedPreferences("netra_crash_recovery",0).getInt("count",0))
     }
     @Test fun refusedStartsAreVisibleButNotCrashes() {

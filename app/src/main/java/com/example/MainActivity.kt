@@ -106,7 +106,6 @@ open class MainActivity : ComponentActivity() {
 
         try {
             com.example.service.BatteryMonitorService.startService(this)
-            com.example.service.BatteryForegroundService.startService(this)
         } catch (_: Exception) {}
 
         handleNetworkPanelExtra(intent)
