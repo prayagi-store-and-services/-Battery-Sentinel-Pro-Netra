@@ -35,9 +35,10 @@ object BatteryTracker {
         _batteryStateFlow.value = _batteryStateFlow.value.copy(isTrackingActive = enabled)
     }
 
-    /** Single ingestion point, fed by BatteryMonitorService's canonical telemetry. */
+    /** Single ingestion point, fed by BatteryMonitorService's canonical telemetry. A disabled tracker stays silent, exactly like the stopped service it replaces. */
     internal fun onTelemetry(context: Context, telemetry: BatteryTelemetry) {
-        _batteryStateFlow.value = telemetry.toTrackState(isTrackingActive = isEnabled(context))
+        if (!isEnabled(context)) return
+        _batteryStateFlow.value = telemetry.toTrackState(isTrackingActive = true)
     }
 
     fun isRunning(): Boolean = _batteryStateFlow.value.isTrackingActive
