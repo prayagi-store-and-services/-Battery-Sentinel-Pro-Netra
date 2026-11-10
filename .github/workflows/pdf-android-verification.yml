@@ -44,6 +44,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 3
           name: android-pdf-verification
           path: |
             app/build/outputs/pdf-verification/

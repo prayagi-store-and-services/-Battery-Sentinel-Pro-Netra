@@ -67,6 +67,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
+        retention-days: 3
         name: compose-ui-renders
         path: |
           app/build/outputs/ui-renders/*.png
@@ -111,6 +112,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
+        retention-days: 3
         name: android-pdf-verification
         path: |
           app/build/outputs/pdf-verification/
@@ -209,7 +211,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: verified-signed-candidate-${{ github.sha }}
-        retention-days: 7
+        retention-days: 3
         path: app/build/outputs/apk/release/app-release.apk
         if-no-files-found: error
     - name: Stage draft only after all checks pass

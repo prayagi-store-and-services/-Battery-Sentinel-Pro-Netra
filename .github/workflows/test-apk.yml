@@ -60,5 +60,5 @@ jobs:
         path: |
           netra-test-*.apk
           netra-test-sha256.txt
-        retention-days: 14
+        retention-days: 3
         if-no-files-found: error
