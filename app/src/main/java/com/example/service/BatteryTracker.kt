@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
 import android.os.Build
+import com.example.model.BatteryTelemetry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
