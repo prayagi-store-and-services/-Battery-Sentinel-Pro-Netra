@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.provider.Settings
 import android.util.Log
-import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -15,7 +14,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Saver: when the battery is too hot or too low, lower brightness to 10%, set the shortest screen
- * timeout, close background apps and clear notifications. Everything that was changed is put back
+ * timeout. Background-process cleanup is manual-only. Display settings are restored
  * when the battery is back to normal. Off by default; every action has its own switch.
  *
  * Honest limits: Android only lets us end the background processes of other apps (not Force stop),
@@ -30,7 +29,6 @@ object SaverEngine {
     const val KEY_LEVEL = "saver_level"
     const val KEY_ACT_DISPLAY = "saver_act_display"
     const val KEY_ACT_KILL = "saver_act_kill"
-    const val KEY_ACT_NOTIF = "saver_act_notif_consent_v2"
     const val KEY_RESULT = "saver_last_result"
     const val KEY_JOURNEY_UNTIL = "saver_journey_until_ms"
     private const val KEY_ACTIVE = "saver_active"
@@ -67,9 +65,6 @@ object SaverEngine {
     }
 
     fun isActive(c: Context): Boolean = prefs(c).getBoolean(KEY_ACTIVE, false)
-
-    fun hasNotificationAccess(c: Context): Boolean =
-        NotificationManagerCompat.getEnabledListenerPackages(c).contains(c.packageName)
 
     /** Called with every real battery reading. Cheap: a couple of comparisons. */
     fun onReading(context: Context, level: Int, tempC: Float?, charging: Boolean) {
@@ -126,10 +121,6 @@ object SaverEngine {
         val notes = mutableListOf<String>()
         if (p.getBoolean(KEY_ACT_DISPLAY, true)) {
             notes.add(applyDisplay(app, p))
-        }
-        if (p.getBoolean(KEY_ACT_NOTIF, false)) {
-            notes.add(if (!hasNotificationAccess(app)) "notifications: access not granted"
-            else if (SaverNotificationListener.clearAll()) "notifications cleared" else "notifications: listener not connected")
         }
         // Never clear other apps' cached processes automatically. The explicit button owns that action.
         p.edit().putString(KEY_RESULT, (p.getString(KEY_EARLY_NOTE, "") ?: "") + "Last run: " + notes.joinToString("; ")).apply()
@@ -209,7 +200,7 @@ object SaverEngine {
 
     private fun restoreDisplay(app: Context) { SavingSettings.restoreDisplay(app, "saver") }
 
-    /** Puts everything back. Closed apps and cleared notifications cannot be brought back; display settings are. */
+    /** Puts everything back. Closed apps cannot be brought back; display settings are restored. */
     fun restore(app: Context) {
         val c = app.applicationContext
         restoreDisplay(c)
