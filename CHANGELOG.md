@@ -4,6 +4,16 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+### Fixed
+- Charging-screen screen-off events no longer look like unplug events. Actual unplug/not-charging events keep the existing optional lock behavior; closing for a mode change does not request a lock.
+- Target-charge test alerts use a separate notification ID so a test does not replace the live overheat notification.
+- Live charging/discharging duration displays reuse a valid saved central session start instead of starting over with each engine. A mismatched, missing or future start falls back to the current session. Restored duration does not invent earlier samples or skip estimate warm-up.
+
+### Verification limits
+- Automated JVM/Robolectric tests, CI Android debug build/tests, PDF emulator checks, CodeQL and light/dark Compose fixture renders passed for the stabilization changes. Fixture renders are not a live-phone test.
+- Physical installed-update, reboot, background, lock-screen and OEM behavior remain NOT VERIFIED. Charging-history restart persistence and full Legacy feature parity are not fixed or claimed by this release.
+- Reliability fixes, not a vulnerability patch. No new permission, dependency, network endpoint, sampler or stored-data schema.
+
 ## [2.2.31]
 
 ### Fixed

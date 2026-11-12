@@ -1,3 +1,9 @@
+## Session duration and charging-screen event handling (v2.2.32)
+
+Reliability fixes, not a vulnerability patch. Screen-off and battery-state events are handled separately; only a real unplug/not-charging close may request the existing optional device lock. Target-charge tests have a notification ID separate from live overheat alerts. Live duration uses the existing private persisted central session start when valid and matching, without creating a new store, earlier measurement samples or extra warm-up credit for estimates. The existing charge-curve persistence initialization now runs through the central persistence entry point.
+
+No new permission, dependency, network endpoint, sampler, stored-data field or database schema. Existing local session data and device-admin opt-in are unchanged. No private Legacy APK or decompiled code is included. Physical installed-update, reboot, background, lock-screen and OEM acceptance remain NOT VERIFIED; no physical battery-safety or full Legacy-parity claim.
+
 ## Unreleased opt-in gauge animations
 
 Gauge animations are off by default and purely presentational: they read the same in-memory central state (charging, temperature, health life) as the gauges, compute rising/falling trends with small hysteresis in memory, and draw only while the app is resumed, visible, interactive and the data is fresh. Flat, missing or unknown readings animate nothing. No new permission, sampler, dependency, network endpoint, or stored data beyond the one stored switch.
