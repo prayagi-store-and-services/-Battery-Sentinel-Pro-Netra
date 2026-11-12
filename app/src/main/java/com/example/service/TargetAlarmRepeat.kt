@@ -14,11 +14,14 @@ object TargetAlarmRepeat {
     fun due(lastFiredAtMs: Long, nowMs: Long, isMuted: Boolean, intervalMs: Long = INTERVAL_MS): Boolean =
         !isMuted && lastFiredAtMs > 0L && nowMs - lastFiredAtMs >= intervalMs
 
-    /** "Continue to 100%" raises the target for this charge only. It is never saved. */
+    /** "Continue to 100%" raises the target for this charge only. It is restored only for the same verified charging session, not saved as a user setting. */
     @Volatile
     var sessionTarget: Int? = null
 
+    @Volatile var sessionIdentity: Long? = null
+
     fun resetForNewSession() {
+        sessionIdentity = null
         muted = false
         sessionTarget = null
     }

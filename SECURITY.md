@@ -1,3 +1,11 @@
+## Private restart-safe alert state (v2.2.35)
+
+Reliability fix, not a vulnerability patch. A bounded private preference record stores the matching canonical charger-connection timestamp, target delivery attempt time, session mute/100% override, heat notification cooldowns, and four fixed low/thermal speech-condition attempt timestamps. No raw spoken text or Bluetooth identity is stored here. Clear data/uninstall removes it; Android backup remains disabled. No cloud/archive/upload operation, new permission, dependency, network endpoint, sampler, database schema or migration. The existing service, receiver and announcement engine remain the only delivery paths.
+
+Actions stay component-explicit, package-scoped, immutable and non-exported, and are bound to their charging-session identity. Unknown/unbound or different-session actions cannot change a current alert. Corrupt/missing/unavailable storage and future delivery times fail open, with working in-memory state retained where possible; a write failure may permit a duplicate after a later restart. A delivery record is not proof that Android displayed a notification or TTS was heard. Fresh per-field measured recovery re-arms speech; retained display values do not. Unobserved changes/recovery cannot be reconstructed. Existing continuous speech, percentage-baseline and full-summary consume-before-delivery rules are unchanged.
+
+Physical installed-update, real process kill/reboot, background/OEM, audible-output and Play Protect acceptance remain NOT VERIFIED. No physical charging cutoff, cooling or full Legacy parity claim. The notification-listener removal in v2.2.34 stays in force; do not disable Play Protect.
+
 ## Notification-listener access removed (v2.2.34)
 
 The optional other-app notification-clearing feature is removed, including its NotificationListenerService manifest component and BIND_NOTIFICATION_LISTENER_SERVICE declaration, implementation, runtime call, consent UI, Android settings prompt and restricted-settings guide. Old local consent keys are inert and not repurposed; stale notification-clearing result text is not shown. POST_NOTIFICATIONS remains solely for this app's own alerts. No SMS or accessibility access is added. All historical notification-clearing/access instructions below describe removed versions and no longer apply to current releases.

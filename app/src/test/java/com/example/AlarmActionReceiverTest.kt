@@ -27,6 +27,8 @@ class AlarmActionReceiverTest {
     @Before fun setUp() {
         context = ApplicationProvider.getApplicationContext()
         manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        com.example.service.TargetAlarmRepeat.resetForNewSession()
+        com.example.service.TargetAlarmRepeat.sessionIdentity = 123L
         context.getSharedPreferences("netra_sentinel_prefs", Context.MODE_PRIVATE).edit().clear().commit()
     }
 

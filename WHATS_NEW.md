@@ -1,3 +1,11 @@
+## 2.2.35 - Restart-safe existing alert state
+
+- Target-charge timing, Dismiss and the temporary 100% choice survive restart for the same saved connection identity. A new connection re-arms the alert; your saved target is not changed.
+- Heat notification cooldowns survive restart. Critical escalation is separate from a lower threshold; an active critical cooldown does not produce an extra lower-severity notification.
+- Existing low-battery/thermal speech attempts are not replayed for the same observed condition. Fresh measured recovery re-arms them; missing or stale readings do not invent recovery.
+- Old-session notification actions cannot mute a newer session. Local state only, no extra permission or background sampler. Deliberate continuous unplug speech still repeats.
+- Automated checks only. Real installed-update/process-kill/reboot/OEM, audible output and Play Protect acceptance are NOT VERIFIED. Keep Play Protect ON. Missing state or failed storage can allow a later repeat; accepted delivery is not proof the warning was seen or heard. No missing history is recovered.
+
 ## 2.2.34 - Remove other-app notification access
 
 - Removed "clear other apps' notifications" entirely, along with notification-listener access and its setup guide. BSPN still uses normal notification permission for its own battery alerts.
