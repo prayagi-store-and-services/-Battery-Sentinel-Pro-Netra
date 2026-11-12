@@ -59,6 +59,7 @@ private const val KEY_AUTO = "auto_open_on_plug"
 const val CHARGING_SCREEN_PREFS = PREFS
 const val KEY_BACKGROUND = "auto_open_background"
 const val KEY_SCREEN_ENABLED = "charging_screen_enabled"
+internal const val CHARGING_DISPLAY_POLICY_NOTE = "Charging display stays closed from 23:00 to 06:00, even in ON mode. After about 1 minute of fresh Slow Charging readings it closes and releases its screen hold; Android's normal timeout applies. Normal or faster charging is unchanged. Preview never keeps the display on."
 
 /**
  * Optional charging screen, Portion 1. A plain black full screen with only real readings from the same
@@ -97,7 +98,7 @@ fun ChargingScreenCard() {
         val obs = LifecycleEventObserver { _, e ->
             if (e == Lifecycle.Event.ON_START && enabled && auto && !bg && receiver == null) {
                 receiver = object : BroadcastReceiver() {
-                    override fun onReceive(context: Context, intent: Intent) { if (ChargingScreenGuard.Mode.load(c) != ChargingScreenGuard.Mode.OFF) { previewMode = false; show = true } }
+                    override fun onReceive(context: Context, intent: Intent) { if (ChargingScreenGuard.Mode.load(c) != ChargingScreenGuard.Mode.OFF && ChargingScreenVisibility.allowed()) { previewMode = false; show = true } }
                 }
                 c.registerReceiver(receiver, IntentFilter(Intent.ACTION_POWER_CONNECTED))
             } else if (e == Lifecycle.Event.ON_STOP) {
@@ -154,9 +155,10 @@ fun ChargingScreenCard() {
         ChargingDesignSettings()
         Button(onClick = {
             val live = try { c.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
-            previewMode = !ChargingScreenGuard.holdAllowed(ChargingScreenGuard.Mode.load(c), live, ChargingScreenGuard.isPhoneLocked(c)); show = true
+            previewMode = !ChargingScreenVisibility.allowed() || !ChargingScreenGuard.holdAllowed(ChargingScreenGuard.Mode.load(c), live, ChargingScreenGuard.isPhoneLocked(c)); show = true
         }, modifier = Modifier.fillMaxWidth()) { Text("Open charging screen now") }
         androidx.compose.material3.OutlinedButton(onClick = { previewMode = true; show = true }, modifier = Modifier.fillMaxWidth()) { Text("Preview the charging screen (does not keep the screen on)") }
+        Text(CHARGING_DISPLAY_POLICY_NOTE, fontSize = 12.sp)
         Text(
             "A black screen with the live battery values from this phone. It keeps the screen on only while the phone is really charging (dimmed after 15 seconds); the moment charging stops, for any reason, it lets go and closes, and your phone's own screen timeout applies again. Close it with a double tap. Preview shows the same screen without keeping the display on. Both switches are on by default; you can turn them off. After 15 seconds without a touch the screen dims to 10% brightness; a touch brings normal brightness back, and so does unplugging. " +
                 "The background option uses the charger-connected event the app already listens for (no extra polling) and Android's Display over other apps permission, which only you can grant. It cannot open over a locked screen.",
@@ -182,9 +184,15 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true, pre
     val st = remember { ChargingStyleSettings.load(c) }
     var ui by remember { mutableStateOf<LivePowerUi?>(null) }
     var now by remember { mutableStateOf(System.currentTimeMillis()) }
+    val view = LocalView.current
     LaunchedEffect(owner) {
         owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             while (true) {
+                if (!preview && !ChargingScreenVisibility.allowed()) {
+                    view.keepScreenOn = false
+                    onClose()
+                    break
+                }
                 sharedTelemetry.targetPercent = com.example.NetraApplication.instance.settingsRepository.settings.value.chargeTargetPercent
                 ui = sharedTelemetry.update(readSnapshot(c), SystemClock.elapsedRealtime())
                 now = System.currentTimeMillis()
@@ -192,23 +200,23 @@ fun ChargingScreenContent(onClose: () -> Unit, keepScreenOn: Boolean = true, pre
             }
         }
     }
-    val view = LocalView.current
     // Hard rule: the screen is held awake only while the battery is really charging. The moment charging stops
     // (unplugged, halted, any not-charging state) the hold is released and the screen closes; a preview never holds the screen.
     DisposableEffect(Unit) {
         fun apply(i: Intent?) {
-            val ok = ChargingScreenGuard.holdAllowed(ChargingScreenGuard.Mode.load(c), i, ChargingScreenGuard.isPhoneLocked(c))
+            val ok = ChargingScreenVisibility.allowed() && ChargingScreenGuard.holdAllowed(ChargingScreenGuard.Mode.load(c), i, ChargingScreenGuard.isPhoneLocked(c))
             view.keepScreenOn = keepScreenOn && ok && !preview
             if (!ok && !preview) { view.keepScreenOn = false; onClose() }
         }
         val r = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                if (intent.action == Intent.ACTION_POWER_DISCONNECTED) { view.keepScreenOn = false; if (!preview) onClose() }
+                if (!preview && !ChargingScreenVisibility.allowed()) { view.keepScreenOn = false; onClose() }
+                else if (intent.action == Intent.ACTION_POWER_DISCONNECTED) { view.keepScreenOn = false; if (!preview) onClose() }
                 else if (intent.action == Intent.ACTION_SCREEN_OFF) { if (!preview && ChargingScreenGuard.Mode.load(c) != ChargingScreenGuard.Mode.ON) { view.keepScreenOn = false; onClose() } }
                 else apply(c.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)))
             }
         }
-        val f = IntentFilter(Intent.ACTION_BATTERY_CHANGED).apply { addAction(Intent.ACTION_POWER_DISCONNECTED); addAction(Intent.ACTION_SCREEN_OFF) }
+        val f = IntentFilter(Intent.ACTION_BATTERY_CHANGED).apply { addAction(Intent.ACTION_POWER_DISCONNECTED); addAction(Intent.ACTION_SCREEN_OFF); addAction(Intent.ACTION_TIME_CHANGED); addAction(Intent.ACTION_TIMEZONE_CHANGED); addAction(Intent.ACTION_TIME_TICK) }
         val sticky = try { c.registerReceiver(r, f) } catch (_: Exception) { null }
         apply(sticky)
         onDispose { view.keepScreenOn = false; try { c.unregisterReceiver(r) } catch (_: Exception) {} }

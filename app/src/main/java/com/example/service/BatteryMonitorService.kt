@@ -66,6 +66,7 @@ class BatteryMonitorService : Service() {
             when (intent?.action) {
                 Intent.ACTION_BATTERY_CHANGED -> batteryInputs.trySend(intent)
                 Intent.ACTION_POWER_CONNECTED -> {
+                    com.example.ui.components.ChargingScreenVisibility.reset()
                     lastNotified80PercentSession = false; lastTargetAlarmAt = 0L; TargetAlarmRepeat.resetForNewSession(); alertSessionInitialized = false; alertDelivery.clearTarget()
                     if (BatteryTracker.isEnabled(applicationContext)) openChargingScreenIfAllowed(wake = true)
                 }
@@ -83,6 +84,7 @@ class BatteryMonitorService : Service() {
                     }
                 }
                 Intent.ACTION_POWER_DISCONNECTED -> {
+                    com.example.ui.components.ChargingScreenVisibility.reset()
                     lastNotified80PercentSession = false
                     lastTargetAlarmAt = 0L
                     TargetAlarmRepeat.resetForNewSession()
@@ -109,7 +111,7 @@ class BatteryMonitorService : Service() {
             val on = prefs.getBoolean(com.example.ui.components.KEY_BACKGROUND, true)
             val enabled = prefs.getBoolean(com.example.ui.components.KEY_SCREEN_ENABLED, true)
             val live = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-            if (enabled && on && android.provider.Settings.canDrawOverlays(this) && com.example.ui.components.ChargingScreenGuard.holdAllowed(com.example.ui.components.ChargingScreenGuard.Mode.load(this), live, com.example.ui.components.ChargingScreenGuard.isPhoneLocked(this))) {
+            if (enabled && on && com.example.ui.components.ChargingScreenVisibility.allowed() && android.provider.Settings.canDrawOverlays(this) && com.example.ui.components.ChargingScreenGuard.holdAllowed(com.example.ui.components.ChargingScreenGuard.Mode.load(this), live, com.example.ui.components.ChargingScreenGuard.isPhoneLocked(this))) {
                 startActivity(Intent(this, com.example.ui.ChargingScreenActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra(com.example.ui.ChargingScreenActivity.EXTRA_WAKE, wake))
             }
         } catch (e: Exception) {
@@ -446,6 +448,7 @@ class BatteryMonitorService : Service() {
     ) {
         // Critical safety always runs first. Recommendation failures cannot abort it.
         checkSafetyAlerts(state)
+        com.example.ui.components.ChargingScreenVisibility.allowed(state)
         try { recommend() } catch (e: Exception) {
             Log.w("BatteryMonitorService", "Power recommendation failed", e)
         }

@@ -9,6 +9,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.example.ui.components.ChargingScreenContent
+import com.example.ui.components.ChargingScreenVisibility
 import com.example.ui.components.ChargingScreenEventPolicy as ScreenEvent
 
 /**
@@ -24,6 +25,7 @@ class ChargingScreenActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!ChargingScreenVisibility.allowed()) { closeChargingScreen(); return }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             val live = try { registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)) } catch (_: Exception) { null }
@@ -32,6 +34,7 @@ class ChargingScreenActivity : ComponentActivity() {
         }
         unplugReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
+                if (!ChargingScreenVisibility.allowed()) { closeChargingScreen(); return }
                 val event = when (intent.action) {
                     Intent.ACTION_POWER_DISCONNECTED -> ScreenEvent.Event.UNPLUGGED
                     Intent.ACTION_BATTERY_CHANGED -> ScreenEvent.Event.BATTERY_CHANGED
@@ -55,7 +58,7 @@ class ChargingScreenActivity : ComponentActivity() {
                 }
             }
         }
-        registerReceiver(unplugReceiver, IntentFilter(Intent.ACTION_POWER_DISCONNECTED).apply { addAction(Intent.ACTION_BATTERY_CHANGED); addAction(Intent.ACTION_SCREEN_OFF) })
+        registerReceiver(unplugReceiver, IntentFilter(Intent.ACTION_POWER_DISCONNECTED).apply { addAction(Intent.ACTION_BATTERY_CHANGED); addAction(Intent.ACTION_SCREEN_OFF); addAction(Intent.ACTION_TIME_CHANGED); addAction(Intent.ACTION_TIMEZONE_CHANGED); addAction(Intent.ACTION_TIME_TICK) })
         setContent { ChargingScreenContent(onClose = { closeChargingScreen() }, keepScreenOn = false) }
     }
 
