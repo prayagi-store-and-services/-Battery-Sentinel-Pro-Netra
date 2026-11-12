@@ -154,7 +154,7 @@ object FirebaseAiHealthService {
             - Thermal Stress Hours (>38°C): Unavailable (sample intervals not enough)
             - Deep Discharges: ${report.deepDischargeCount?.toString() ?: "Unavailable"}
             - Observed charge throughput (partial history): ${report.totalEquivalentCycles} full-charge equivalents
-            - Recent Charging Sessions: ${sessions.take(3).joinToString { "${it.startLevel}%->${it.endLevel}% (${it.durationMinutes}m, Peak: ${it.peakTemperature}°C)" }}
+            - Partial charging observations (gaps/restarts may omit readings): ${sessions.take(3).joinToString { "${it.startLevel}%->${it.endLevel}% (${it.durationMinutes}m, Peak: ${it.peakTemperature}°C)" }}
 
             Provide a concise, friendly, conversational and scientifically accurate answer tailored to the user's real hardware telemetry. Keep under 4-5 sentences.
         """.trimIndent()
@@ -213,7 +213,7 @@ object FirebaseAiHealthService {
             - Thermal Stress Time (>38°C): Unavailable (sample intervals not enough)
             - Deep Discharges (<15% SoC): ${report.deepDischargeCount?.toString() ?: "Unavailable"}
             - Total Recorded Historical Samples: ${records.size}
-            - Recent Completed Sessions: ${sessions.take(5).joinToString { "${it.startLevel}%->${it.endLevel}% (${it.chargerType}, Peak ${it.peakTemperature}°C)" }}
+            - Partial recorded charging intervals, not complete-session proof: ${sessions.take(5).joinToString { "${it.startLevel}%->${it.endLevel}% (${it.chargerType}, Peak ${it.peakTemperature}°C)" }}
 
             Provide personalized, conversational battery longevity tips in structured JSON with keys:
             - 'title': Catchy headline

@@ -147,7 +147,7 @@ object BatteryPdfReportGenerator {
         paint.color = Color.rgb(0, 229, 255)
         paint.textSize = 12f
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText("RECORDED CHARGING SESSIONS", margin + 16f, currentY + 24f, paint)
+        canvas.drawText("PARTIAL CHARGING OBSERVATIONS", margin + 16f, currentY + 24f, paint)
 
         val avgWatt = sessions.map { it.avgPowerWatts }.filter { it.isFinite() && it > 0f }.takeIf { it.isNotEmpty() }?.average()?.toFloat()
         val peakT = sessions.map { it.peakTemperature }.filter { it.isFinite() && it > 0f }.maxOrNull()
@@ -156,8 +156,8 @@ object BatteryPdfReportGenerator {
         paint.color = Color.WHITE
         paint.textSize = 10f
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
-        canvas.drawText("• Recorded Charging Sessions: $totalSessions observed sessions", margin + 16f, currentY + 45f, paint)
-        canvas.drawText("• Mean recorded battery-side power: ${avgWatt?.let { "${String.format("%.2f", it)} Watts" } ?: "Unavailable"}", margin + 16f, currentY + 62f, paint)
+        canvas.drawText("• Recorded portions: $totalSessions (gaps/restarts may omit readings)", margin + 16f, currentY + 45f, paint)
+        canvas.drawText("• Mean endpoint power estimate: ${avgWatt?.let { "${String.format("%.2f", it)} Watts" } ?: "Unavailable"}", margin + 16f, currentY + 62f, paint)
         canvas.drawText("• Peak Recorded Cell Temperature: ${peakT?.let { "${String.format("%.1f", it)}°C" } ?: "Unavailable"}", margin + 16f, currentY + 79f, paint)
         canvas.drawText("• Coulombic Charging Efficiency: Unavailable (not measured)", margin + 16f, currentY + 96f, paint)
         canvas.drawText("• Primary Stress Driver: Unavailable (capacity history not measured)", margin + 16f, currentY + 113f, paint)

@@ -97,13 +97,15 @@ class BatteryRepository(
 
     private suspend fun persistCanonicalChargingSession(state: NetraCentralState, current: BatteryRecord) {
         val startedAt = state.chargingStartedAt
-        if (state.isCharging == true && startedAt != null && startedAt != lastCanonicalChargingStartedAt) {
+        if (state.isCharging == true && current.isCharging && startedAt != null && startedAt > 0L && startedAt <= current.timestamp && startedAt != lastCanonicalChargingStartedAt) {
             lastCanonicalChargingStartedAt = startedAt
-            currentChargingSessionStart = current.copy(timestamp = startedAt)
+            // A restored canonical start identifies the session, not a measurement.
+            // Never attach this process's current level/temperature to that old time.
+            currentChargingSessionStart = current
             currentSessionPeakTemp = current.temperature
             logEvent(
-                title = "Charging Started",
-                message = "Charging session started at ${current.level}%. Battery Temp: ${current.temperature}°C",
+                title = "Charging Observation Started",
+                message = "Partial recorded interval begins at ${current.level}%. Observed battery temperature: ${current.temperature}°C. Earlier samples may be missing.",
                 category = "CHARGING",
                 severity = "INFO",
                 dotColor = "GREEN"
@@ -116,12 +118,12 @@ class BatteryRepository(
         }
 
         val stoppedAt = state.chargingStoppedAt
-        if (stoppedAt != null && stoppedAt != lastCanonicalChargingStoppedAt) {
+        if (state.isCharging == false && !current.isCharging && stoppedAt != null && stoppedAt <= current.timestamp && stoppedAt != lastCanonicalChargingStoppedAt) {
             lastCanonicalChargingStoppedAt = stoppedAt
             val activeSession = currentChargingSessionStart
             if (activeSession != null && stoppedAt > activeSession.timestamp) {
-                val durationMin = maxOf(1, ((stoppedAt - activeSession.timestamp) / 60_000L).toInt())
-                val endPower = current.powerWatts ?: 0f
+                val durationMin = ((stoppedAt - activeSession.timestamp) / 60_000L).coerceIn(0, Int.MAX_VALUE.toLong()).toInt()
+                val endPower = current.powerWatts
                 val avgPower = (activeSession.powerWatts + endPower) / 2f
                 val completedSession = ChargingSession(
                     startTime = activeSession.timestamp,
@@ -135,8 +137,8 @@ class BatteryRepository(
                 )
                 chargingSessionDao.insert(completedSession)
                 logEvent(
-                    title = "Charging Session Ended",
-                    message = "Charged from ${activeSession.level}% to ${current.level}% in ${durationMin}m. Peak Temp: ${completedSession.peakTemperature}°C",
+                    title = "Charging Observation Ended",
+                    message = "Partial recorded interval: ${activeSession.level}% to ${current.level}%, ${if (durationMin == 0) "less than 1 minute" else "$durationMin min"}. Peak observed temperature: ${completedSession.peakTemperature}°C. Not proof of a complete charging session.",
                     category = "CHARGING",
                     severity = "INFO",
                     dotColor = "BLUE"

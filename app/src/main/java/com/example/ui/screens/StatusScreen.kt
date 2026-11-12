@@ -548,7 +548,7 @@ fun StatusScreen(
                         .padding(8.dp)
                 ) {
                     Text(
-                        text = "Last Session: ${session.startLevel}% → ${session.endLevel}% in ${session.durationMinutes}m (Peak: ${session.peakTemperature}°C)",
+                        text = "Partial recorded interval: ${session.startLevel}% → ${session.endLevel}% in ${session.durationMinutes}m (Peak: ${session.peakTemperature}°C)",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )

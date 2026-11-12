@@ -1,3 +1,9 @@
+## Partial charging-history evidence (v2.2.33)
+
+Reliability and evidence-label fix, not a vulnerability patch. The existing repository stores completed observed portions starting with an actual sample, not a restored timestamp paired with newly observed readings. Stale stop state and invalid future timestamps do not create completed history. UI, exports and diagnostic context say observations can be partial; endpoint power estimates are not measured averages. Old saved rows are retained, not silently repaired. Unfinished observations and missing pre-restart samples are not recovered.
+
+No new permission, dependency, network endpoint, sampler, persistent store, stored-data field, database schema, migration or backup operation. Existing consent and sharing controls are unchanged. No private Legacy code or APK is included. Local tests and fixture renders do not establish physical installed-update, reboot, background or OEM acceptance, which remains NOT VERIFIED.
+
 ## Session duration and charging-screen event handling (v2.2.32)
 
 Reliability fixes, not a vulnerability patch. Screen-off and battery-state events are handled separately; only a real unplug/not-charging close may request the existing optional device lock. Target-charge tests have a notification ID separate from live overheat alerts. Live duration uses the existing private persisted central session start when valid and matching, without creating a new store, earlier measurement samples or extra warm-up credit for estimates. The existing charge-curve persistence initialization now runs through the central persistence entry point.

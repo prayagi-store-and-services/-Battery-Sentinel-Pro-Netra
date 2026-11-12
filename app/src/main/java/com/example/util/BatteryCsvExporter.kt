@@ -60,7 +60,8 @@ object BatteryCsvExporter {
 
                 // Section 3: Charging Sessions
                 writer.append("\n=== CHARGING_SESSIONS ===\n")
-                writer.append("Start_Time_ISO,End_Time_ISO,Duration_Minutes,Start_Level_Pct,End_Level_Pct,Total_Gain_Pct,Peak_Temp_C,Avg_Power_Watts,Charger_Type\n")
+                writer.append("Evidence: partial recorded intervals; gaps and restarts may omit earlier readings. Older saved start fields are not complete-session proof.\n")
+                writer.append("Start_Time_ISO,End_Time_ISO,Duration_Minutes,Start_Level_Pct,End_Level_Pct,Observed_Gain_Pct,Observed_Peak_Temp_C,Endpoint_Power_Estimate_Watts,Charger_Type\n")
 
                 for (session in sessions) {
                     val startIso = isoFormat.format(Date(session.startTime))

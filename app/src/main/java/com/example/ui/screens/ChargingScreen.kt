@@ -371,7 +371,7 @@ private fun ChargingSessionItem(session: ChargingSession) {
                     Text(text = dateFmt, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 }
                 Text(
-                    text = "${session.durationMinutes} mins",
+                    text = "Recorded: ${if(session.durationMinutes > 0) "${session.durationMinutes} min" else "<1 min"}",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = NetraEmerald
@@ -385,7 +385,7 @@ private fun ChargingSessionItem(session: ChargingSession) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Level: ${session.startLevel}% → ${session.endLevel}% (+${session.endLevel - session.startLevel}%)",
+                    text = "Partial interval: ${session.startLevel}% → ${session.endLevel}% (+${session.endLevel - session.startLevel}%)",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -409,7 +409,7 @@ private fun ChargingSessionItem(session: ChargingSession) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Avg Power: ${String.format("%.2f", session.avgPowerWatts)}W",
+                    text = "Endpoint estimate: ${String.format("%.2f", session.avgPowerWatts)}W",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -1,3 +1,10 @@
+## 2.2.33 - Honest recorded charging intervals
+
+- After restart, charging history uses the first actual observed percentage and time, not today's percentage attached to an old session start.
+- History clearly says "Partial recorded interval". Gaps and restarts can omit earlier readings; missing data is not recovered, and an unfinished portion can still be lost when the process ends.
+- Very short portions say <1 min. Stale stop events while charging and future timestamps cannot fabricate a completed history interval.
+- CSV/PDF and diagnostic context carry the same partial-evidence limits. No new permission, schema, store or backup operation. Physical installed-update/reboot/OEM acceptance is NOT VERIFIED.
+
 ## 2.2.32 - Session duration and charging-screen fixes
 
 - Live duration displays reuse the saved matching charging/discharging session start. Earlier sample history is not invented, so time estimates still warm up honestly.
