@@ -97,7 +97,10 @@ class NetraApplication : Application(), androidx.work.Configuration.Provider {
         chargingOptimizationEngine = com.example.service.ChargingOptimizationEngine(this)
         liveChargingSessionEngine = com.example.service.LiveChargingSessionEngine(
             hardwareProvider = com.example.service.AndroidBatteryHardwareProvider(this),
-            anchorStore = com.example.service.PrefsDischargeAnchorStore(this)
+            anchorStore = com.example.service.PrefsDischargeAnchorStore(this),
+            canonicalSessionStartEpochMs = { charging ->
+                com.example.service.CanonicalSessionTime.startEpochMs(centralDataCenter.centralState.value, charging)
+            }
         )
         com.example.service.StabilityHealthScheduler.schedule(this)
         com.example.update.UpdateCheckWorker.schedule(this)

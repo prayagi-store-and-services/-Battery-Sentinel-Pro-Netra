@@ -34,7 +34,14 @@ import com.example.ui.theme.NetraCyan
 import kotlinx.coroutines.delay
 
 /** One process-wide telemetry state, so rotation does not restart the session timer. */
-internal val sharedTelemetry = LivePowerTelemetry()
+internal val sharedTelemetry = LivePowerTelemetry(sessionStartEpochMs = { mode ->
+    val state = com.example.NetraApplication.instance.centralDataCenter.centralState.value
+    when (mode) {
+        PowerMode.CHARGING -> com.example.service.CanonicalSessionTime.startEpochMs(state, charging = true)
+        PowerMode.DISCHARGING -> com.example.service.CanonicalSessionTime.startEpochMs(state, charging = false)
+        else -> null
+    }
+})
 
 internal fun readSnapshot(c: Context): BatterySnapshot {
     val i: Intent? = c.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
@@ -97,7 +104,7 @@ fun LivePowerContent(u: LivePowerUi) {
             "Current updates every second while this screen is visible. Values are Android-reported battery current, not charger output. " +
                 "Magnitude is shown because phones differ in sign. Min, max and average describe observed samples only; they reset on a mode change, missing reading or sampling gap over 5 seconds. " +
                 "OEM current reporting can be inaccurate. Battery-side watts are calculated from voltage x current, not wall-adapter watts. " +
-                "Session time starts when this screen sees the mode. Estimates use observed battery-level changes, not instantaneous current. Learning needs at least two percentage points and two minutes. Without a reliable trend no time prediction is shown; an estimate is not a guarantee.",
+                "Session time uses the saved Central Unit start when available; otherwise it starts at the first observed mode. Estimates use observed battery-level changes, not instantaneous current. Learning needs at least two percentage points and two minutes. Without a reliable trend no time prediction is shown; an estimate is not a guarantee.",
             fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }

@@ -137,7 +137,8 @@ class LiveChargingSessionEngine(
         }
     },
     private val pollingIntervalMs: Long = 1000L,
-    private val anchorStore: DischargeAnchorStore? = null
+    private val anchorStore: DischargeAnchorStore? = null,
+    private val canonicalSessionStartEpochMs: (Boolean) -> Long? = { null }
 ) {
     private val mutex = Mutex()
     private var refreshJob: Job? = null
@@ -146,6 +147,9 @@ class LiveChargingSessionEngine(
     private val measuredEta = SessionEtaEstimator()
     private val rollingHistoryBuffer = ArrayDeque<LiveChargingSample>(300)
     private var sessionStartElapsedRealtime: Long = 0L
+    private var evidenceStartElapsedRealtime: Long = 0L
+    private var canonicalChargeEpochMs: Long? = null
+    private var canonicalDischargeEpochMs: Long? = null
     private val dischargeHistoryBuffer = ArrayDeque<LiveChargingSample>(300)
     private var dischargeStartElapsedRealtime: Long = 0L
 
@@ -251,10 +255,13 @@ class LiveChargingSessionEngine(
 
     private fun startNewSessionLocked() {
         anchorStore?.clear()
+        canonicalChargeEpochMs = null
+        canonicalDischargeEpochMs = null
         dischargeStartElapsedRealtime = 0L
         dischargeHistoryBuffer.clear()
         val now = clock()
         sessionStartElapsedRealtime = elapsedRealtimeClock()
+        evidenceStartElapsedRealtime = sessionStartElapsedRealtime
         measuredEta.reset()
         val currentLevel = hardwareProvider.getBatteryLevelPercent()
         val currentTemp = hardwareProvider.getTemperatureCelsius()
@@ -323,6 +330,12 @@ class LiveChargingSessionEngine(
         if (dischargeStartElapsedRealtime == 0L) {
             dischargeStartElapsedRealtime = DischargeAnchor.elapsedStart(anchorStore, clock(), elapsedRealtimeClock())
         }
+        val canonicalStart = CanonicalSessionTime.validStart(canonicalSessionStartEpochMs(false), now)
+        if (canonicalStart != null && canonicalStart != canonicalDischargeEpochMs) {
+            if (canonicalDischargeEpochMs != null) { dischargeHistoryBuffer.clear(); measuredEta.reset() }
+            canonicalDischargeEpochMs = canonicalStart
+            dischargeStartElapsedRealtime = CanonicalSessionTime.elapsedStart(canonicalStart, now, elapsedRealtimeClock())
+        }
         val durationSeconds =
             (elapsedRealtimeClock() - dischargeStartElapsedRealtime).coerceAtLeast(0L) / 1000L
         val voltageMvFloat = voltageMv?.let { if (it in 2000..15000) it.toFloat() else null }
@@ -386,8 +399,17 @@ class LiveChargingSessionEngine(
         val rawCurrentMicroAmps = hardwareProvider.getCurrentMicroAmps()
         val isFull = hardwareProvider.isBatteryFull()
 
-        val startTime = _sessionState.value.sessionStartTimeMs ?: now
-        val durationSeconds = if (sessionStartElapsedRealtime > 0L) {
+        val canonicalStart = if (isCharging) CanonicalSessionTime.validStart(canonicalSessionStartEpochMs(true), now) else null
+        if (canonicalStart != null && canonicalStart != canonicalChargeEpochMs) {
+            if (canonicalChargeEpochMs != null) {
+                rollingHistoryBuffer.clear(); measuredEta.reset()
+                evidenceStartElapsedRealtime = elapsedRealtimeClock()
+            }
+            canonicalChargeEpochMs = canonicalStart
+            sessionStartElapsedRealtime = CanonicalSessionTime.elapsedStart(canonicalStart, now, elapsedRealtimeClock())
+        }
+        val startTime = canonicalChargeEpochMs ?: _sessionState.value.sessionStartTimeMs ?: now
+        val durationSeconds = if (sessionStartElapsedRealtime != 0L || canonicalChargeEpochMs != null) {
             (elapsedRealtimeClock() - sessionStartElapsedRealtime).coerceAtLeast(0L) / 1000L
         } else {
             (now - startTime).coerceAtLeast(0L) / 1000L
@@ -496,7 +518,7 @@ class LiveChargingSessionEngine(
             val seconds = minutes * 60L
             return seconds to LivePowerTelemetry.formatDuration(seconds)
         }
-        return null to if (elapsedRealtimeClock() - sessionStartElapsedRealtime < 120_000L) "Calculating..." else "Unavailable"
+        return null to if (elapsedRealtimeClock() - evidenceStartElapsedRealtime < 120_000L) "Calculating..." else "Unavailable"
     }
 
     /**
@@ -520,5 +542,8 @@ class LiveChargingSessionEngine(
         _sessionState.value = LiveChargingSessionState()
         isScreenActive = false
         sessionStartElapsedRealtime = 0L
+        evidenceStartElapsedRealtime = 0L
+        canonicalChargeEpochMs = null
+        canonicalDischargeEpochMs = null
     }
 }

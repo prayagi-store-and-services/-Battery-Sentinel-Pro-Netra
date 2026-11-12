@@ -703,9 +703,9 @@ class BatteryMonitorService : Service() {
         const val CHANNEL_SERVICE_ID = SentinelStatusNotification.CHANNEL_ID
         const val CHANNEL_ALERTS_ID = "netra_alerts_channel"
         const val NOTIFICATION_ID = SentinelStatusNotification.NOTIFICATION_ID
-        const val NOTIFICATION_ALARM_ID = 2002
-        const val NOTIFICATION_OVERHEAT_ID = 2003
-        const val NOTIFICATION_THRESHOLD_ID = 2004
+        const val NOTIFICATION_ALARM_ID = BatteryNotificationIds.TARGET_ALARM
+        const val NOTIFICATION_OVERHEAT_ID = BatteryNotificationIds.OVERHEAT
+        const val NOTIFICATION_THRESHOLD_ID = BatteryNotificationIds.THRESHOLD
 
         private val _liveTelemetryFlow = MutableStateFlow(BatteryTelemetry())
         val liveTelemetryFlow: StateFlow<BatteryTelemetry> = _liveTelemetryFlow.asStateFlow()

@@ -179,6 +179,7 @@ class NetraCentralDataCenter(
     }
 
     fun initPersistence(context: Context) {
+        ChargeCurveLearner.init(context)
         fullChargeSummaryStore = FullChargeSummaryStore(context)
         _fullChargeSummary.value = fullChargeSummaryStore?.load()
 
@@ -653,7 +654,6 @@ class NetraCentralDataCenter(
             // Invalid input clears ETA evidence while last-valid display telemetry stays intact.
             // The learned charge curve (phone's own history, temperature-banded) wins when it
             // has data; the single-session linear estimate remains the honest fallback.
-            ChargeCurveLearner.init(com.example.NetraApplication.instance)
             ChargeCurveLearner.observeTransition(validatedLevel, status, plugged, tempCelsius, now)
             val learnedCharge = if (status == BatteryManager.BATTERY_STATUS_CHARGING && plugged > 0 && validatedLevel != null) {
                 ChargeCurveLearner.estimateMinutes(validatedLevel, 100, true, tempCelsius)

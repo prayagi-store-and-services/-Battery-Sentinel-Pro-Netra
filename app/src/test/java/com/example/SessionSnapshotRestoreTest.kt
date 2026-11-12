@@ -9,6 +9,7 @@ import com.example.service.NetraCentralDataCenter
 import com.example.service.SessionSnapshot
 import com.example.service.SessionSnapshotStore
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.runCurrent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -69,4 +70,42 @@ class SessionSnapshotRestoreTest {
         second.processRawInput(61, 100, BatteryManager.BATTERY_STATUS_CHARGING, BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 1_000_000, null, null)
         assertEquals(now, second.centralState.value.chargingStartedAt)
     }
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun bothLiveTimerEnginesUseRestoredCentralIdentity() = runTest {
+        for (charging in listOf(false, true)) {
+            val store = MemStore()
+            var now = 1_000_000L
+            suspend fun sample(c: NetraCentralDataCenter) {
+                c.processRawInput(60, 100,
+                    if (charging) BatteryManager.BATTERY_STATUS_CHARGING else BatteryManager.BATTERY_STATUS_DISCHARGING,
+                    if (charging) BatteryManager.BATTERY_PLUGGED_AC else 0,
+                    300, 4000, 1_000_000, null, null)
+            }
+            sample(center(store) { now })
+            now += 6 * 3_600_000L
+            val restored = center(store) { now }
+            sample(restored)
+            val provider: (Boolean) -> Long? = { wantCharge ->
+                com.example.service.CanonicalSessionTime.startEpochMs(restored.centralState.value, wantCharge)
+            }
+            val card = com.example.service.LivePowerTelemetry({ mode ->
+                provider(mode == com.example.service.PowerMode.CHARGING)
+            }, { now })
+            val snapshot = com.example.service.BatterySnapshot(
+                if (charging) BatteryManager.BATTERY_STATUS_CHARGING else BatteryManager.BATTERY_STATUS_DISCHARGING,
+                if (charging) 1 else 0, 60, 100, 4000, 300, 1_000_000)
+            assertEquals("06:00:00", card.update(snapshot, 10_000L).sessionDuration)
+            val monitor = com.example.service.LiveChargingSessionEngine(
+                com.example.service.FakeBatteryHardwareProvider(isChargingState = charging), this,
+                { now }, { 10_000L }, canonicalSessionStartEpochMs = provider)
+            monitor.onScreenResumed()
+            runCurrent()
+            assertEquals(21_600L, if (charging) monitor.sessionState.value.sessionDurationSeconds
+                else monitor.sessionState.value.dischargeDurationSeconds)
+            monitor.onScreenPaused()
+            runCurrent()
+        }
+    }
+
 }

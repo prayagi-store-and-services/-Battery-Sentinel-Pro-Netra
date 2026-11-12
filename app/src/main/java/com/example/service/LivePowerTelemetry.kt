@@ -39,10 +39,15 @@ data class CurrentSampleStats(val minimumMa: Double, val maximumMa: Double, val 
  * so the session timer is monotonic and unit tests do not need Android.
  * Percentages come only from level/scale. Nothing is estimated from voltage.
  */
-class LivePowerTelemetry {
+class LivePowerTelemetry(
+    private val sessionStartEpochMs: (PowerMode) -> Long? = { null },
+    private val wallClock: () -> Long = { System.currentTimeMillis() }
+) {
     private val etaEstimator = SessionEtaEstimator()
     private var sessionMode: PowerMode? = null
     private var sessionStartMs = 0L
+    private var canonicalEpochMs: Long? = null
+    private var canonicalElapsedMs: Long? = null
     private var currentMode: PowerMode? = null
     private var lastCurrentAt: Long? = null
     private var currentMin = 0.0
@@ -71,24 +76,41 @@ class LivePowerTelemetry {
     /** Charge level the estimate counts down to (the user's target, 100 when not set). */
     var targetPercent: Int = 100
 
-    fun reset() { clearCurrentSamples(); sessionMode = null; etaEstimator.reset() }
+    fun reset() { clearCurrentSamples(); sessionMode = null; canonicalEpochMs = null; canonicalElapsedMs = null; etaEstimator.reset() }
 
     fun update(s: BatterySnapshot, nowMs: Long): LivePowerUi {
         val mode = classify(s)
         val percent = percentOf(s)
 
-        // The session restarts whenever the mode changes. After a process restart the timer
-        // starts from the first observation (it cannot be reconstructed reliably), and says so in the UI.
+        // Sampling/ETA evidence always starts with real observations. Only the displayed duration
+        // may reuse a validated Central Unit start; no pre-restart samples are invented.
         val timed = mode == PowerMode.CHARGING || mode == PowerMode.DISCHARGING
         if (!timed) {
             sessionMode = null
+            canonicalEpochMs = null
+            canonicalElapsedMs = null
             etaEstimator.reset()
         } else if (mode != sessionMode) {
             sessionMode = mode
             sessionStartMs = nowMs
+            canonicalEpochMs = null
+            canonicalElapsedMs = null
             etaEstimator.reset()
         }
-        val duration = if (timed) formatDuration((nowMs - sessionStartMs).coerceAtLeast(0L) / 1000L) else UNAVAILABLE
+        if (timed) {
+            val nowEpoch = wallClock()
+            val start = CanonicalSessionTime.validStart(sessionStartEpochMs(mode), nowEpoch)
+            if (start != null && start != canonicalEpochMs) {
+                if (canonicalEpochMs != null) {
+                    sessionStartMs = nowMs
+                    etaEstimator.reset()
+                    clearCurrentSamples()
+                }
+                canonicalEpochMs = start
+                canonicalElapsedMs = CanonicalSessionTime.elapsedStart(start, nowEpoch, nowMs)
+            }
+        }
+        val duration = if (timed) formatDuration((nowMs - (canonicalElapsedMs ?: sessionStartMs)).coerceAtLeast(0L) / 1000L) else UNAVAILABLE
 
         val currentMa = currentMa(s)
         val showCurrent = currentMa != null && (mode == PowerMode.CHARGING || mode == PowerMode.DISCHARGING)
