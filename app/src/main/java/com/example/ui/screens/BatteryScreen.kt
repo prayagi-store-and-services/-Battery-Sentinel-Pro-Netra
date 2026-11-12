@@ -399,14 +399,14 @@ fun BatteryScreen(
                     extraItems = {
                         item {
                             SentinelCard(
-                                title = "Recent Charging Sessions",
+                                title = "Recorded Charging Intervals",
                                 icon = Icons.Default.History,
                                 dotState = DotState.CONNECTED,
                                 accentColor = NetraCyan
                             ) {
                                 if (sessions.isEmpty()) {
                                     Text(
-                                        text = "No charging sessions recorded yet. Plug in your charger to start recording session metrics.",
+                                        text = "No charging intervals recorded yet. Gaps and restarts can omit earlier readings.",
                                         fontSize = 12.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -461,7 +461,7 @@ private fun ElectricBadge(
 }
 
 @Composable
-private fun ChargingSessionItemRow(session: ChargingSession) {
+internal fun ChargingSessionItemRow(session: ChargingSession) {
     val durationMin = session.durationMinutes
     val dateFormat = SimpleDateFormat("MMM d, h:mm a", Locale.getDefault())
     val dateStr = dateFormat.format(Date(session.startTime))
@@ -475,6 +475,9 @@ private fun ChargingSessionItemRow(session: ChargingSession) {
             .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
             .padding(12.dp)
     ) {
+        Column {
+        Text("Partial recorded interval", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(4.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -502,11 +505,14 @@ private fun ChargingSessionItemRow(session: ChargingSession) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${String.format(Locale.US, "%.1f", session.peakTemperature)}°C peak",
+                    text = "${String.format(Locale.US, "%.1f", session.peakTemperature)}°C observed",
                     fontSize = 11.sp,
                     color = if (session.peakTemperature >= 40f) StatusRed else NetraCyan
                 )
             }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text("Gaps and restarts can omit earlier readings.", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

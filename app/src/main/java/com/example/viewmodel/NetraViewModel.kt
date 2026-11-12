@@ -525,7 +525,7 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
 
             val sessionsSummary = if (sessions.isNotEmpty()) {
                 sessions.joinToString("\n") {
-                    "Session: ${it.startLevel}% -> ${it.endLevel}%, Duration: ${it.durationMinutes}m, PeakTemp: ${it.peakTemperature}°C, Charger: ${it.chargerType}"
+                    "Partial recorded interval (gaps/restarts may omit readings): ${it.startLevel}% -> ${it.endLevel}%, Duration: ${it.durationMinutes}m, PeakTemp: ${it.peakTemperature}°C, Charger: ${it.chargerType}"
                 }
             } else "No completed charging sessions recorded."
 

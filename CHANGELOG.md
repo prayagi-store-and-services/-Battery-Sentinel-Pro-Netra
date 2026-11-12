@@ -5,6 +5,18 @@ All user-facing release notes are maintained here. The guarded release workflow 
 ## [Unreleased]
 
 ### Fixed
+- Charging history starts a new recorded portion at its first actual sample after a process restart. It no longer attaches the current percentage, temperature or power to an older saved session start.
+- A stale stop timestamp while still charging cannot discard the current observation. Invalid future starts/stops do not create history; a portion under one minute stays under one minute.
+- History, logs, CSV/PDF reports and AI context identify partial recorded intervals. Power summaries are labelled as endpoint estimates, not a measured time-weighted average.
+
+### Verification limits
+- Local repository regressions, related tests and actual light/dark Compose fixtures were checked. CI debug tests, PDF emulator output and CodeQL must pass on the release head before publication.
+- Missing pre-restart samples are not recovered. An interrupted process can still lose its unfinished portion; old saved rows are retained and are not complete-session proof. This is honest partial-observation handling, not durable whole-session recording.
+- Physical installed-update/reboot/background/OEM behavior is NOT VERIFIED. No complete Legacy parity or hardware-safety claim. No new permission, dependency, endpoint, sampler, database schema or backup operation. Reliability fix, not a vulnerability patch.
+
+## [2.2.32]
+
+### Fixed
 - Charging-screen screen-off events no longer look like unplug events. Actual unplug/not-charging events keep the existing optional lock behavior; closing for a mode change does not request a lock.
 - Target-charge test alerts use a separate notification ID so a test does not replace the live overheat notification.
 - Live charging/discharging duration displays reuse a valid saved central session start instead of starting over with each engine. A mismatched, missing or future start falls back to the current session. Restored duration does not invent earlier samples or skip estimate warm-up.
