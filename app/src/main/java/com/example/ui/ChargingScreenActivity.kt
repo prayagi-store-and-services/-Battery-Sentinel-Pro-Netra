@@ -9,6 +9,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.example.ui.components.ChargingScreenContent
+import com.example.ui.components.ChargingScreenEventPolicy as ScreenEvent
 
 /**
  * Opened by the charger-connected event, or when the screen turns off while charging, when the user allowed it.
@@ -31,9 +32,27 @@ class ChargingScreenActivity : ComponentActivity() {
         }
         unplugReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                if (intent.action == Intent.ACTION_POWER_DISCONNECTED || !G.keepAwakeAllowed(intent)) { com.example.service.ScreenLock.lockIfAllowed(applicationContext, true); closeChargingScreen(); return }
-                if (intent.action == Intent.ACTION_SCREEN_OFF && GMode.load(context) != GMode.ON) closeChargingScreen()
-                if (GMode.load(context) == GMode.OFF) closeChargingScreen()
+                val event = when (intent.action) {
+                    Intent.ACTION_POWER_DISCONNECTED -> ScreenEvent.Event.UNPLUGGED
+                    Intent.ACTION_BATTERY_CHANGED -> ScreenEvent.Event.BATTERY_CHANGED
+                    Intent.ACTION_SCREEN_OFF -> ScreenEvent.Event.SCREEN_OFF
+                    else -> ScreenEvent.Event.OTHER
+                }
+                val mode = GMode.load(context)
+                val decision = ScreenEvent.decide(
+                    event = event,
+                    chargingAllowed = G.keepAwakeAllowed(intent),
+                    modeAllowsHold = G.holdAllowed(mode, intent, G.isPhoneLocked(context)),
+                    alwaysOn = mode == GMode.ON
+                )
+                when (decision) {
+                    ScreenEvent.Decision.KEEP -> Unit
+                    ScreenEvent.Decision.CLOSE -> closeChargingScreen()
+                    ScreenEvent.Decision.CLOSE_AND_LOCK_IF_ENABLED -> {
+                        com.example.service.ScreenLock.lockIfAllowed(applicationContext, true)
+                        closeChargingScreen()
+                    }
+                }
             }
         }
         registerReceiver(unplugReceiver, IntentFilter(Intent.ACTION_POWER_DISCONNECTED).apply { addAction(Intent.ACTION_BATTERY_CHANGED); addAction(Intent.ACTION_SCREEN_OFF) })

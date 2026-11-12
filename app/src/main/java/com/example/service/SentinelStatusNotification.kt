@@ -22,7 +22,7 @@ import java.util.Locale
 object SentinelStatusNotification {
 
     const val CHANNEL_ID = "netra_service_channel"
-    const val NOTIFICATION_ID = 2001
+    const val NOTIFICATION_ID = BatteryNotificationIds.STATUS
 
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

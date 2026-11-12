@@ -44,7 +44,7 @@ object TargetAlert {
             .setContentText("If you can see this, the target alert can reach you.")
             .setAutoCancel(true)
             .build()
-        nm.notify(2003, n)
+        nm.notify(BatteryNotificationIds.TARGET_TEST, n)
         val master = try { com.example.NetraApplication.instance.settingsRepository.settings.value.announcementsMasterEnabled } catch (_: Exception) { true }
         if (!master) return "Test notification sent. Voice announcements are switched off, so there is no spoken alert."
         try {
