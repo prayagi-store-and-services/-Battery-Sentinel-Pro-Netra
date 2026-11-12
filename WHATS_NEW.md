@@ -1,3 +1,10 @@
+## 2.2.32 - Session duration and charging-screen fixes
+
+- Live duration displays reuse the saved matching charging/discharging session start. Earlier sample history is not invented, so time estimates still warm up honestly.
+- Screen-off no longer gets mistaken for unplug on the charging screen. Real unplug and the existing optional-lock choice are unchanged.
+- A target-charge test notification no longer replaces the live overheat notification.
+- Automated tests and light/dark fixture renders only. Physical installed-update, reboot, background/lock-screen and OEM behavior are NOT VERIFIED. This is not a complete Legacy feature port or a charging-history persistence fix.
+
 ## 2.2.31 - Crash reports only when you send them
 
 - Crash reports stay on your phone now. After a crash you can preview the report and choose Send or Delete - nothing uploads by itself.
