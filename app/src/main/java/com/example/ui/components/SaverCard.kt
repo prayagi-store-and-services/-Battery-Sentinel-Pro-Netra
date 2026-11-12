@@ -38,17 +38,15 @@ fun SaverCard() {
     var level by remember { mutableIntStateOf(prefs.getInt(SaverEngine.KEY_LEVEL, SaverPolicy.DEFAULT_LEVEL)) }
     var actDisplay by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_ACT_DISPLAY, true)) }
     var cachedResult by remember { mutableStateOf("") }
-    var actNotif by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_ACT_NOTIF, false)) }
     var riseOn by remember { mutableStateOf(prefs.getBoolean(SaverEngine.KEY_RISE_ON, true)) }
     var riseC by remember { mutableFloatStateOf(SaverPolicy.clampRise(prefs.getFloat(SaverEngine.KEY_RISE_C, SaverPolicy.DEFAULT_RISE_C))) }
     var riseMin by remember { mutableFloatStateOf(SaverPolicy.clampRiseMinTemp(prefs.getFloat(SaverEngine.KEY_RISE_MIN_TEMP, SaverPolicy.DEFAULT_RISE_MIN_TEMP_C))) }
     var journey by remember { mutableStateOf(SaverEngine.isJourneyOn(c)) }
     val canWrite = Settings.System.canWrite(c)
-    val notifAccess = SaverEngine.hasNotificationAccess(c)
 
     SentinelCard(title = "Saver", icon = Icons.Default.SignalCellularAlt, dotState = DotState.CONNECTED, accentColor = NetraCyan) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Save battery automatically", fontSize = 13.sp)
+            Text("Save battery automatically", fontSize = 13.sp, modifier = Modifier.weight(1f))
             Switch(checked = enabled, onCheckedChange = {
                 enabled = it
                 prefs.edit().putBoolean(SaverEngine.KEY_ENABLED, it).apply()
@@ -57,31 +55,31 @@ fun SaverCard() {
         }
         Text("Starts when the battery gets hot or low, and puts your settings back when it is normal again. Off by default.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Journey mode (up to 12 hours)", fontSize = 13.sp)
+            Text("Journey mode (up to 12 hours)", fontSize = 13.sp, modifier = Modifier.weight(1f))
             Switch(checked = journey, onCheckedChange = { journey = it; SaverEngine.setJourney(c, it) })
         }
         Text("For a long trip. You turn it on yourself; it never starts alone and ends by itself after 12 hours. While it is on and the phone is not charging, the Saver actions below run at the next battery reading without waiting for the level limit, and they are put back when you plug in, turn it off or it ends. It uses only the battery readings the app already takes and adds no background work. It cannot stop other apps from using data or battery; on Android 13 and older it can close background processes (see the limits below); on Android 14 and newer it cannot.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Battery temperature: ${temp.toInt()} °C or more", fontSize = 13.sp)
+            Text("Battery temperature: ${temp.toInt()} °C or more", fontSize = 13.sp, modifier = Modifier.weight(1f))
             Row {
                 OutlinedButton(onClick = { temp = SaverPolicy.clampTemp(temp - 1f); prefs.edit().putFloat(SaverEngine.KEY_TEMP, temp).apply() }) { Text("-") }
                 OutlinedButton(onClick = { temp = SaverPolicy.clampTemp(temp + 1f); prefs.edit().putFloat(SaverEngine.KEY_TEMP, temp).apply() }) { Text("+") }
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Early start on fast temperature rise", fontSize = 13.sp)
+            Text("Early start on fast temperature rise", fontSize = 13.sp, modifier = Modifier.weight(1f))
             Switch(checked = riseOn, onCheckedChange = { riseOn = it; prefs.edit().putBoolean(SaverEngine.KEY_RISE_ON, it).apply() })
         }
         if (riseOn) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Rise of ${String.format(java.util.Locale.US, "%.1f", riseC)} °C within about 3 minutes", fontSize = 13.sp)
+                Text("Rise of ${String.format(java.util.Locale.US, "%.1f", riseC)} °C within about 3 minutes", fontSize = 13.sp, modifier = Modifier.weight(1f))
                 Row {
                     OutlinedButton(onClick = { riseC = SaverPolicy.clampRise(riseC - 0.2f); prefs.edit().putFloat(SaverEngine.KEY_RISE_C, riseC).apply() }) { Text("-") }
                     OutlinedButton(onClick = { riseC = SaverPolicy.clampRise(riseC + 0.2f); prefs.edit().putFloat(SaverEngine.KEY_RISE_C, riseC).apply() }) { Text("+") }
                 }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Only from ${riseMin.toInt()} °C up", fontSize = 13.sp)
+                Text("Only from ${riseMin.toInt()} °C up", fontSize = 13.sp, modifier = Modifier.weight(1f))
                 Row {
                     OutlinedButton(onClick = { riseMin = SaverPolicy.clampRiseMinTemp(riseMin - 1f); prefs.edit().putFloat(SaverEngine.KEY_RISE_MIN_TEMP, riseMin).apply() }) { Text("-") }
                     OutlinedButton(onClick = { riseMin = SaverPolicy.clampRiseMinTemp(riseMin + 1f); prefs.edit().putFloat(SaverEngine.KEY_RISE_MIN_TEMP, riseMin).apply() }) { Text("+") }
@@ -90,14 +88,14 @@ fun SaverCard() {
         }
         Text("Early start: the Saver also starts before the limit if the battery temperature rises fast, using the two values above, only when not charging, in this phone's own battery readings. It ends when the temperature stops rising, 5 minutes have passed and it is below the limit. Plugging in a charger never counts as a rise. It never closes an app you used in the last 15 minutes (it needs Usage Access to know) and leaves your screen timeout alone. Android cannot tell which app makes the heat, so the apps listed in the result are estimates from usage. It only reads the battery temperature; it cannot cool the phone itself.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Battery level: $level% or less (not charging)", fontSize = 13.sp)
+            Text("Battery level: $level% or less (not charging)", fontSize = 13.sp, modifier = Modifier.weight(1f))
             Row {
                 OutlinedButton(onClick = { level = SaverPolicy.clampLevel(level - 1); prefs.edit().putInt(SaverEngine.KEY_LEVEL, level).apply() }) { Text("-") }
                 OutlinedButton(onClick = { level = SaverPolicy.clampLevel(level + 1); prefs.edit().putInt(SaverEngine.KEY_LEVEL, level).apply() }) { Text("+") }
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Brightness 10% and shortest screen timeout", fontSize = 13.sp)
+            Text("Brightness 10% and shortest screen timeout", fontSize = 13.sp, modifier = Modifier.weight(1f))
             Switch(checked = actDisplay, onCheckedChange = { actDisplay = it; prefs.edit().putBoolean(SaverEngine.KEY_ACT_DISPLAY, it).apply() })
         }
         OutlinedButton(enabled = android.os.Build.VERSION.SDK_INT < 34, onClick = {
@@ -105,44 +103,14 @@ fun SaverCard() {
         }) { Text("Request background-process cleanup") }
         Text("Manual only. Android 14+ cannot end other apps' processes. On older Android, apps may restart. This does not force-stop apps and makes no battery-saving promise.", fontSize = 11.sp)
         if (cachedResult.isNotEmpty()) Text(cachedResult, fontSize = 11.sp)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Allow clearing notifications (cannot undo)", fontSize = 13.sp)
-            Switch(checked = actNotif, onCheckedChange = { actNotif = it; prefs.edit().putBoolean(SaverEngine.KEY_ACT_NOTIF, it).apply() })
-        }
-        Text("On Android 13 and older an app can end the background processes of other apps; on Android 14 and newer it cannot, so that option does nothing there. Music, navigation, calls, messaging, keyboard, launcher and Netra apps are not touched, and some apps restart by themselves, so no battery-saving benefit is promised. The result below shows real free RAM before and after. Closed apps and cleared notifications cannot be brought back; brightness and timeout are restored.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("This app cannot read or clear other apps' notifications. Its own battery alerts still use Android's notification permission.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (enabled && actDisplay && !canWrite) {
             Text("Modify system settings permission is needed for brightness and timeout. Until it is granted nothing is changed.", fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
             TextButton(onClick = {
                 c.startActivity(Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + c.packageName)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }) { Text("Open permission screen") }
         }
-        if (enabled && actNotif && !notifAccess) {
-            Text("Notification access is needed to clear notifications. We never read their content.", fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
-            TextButton(onClick = {
-                c.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            }) { Text("Open notification access") }
-            if (restrictedSettingsLikely(c)) {
-                Text("If the switch \"Allow notification access\" is grey or will not turn on: Android 13 and newer block this for apps installed from a file (APK) instead of a store. This app cannot unlock it for you. Follow these steps:", fontSize = 12.sp)
-                RestrictedSettingsGuide()
-                TextButton(onClick = {
-                    c.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + c.packageName)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                }) { Text("Open app info") }
-            }
-        }
         Text("Saver now: " + (if (SaverEngine.isActive(c)) "active" else "waiting"), fontSize = 11.sp)
-        prefs.getString(SaverEngine.KEY_RESULT, null)?.let { Text(it, fontSize = 11.sp) }
+        prefs.getString(SaverEngine.KEY_RESULT, null)?.takeUnless { it.contains("notification", ignoreCase = true) }?.let { Text(it, fontSize = 11.sp) }
     }
-}
-
-/**
- * True when Android 13+ may block notification access ("Restricted setting") for this app: the app was not installed by
- * Google Play or by this app's own updater (the updater uses a PackageInstaller session, which Android does not restrict). Android has no public call that says whether the block is active, so this only decides whether to SHOW the
- * steps; the steps say "if the switch is grey".
- */
-internal fun restrictedSettingsLikely(c: android.content.Context): Boolean {
-    if (android.os.Build.VERSION.SDK_INT < 33) return false
-    return try {
-        val installer = c.packageManager.getInstallSourceInfo(c.packageName).installingPackageName
-        installer != "com.android.vending" && installer != c.packageName
-    } catch (e: Exception) { true }
 }

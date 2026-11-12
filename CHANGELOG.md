@@ -4,6 +4,12 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+### Removed
+- Removed the optional feature that cleared other apps' notifications, including its notification-listener service/access declaration, runtime call, settings prompt, consent switch and restricted-settings guide. Old consent preferences are ignored. BSPN's own battery alerts keep ordinary notification permission.
+- This reduces sensitive access following Google's guidance for the observed Play Protect internet-sideloading warning. It does not bypass Play Protect and is NOT a guarantee of installation acceptance. Try the new signed APK with Play Protect ON; acceptance is not device-verified yet.
+- Saver control labels now wrap within the available width, keeping buttons and switches visible.
+
+### Included from the unpublished 2.2.33 candidate
 ### Fixed
 - Charging history starts a new recorded portion at its first actual sample after a process restart. It no longer attaches the current percentage, temperature or power to an older saved session start.
 - A stale stop timestamp while still charging cannot discard the current observation. Invalid future starts/stops do not create history; a portion under one minute stays under one minute.

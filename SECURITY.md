@@ -1,3 +1,11 @@
+## Notification-listener access removed (v2.2.34)
+
+The optional other-app notification-clearing feature is removed, including its NotificationListenerService manifest component and BIND_NOTIFICATION_LISTENER_SERVICE declaration, implementation, runtime call, consent UI, Android settings prompt and restricted-settings guide. Old local consent keys are inert and not repurposed; stale notification-clearing result text is not shown. POST_NOTIFICATIONS remains solely for this app's own alerts. No SMS or accessibility access is added. All historical notification-clearing/access instructions below describe removed versions and no longer apply to current releases.
+
+Google documents that internet-sideloaded apps declaring sensitive notification access can receive the exact sensitive-data/fraud-risk warning reported by the owner. This change removes access rather than concealing it. No signing/package/settings change or protection bypass. Play Protect acceptance on the affected phone remains NOT VERIFIED; do not disable protection. No claim that GitHub CI proves Play Protect approval. Sources: https://developers.google.com/android/play-protect/warning-dev-guidance and https://blog.google/intl/en-in/products/launching-enhanced-fraud-protection-pilot-in-india/ .
+
+No new permission, dependency, endpoint, sampler, schema or backup operation. Existing battery alerts/monitoring and display-saving consent remain. Includes the partial-history reliability change from the unpublished v2.2.33 candidate. Physical installed-update, reboot and OEM acceptance remain NOT VERIFIED.
+
 ## Partial charging-history evidence (v2.2.33)
 
 Reliability and evidence-label fix, not a vulnerability patch. The existing repository stores completed observed portions starting with an actual sample, not a restored timestamp paired with newly observed readings. Stale stop state and invalid future timestamps do not create completed history. UI, exports and diagnostic context say observations can be partial; endpoint power estimates are not measured averages. Old saved rows are retained, not silently repaired. Unfinished observations and missing pre-restart samples are not recovered.

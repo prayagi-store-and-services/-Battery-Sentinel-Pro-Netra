@@ -1,3 +1,9 @@
+## 2.2.34 - Remove other-app notification access
+
+- Removed "clear other apps' notifications" entirely, along with notification-listener access and its setup guide. BSPN still uses normal notification permission for its own battery alerts.
+- This removes the sensitive access found in the released APK that matches Google's documented Play Protect warning. Keep Play Protect ON. Whether this APK installs on the affected phone is NOT VERIFIED until tested.
+- Includes the charging-history partial-observation changes below from the unpublished 2.2.33 candidate. No package or signing-key change, obfuscation or protection bypass.
+
 ## 2.2.33 - Honest recorded charging intervals
 
 - After restart, charging history uses the first actual observed percentage and time, not today's percentage attached to an old session start.
