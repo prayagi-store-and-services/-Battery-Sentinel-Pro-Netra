@@ -55,13 +55,18 @@ class BatteryMonitorService : Service() {
     private var lastTargetAlarmAt = 0L
     private var lastOverheatAlertTime = 0L
     private var lastThresholdAlertTime = 0L
+    private var alertSessionInitialized = false
+    private var activeAlertSession: Long? = null
+    private val unknownAlertSession = -System.nanoTime().coerceAtLeast(1L)
+    private var lastThresholdValue: Float? = null
+    private val alertDelivery by lazy { AlertDeliveryState(this) }
 
     private val batteryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 Intent.ACTION_BATTERY_CHANGED -> batteryInputs.trySend(intent)
                 Intent.ACTION_POWER_CONNECTED -> {
-                    lastNotified80PercentSession = false; lastTargetAlarmAt = 0L; TargetAlarmRepeat.resetForNewSession()
+                    lastNotified80PercentSession = false; lastTargetAlarmAt = 0L; TargetAlarmRepeat.resetForNewSession(); alertSessionInitialized = false; alertDelivery.clearTarget()
                     if (BatteryTracker.isEnabled(applicationContext)) openChargingScreenIfAllowed(wake = true)
                 }
                 Intent.ACTION_SCREEN_ON -> {
@@ -81,6 +86,8 @@ class BatteryMonitorService : Service() {
                     lastNotified80PercentSession = false
                     lastTargetAlarmAt = 0L
                     TargetAlarmRepeat.resetForNewSession()
+                    alertSessionInitialized = false
+                    alertDelivery.clearTarget()
                     ScreenOffSaver.restore(applicationContext)
                     val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     notificationManager.cancel(NOTIFICATION_ALARM_ID)
@@ -447,6 +454,41 @@ class BatteryMonitorService : Service() {
     private fun checkSafetyAlerts(state: NetraCentralState) {
         val settings = NetraApplication.instance.settingsRepository.settings.value
         val now = System.currentTimeMillis()
+        // Load once per observed connection identity. Missing/broken storage must not
+        // reset working in-memory cooldowns or re-fire the first alert every sample.
+        if (state.isChargerConnected == false && state.isCharging != true) {
+            alertDelivery.clearTarget()
+            alertSessionInitialized = false
+            activeAlertSession = null
+            lastNotified80PercentSession = false
+            lastTargetAlarmAt = 0L
+            TargetAlarmRepeat.resetForNewSession()
+        } else if (state.isChargerConnected == true || state.isCharging == true) {
+            val canonicalSession = state.chargerConnectedAt?.takeIf { it > 0L && it <= now }
+            val identity = canonicalSession ?: unknownAlertSession
+            if (!alertSessionInitialized || activeAlertSession != identity) {
+                alertSessionInitialized = true
+                activeAlertSession = identity
+                lastNotified80PercentSession = false
+                lastTargetAlarmAt = 0L
+                TargetAlarmRepeat.resetForNewSession()
+                TargetAlarmRepeat.sessionIdentity = identity
+                val saved = if (state.isChargerConnected == true) alertDelivery.loadTarget(canonicalSession, now) else null
+                if (saved != null) {
+                    lastNotified80PercentSession = true
+                    lastNotifiedTargetValue = saved.target
+                    lastTargetAlarmAt = saved.firedAt
+                    TargetAlarmRepeat.muted = saved.muted
+                    TargetAlarmRepeat.sessionTarget = saved.override
+                }
+            }
+        }
+        if (lastTargetAlarmAt > now) {
+            // A wall-clock rollback invalidates an old delivery timestamp, never a safety alert.
+            lastNotified80PercentSession = false
+            lastTargetAlarmAt = 0L
+            TargetAlarmRepeat.muted = false
+        }
         val targetPercent = TargetAlarmRepeat.sessionTarget ?: settings.chargeTargetPercent
         DischargeAnchor.observe(PrefsDischargeAnchorStore(this), state.isChargerConnected, now)
 
@@ -458,6 +500,7 @@ class BatteryMonitorService : Service() {
                 lastNotifiedTargetValue = targetPercent
                 lastTargetAlarmAt = now
                 TargetAlarmRepeat.muted = false
+                alertDelivery.saveTarget(state.chargerConnectedAt, targetPercent, now, false, TargetAlarmRepeat.sessionTarget)
                 TargetAlert.markFired(now, requireNotNull(state.batteryLevel), targetPercent)
                 try {
                     NetraApplication.instance.announcementEngine.enqueue(
@@ -484,6 +527,7 @@ class BatteryMonitorService : Service() {
             } else if (TargetAlarmRepeat.due(lastTargetAlarmAt, now, TargetAlarmRepeat.muted)) {
                 // Still charging at or above the target: repeat the alert every 2 minutes until unplug or Dismiss.
                 lastTargetAlarmAt = now
+                alertDelivery.saveTarget(state.chargerConnectedAt, targetPercent, now, TargetAlarmRepeat.muted, TargetAlarmRepeat.sessionTarget)
                 if (FullChargeSilence.soundAllowed(state.isNightProtectionActive)) {
                     sendUnplugAlarmNotification(requireNotNull(state.batteryLevel), targetPercent)
                     triggerVibrationAlert()
@@ -498,9 +542,16 @@ class BatteryMonitorService : Service() {
         // Opt-in battery percentage voice announcement at each crossed 5/10% step.
         percentAnnouncement.onState(state.batteryLevel, state.isCharging, state.isChargerConnected)
 
+        lastOverheatAlertTime = maxOf(lastOverheatAlertTime.takeIf { it in 1..now } ?: 0L,
+            alertDelivery.cooldownAt("overheat_at", now))
+        if (lastThresholdValue != settings.thermalWarningThreshold) lastThresholdAlertTime = 0L
+        lastThresholdValue = settings.thermalWarningThreshold
+        lastThresholdAlertTime = maxOf(lastThresholdAlertTime.takeIf { it in 1..now } ?: 0L,
+            alertDelivery.thresholdAt(settings.thermalWarningThreshold, now))
         // Critical Overheat Alarm (>45°C)
         if (state.temperatureCelsius?.let { it >= 45f } == true && (now - lastOverheatAlertTime > 120_000L)) {
             lastOverheatAlertTime = now
+            alertDelivery.recordCooldown("overheat_at", now)
             sendOverheatNotification(requireNotNull(state.temperatureCelsius))
             triggerVibrationAlert()
             serviceScope.launch {
@@ -512,9 +563,10 @@ class BatteryMonitorService : Service() {
                     dotColor = "RED"
                 )
             }
-        } else if (state.temperatureCelsius != null && state.temperatureCelsius >= settings.thermalWarningThreshold && (now - lastThresholdAlertTime > 180_000L)) {
+        } else if (state.temperatureCelsius != null && state.temperatureCelsius < 45f && state.temperatureCelsius >= settings.thermalWarningThreshold && (now - lastThresholdAlertTime > 180_000L)) {
             // User-defined safe temperature threshold alert
             lastThresholdAlertTime = now
+            alertDelivery.recordThreshold(settings.thermalWarningThreshold, now)
             sendThermalThresholdNotification(requireNotNull(state.temperatureCelsius), settings.thermalWarningThreshold)
             triggerVibrationAlert()
             serviceScope.launch {
@@ -558,14 +610,14 @@ class BatteryMonitorService : Service() {
         )
 
         // Action 1: Dismiss / Mute Alarm Broadcast
-        val dismissIntent = com.example.receiver.AlarmActionReceiver.intent(this, ACTION_DISMISS_ALARM)
+        val dismissIntent = com.example.receiver.AlarmActionReceiver.intent(this, ACTION_DISMISS_ALARM, activeAlertSession)
         val pendingDismiss = PendingIntent.getBroadcast(
             this, 201, dismissIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         // Action 2: Set Target to 100% (Continue Charging)
-        val continueIntent = com.example.receiver.AlarmActionReceiver.intent(this, ACTION_SET_TARGET_100)
+        val continueIntent = com.example.receiver.AlarmActionReceiver.intent(this, ACTION_SET_TARGET_100, activeAlertSession)
         val pendingContinue = PendingIntent.getBroadcast(
             this, 202, continueIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE

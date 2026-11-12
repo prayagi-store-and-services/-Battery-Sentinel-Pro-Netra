@@ -4,6 +4,21 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+### Fixed
+- Target-charge delivery time, Dismiss and the temporary 100% choice survive a service/process restart only for the matching canonical charger-connection identity. A new connection re-arms the existing alert, and the saved user target is unchanged.
+- Critical-temperature (2-minute) and selected-threshold (3-minute) notification cooldowns survive restart. Threshold changes and critical escalation are independent; a critical reading cannot fall through to an extra lower-severity notification during its cooldown.
+- Existing low-battery and thermal condition speech retain accepted-attempt latches across restart. Fresh measured recovery re-arms them using the existing thresholds; retained display values do not count as recovery. Critical speech has a separate latch from an earlier warning.
+- Notification actions carry their charging-session identity. Old-session or unbound old-version actions cannot mute or change a newer session.
+
+### Verification limits
+- Real-service/announcement regression tests reproduce restart duplicates on old production code. Related automated tests cover restart, recovery, escalation, existing repeats, unknown sessions, corrupt/unavailable storage and invalid clocks. Required final-head CI must pass before merge/release; broad local runs hit the command time limit and are not full-suite passes.
+- Private on-device alert state only, removed by Clear data/uninstall. No raw speech text, Bluetooth identity, new permission, dependency, network endpoint, sampler, database migration, backup operation or second alert engine. This is a reliability fix, not a vulnerability patch.
+- These records track accepted delivery attempts, not proof that a notification appeared or speech was heard. Failed persistence can allow a later duplicate; missing/mismatched state fails open rather than silencing safety warnings. Recovery or charger changes while the app was not observing cannot be reconstructed.
+- The deliberate continuous unplug speech still repeats. Percentage speech still establishes a fresh baseline; completed full-charge summaries reuse their existing consume-before-delivery store. No replay of missed samples or unfinished history is added.
+- Physical installed-update, real process kill/reboot, background/OEM behavior, audible output and Play Protect installation acceptance are NOT VERIFIED. Play Protect must stay ON. No complete Legacy parity or hardware-safety claim.
+
+## [2.2.34]
+
 ### Removed
 - Removed the optional feature that cleared other apps' notifications, including its notification-listener service/access declaration, runtime call, settings prompt, consent switch and restricted-settings guide. Old consent preferences are ignored. BSPN's own battery alerts keep ordinary notification permission.
 - This reduces sensitive access following Google's guidance for the observed Play Protect internet-sideloading warning. It does not bypass Play Protect and is NOT a guarantee of installation acceptance. Try the new signed APK with Play Protect ON; acceptance is not device-verified yet.

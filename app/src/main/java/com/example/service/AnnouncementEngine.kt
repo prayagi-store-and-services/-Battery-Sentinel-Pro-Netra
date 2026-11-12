@@ -83,6 +83,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
     // Event ID tracking for absolute deduplication across observers/recomposition
     private val processedEventIds = mutableSetOf<String>()
     private val recentSpoken = HashMap<String, Long>()
+    private val alertDelivery = AlertDeliveryState(context)
     private val lastByCategory = HashMap<String, Long>()
 
     // State Tracking & Baseline for Deduplication inside Announcement Engine
@@ -114,6 +115,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 // 1. Collect and establish baseline from centralState
                 launch {
                     dataCenter.centralState.collect { state ->
+                        alertDelivery.observeRecovery(state)
                         if (!isBaselineEstablished && state.batteryLevel != null) {
                             establishBaseline(state)
                         } else if (isBaselineEstablished) {
@@ -560,6 +562,10 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             }
             lastByCategory[item.category] = nowMs
         }
+
+        // Preserve existing low/heat condition speech across an engine/process restart.
+        // Critical escalation has its own key; controls and deliberate continuous speech are unchanged.
+        if (!alertDelivery.claimCondition(item.category, System.currentTimeMillis())) return
 
         // 3b. One central ledger for every announcement type: the same words are never spoken twice
         // within DEDUPE_WINDOW_MS, whatever path produced them (event, state change, test).
