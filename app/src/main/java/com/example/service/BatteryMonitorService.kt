@@ -423,7 +423,7 @@ class BatteryMonitorService : Service() {
             } catch (_: Exception) {}
 
             try {
-                NetraApplication.instance.storageCacheManager.autoCleanIfAppropriate(isCharging)
+                NetraApplication.instance.storageCacheManager.autoCleanIfAppropriate(isCharging, canonical)
             } catch (_: Exception) {}
 
             try {

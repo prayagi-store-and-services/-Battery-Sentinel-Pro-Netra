@@ -87,9 +87,11 @@ class StorageCacheManager(context: Context) {
 
     /** One app-owned scan/attempt per six hours, across restart; charging never lowers the threshold. */
     @Suppress("UNUSED_PARAMETER")
-    suspend fun autoCleanIfAppropriate(isCharging: Boolean) = withContext(Dispatchers.IO) {
+    suspend fun autoCleanIfAppropriate(isCharging: Boolean, state: com.example.model.NetraCentralState? = null) = withContext(Dispatchers.IO) {
         mutex.withLock {
             val now = System.currentTimeMillis()
+            // Defer BEFORE this automatic path scans or consumes its six-hour attempt budget.
+            if (!CacheMaintenancePolicy.contextAllowsAutomaticWork(state, now)) return@withLock
             val last = prefs.getLong("last_auto_attempt_ms", 0L)
             // A clock rollback rebases the interval without cleaning repeatedly.
             if (last > now) { prefs.edit().putLong("last_auto_attempt_ms", now).commit(); return@withLock }
