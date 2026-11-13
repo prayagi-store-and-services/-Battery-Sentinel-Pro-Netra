@@ -25,7 +25,7 @@ data class SentinelSettings(
     // Voice Announcement Engine Settings
     val announcementsMasterEnabled: Boolean = true,
     val announcePhoneBattery: Boolean = true,
-    val announceBluetoothBattery: Boolean = true,
+    val announceBluetoothBattery: Boolean = false,
     val announceChargerConnected: Boolean = true,
     val announceChargingSpeed: Boolean = true,
     val announceThermalWarning: Boolean = true,
@@ -80,7 +80,7 @@ class SettingsRepository(context: Context) {
             widgetBackgroundStyle = prefs.getString("widget_bg_style", "GLASS_DARK") ?: "GLASS_DARK",
             announcementsMasterEnabled = prefs.getBoolean("announcements_master", true),
             announcePhoneBattery = prefs.getBoolean("announce_phone_battery", true),
-            announceBluetoothBattery = prefs.getBoolean("announce_bt_battery", true),
+            announceBluetoothBattery = false,
             announceChargerConnected = prefs.getBoolean("announce_charger_connected", true),
             announceChargingSpeed = prefs.getBoolean("announce_charging_speed", true),
             announceThermalWarning = prefs.getBoolean("announce_thermal_warning", true),
@@ -213,9 +213,10 @@ class SettingsRepository(context: Context) {
         _settings.value = _settings.value.copy(announcePhoneBattery = enabled)
     }
 
-    fun setAnnounceBluetoothBattery(enabled: Boolean) {
-        prefs.edit().putBoolean("announce_bt_battery", enabled).apply()
-        _settings.value = _settings.value.copy(announceBluetoothBattery = enabled)
+    /** Compatibility setter: Bluetooth device announcements were removed. Old values are ignored. */
+    fun setAnnounceBluetoothBattery(@Suppress("UNUSED_PARAMETER") enabled: Boolean) {
+        prefs.edit().remove("announce_bt_battery").apply()
+        _settings.value = _settings.value.copy(announceBluetoothBattery = false)
     }
 
     fun setAnnounceChargerConnected(enabled: Boolean) {

@@ -289,16 +289,7 @@ fun AnnouncementSettingsCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // 4. Bluetooth Battery (10% Boundaries)
-                AnnouncementToggleItem(
-                    icon = Icons.Default.Bluetooth,
-                    iconTint = StatusBlue,
-                    title = "Bluetooth Device & Battery",
-                    subtitle = "Speaks 'BT connected.', 'BT disconnected.', and 'BT 50 percent' on verified 10% boundaries",
-                    checked = settings.announceBluetoothBattery,
-                    onCheckedChange = { viewModel.setAnnounceBluetoothBattery(it) },
-                    testTag = "announce_bt_battery_switch"
-                )
+                BluetoothReadingsOnlyNote()
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -494,5 +485,16 @@ private fun MuteAndOutputCard(
                 }
             }
         }
+    }
+}
+
+
+/** Read-only explanation; no control can re-enable removed Bluetooth speech. */
+@Composable
+fun BluetoothReadingsOnlyNote() {
+    Column(modifier = Modifier.fillMaxWidth().testTag("bluetooth_readings_only_note")) {
+        Text("Bluetooth readings only", style = MaterialTheme.typography.titleSmall)
+        Text("See device battery in Devices. Bluetooth connection, disconnection and device battery are not announced.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
