@@ -5,6 +5,20 @@ All user-facing release notes are maintained here. The guarded release workflow 
 ## [Unreleased]
 
 ### Fixed
+- Charging display auto-open and display holds are blocked from 23:00 until 06:00 in the phone's local clock, including always-on mode. An already-open activity/dialog closes on the existing visible UI tick or clock/time broadcasts.
+- After about one minute of fresh canonical SLOW charging samples, the display closes and releases its own hold. A second actual sample must confirm the duration; UI ticks, unavailable/retained speed, future sample times and gaps over 90 seconds cannot fabricate continuous slow evidence.
+- Normal/faster charging and new charging connections re-arm the slow guard. Once suppressed, missing speed does not repeatedly reopen the same display. This uses the existing service samples and visible UI update loop, not another sampler, alarm or background timer.
+- Existing ON/LOCK/OFF choices, charging-stop rules and isolated-task double-tap behavior remain. Manual preview stays available and never holds the display awake. A visible settings paragraph explains both rules and Android's normal timeout.
+
+### Verification limits
+- Automated policy/activity regressions and light/dark charging-card fixtures are checked. Required exact-head CI and owner approval of the changed explanation preview are needed before merge/release. Not independently reviewed; not device-verified.
+- Closing the app's charging window releases its hold; Android's normal timeout and underlying apps determine actual screen-off. No new forced device lock, permission, dependency, network endpoint, sampler, stored data, database migration or backup operation. No claim that SLOW means faulty charging, net discharge or inability to charge.
+- The slow timer is intentionally in memory. A process restart, unknown speed or a sampling gap starts fresh observation rather than inventing earlier slow time. Missing recovery while unobserved is not reconstructed. This display rule does not change charging current, charge estimates, battery cutoffs or spoken/night alert policies.
+- Physical installed-update, real process kill/reboot, lock-screen/background/OEM timing and Play Protect acceptance remain NOT VERIFIED. Keep Play Protect ON. Reliability/display behavior change, not a vulnerability patch or full Legacy parity claim.
+
+## [2.2.35]
+
+### Fixed
 - Target-charge delivery time, Dismiss and the temporary 100% choice survive a service/process restart only for the matching canonical charger-connection identity. A new connection re-arms the existing alert, and the saved user target is unchanged.
 - Critical-temperature (2-minute) and selected-threshold (3-minute) notification cooldowns survive restart. Threshold changes and critical escalation are independent; a critical reading cannot fall through to an extra lower-severity notification during its cooldown.
 - Existing low-battery and thermal condition speech retain accepted-attempt latches across restart. Fresh measured recovery re-arms them using the existing thresholds; retained display values do not count as recovery. Critical speech has a separate latch from an earlier warning.

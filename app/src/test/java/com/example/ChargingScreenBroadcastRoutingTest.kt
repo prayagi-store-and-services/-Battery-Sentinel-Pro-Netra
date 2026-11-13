@@ -20,7 +20,13 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class ChargingScreenBroadcastRoutingTest {
+    @org.junit.After fun restoreClock() {
+        com.example.ui.components.ChargingScreenVisibility.wallClock = { System.currentTimeMillis() }
+        com.example.ui.components.ChargingScreenVisibility.reset()
+    }
     private fun prepare(mode: ChargingScreenGuard.Mode): Context {
+        com.example.ui.components.ChargingScreenVisibility.wallClock = { java.util.Calendar.getInstance().apply { set(2026,10,12,12,0,0) }.timeInMillis }
+        com.example.ui.components.ChargingScreenVisibility.reset()
         val c: Context = ApplicationProvider.getApplicationContext()
         c.getSharedPreferences(CHARGING_SCREEN_PREFS, Context.MODE_PRIVATE).edit().putString(ChargingScreenGuard.Mode.KEY, mode.name).commit()
         c.sendStickyBroadcast(Intent(Intent.ACTION_BATTERY_CHANGED)

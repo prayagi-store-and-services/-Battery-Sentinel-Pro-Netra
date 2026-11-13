@@ -1,3 +1,11 @@
+## Charging-display slow/night rules (v2.2.36)
+
+Display/reliability change, not a vulnerability patch. One shared in-memory policy reads the existing canonical speed/power state, local wall clock for 23:00-06:00, and monotonic time for a roughly one-minute SLOW interval. A second actual fresh power sample must confirm the duration; retained/unknown power, invalid future times or sample gaps over 90 seconds cannot create continuity. No hardware read, background sampler, timer/alarm, dependency, network endpoint, permission, stored record, migration or backup operation is added. The visible UI reuses its existing update loop and listens for system clock/timezone/tick broadcasts.
+
+The policy applies to the background launch, isolated charging activity and in-app dialog, including already-open displays. It closes only this display and releases its hold; it does not force a new device lock or change charging, cutoffs, audio/night alert policy or Android security settings. Existing optional charge-stop locking is unchanged. Manual preview never holds the display on. Physical screen-off remains subject to Android's timeout/underlying apps; normal/fast charging is not reclassified. Slow state is in memory and never restored as invented observation after a process gap.
+
+Not independently reviewed; not device-verified. Physical installed-update, process kill/reboot, lock-screen/background/OEM timing and Play Protect acceptance remain NOT VERIFIED. No hardware-safety, physical cooling, battery gain or complete Legacy parity claim. Keep Play Protect ON.
+
 ## Private restart-safe alert state (v2.2.35)
 
 Reliability fix, not a vulnerability patch. A bounded private preference record stores the matching canonical charger-connection timestamp, target delivery attempt time, session mute/100% override, heat notification cooldowns, and four fixed low/thermal speech-condition attempt timestamps. No raw spoken text or Bluetooth identity is stored here. Clear data/uninstall removes it; Android backup remains disabled. No cloud/archive/upload operation, new permission, dependency, network endpoint, sampler, database schema or migration. The existing service, receiver and announcement engine remain the only delivery paths.

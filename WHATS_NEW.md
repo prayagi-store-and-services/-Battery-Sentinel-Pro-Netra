@@ -1,3 +1,10 @@
+## 2.2.36 - Charging display slow/night rules
+
+- Charging display stays closed from 23:00 to 06:00 in the phone's local time, even in always-on mode. An already-open charging window closes too; safe manual preview still works without keeping the display on.
+- About one minute of fresh Slow Charging readings closes the charging window and releases its hold. Normal/faster charging stays unchanged. Missing readings or long gaps do not invent slow time; a restart starts fresh observation.
+- Android's normal timeout determines when the physical screen turns off. No extra forced lock, sampler or permission. This does not mean a slow charger is faulty or cannot charge.
+- Automated tests and preview fixtures only. Not independently reviewed; not device-verified. Physical update, process-kill/reboot, lock-screen/background/OEM and Play Protect acceptance are NOT VERIFIED. Keep Play Protect ON.
+
 ## 2.2.35 - Restart-safe existing alert state
 
 - Target-charge timing, Dismiss and the temporary 100% choice survive restart for the same saved connection identity. A new connection re-arms the alert; your saved target is not changed.
