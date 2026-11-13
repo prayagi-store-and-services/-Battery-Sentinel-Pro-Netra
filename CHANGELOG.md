@@ -4,6 +4,17 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+### Changed
+- Removed all Bluetooth device connected, disconnected and battery-percent announcements. Bluetooth readings remain available inside Devices through the existing observation path. Old saved preferences and compatibility queue callers cannot re-enable Bluetooth speech.
+- Replaced the Bluetooth announcement switch with the owner-approved readings-only explanation. Ordinary phone-battery and thermal announcements, headset routing, call/media/night rules and the master/mute controls are unchanged.
+
+### Verification limits
+- Local related regression:93 tests/13 suites, zero failures/errors/skips. Tests cover forbidden canonical events, legacy saved-true preference/reload, category/priority admission guards, normal phone/critical-thermal speech queueing, canonical Bluetooth observations and audio fallback. Removed three obsolete positive Bluetooth-speech string tests; silence regressions supersede them. Earlier time-limited commands are not passes.
+- Owner approved the actual light/dark Settings text preview before PR. Component pixels inspected, not a physical-phone screenshot. Not independently reviewed; not device-verified. Exact-head required CI remains a merge gate; final release evidence is recorded separately.
+- No new dependency, permission, endpoint, sampler, database/history change, backup, signing/package change, weather or AI change. Physical Bluetooth/device audio/OEM/reboot/installed-update and Play Protect acceptance remain NOT VERIFIED. Keep Play Protect ON. This is the scoped speech-removal update, not full Legacy/Guardian parity or a vulnerability patch.
+
+## [2.2.39]
+
 ### Fixed
 - Bluetooth permission loss, failed/empty queries and profile gaps are explicit unavailable observations, not proof that a device disconnected. Both production callers and the legacy input bridge use the same typed observation path. An unavailable observation clears current device readings without inventing disconnect/reconnect speech; prior history remains separately labelled.
 - Poll sightings alone cannot authorize connection transitions. Existing ACL identity evidence bounds connect/disconnect speech; exact adapter OFF can close previously observed connections once. Turning states are unavailable, not OFF. A delayed older query cannot overwrite a newer observation; sequence is captured before service work launches and checked under the existing mutex.

@@ -40,11 +40,11 @@ class BluetoothToggleIntegrationTest {
             method.invoke(engine,NetraCentralEvent("a-80",NetraEventType.BLUETOOTH_BATTERY_BOUNDARY,previousValue=nameA,newValue="80",identityKey="TEST-A"))
             method.invoke(engine,NetraCentralEvent("b-80",NetraEventType.BLUETOOTH_BATTERY_BOUNDARY,previousValue=nameB,newValue="80",identityKey="TEST-B"))
             val field=AnnouncementEngine::class.java.getDeclaredField("queue").apply{isAccessible=true}
-            assertEquals("A second device must not erase the first pending battery line",2,(field.get(engine) as java.util.PriorityQueue<*>).size)
+            assertEquals("Bluetooth battery speech was removed for every device",0,(field.get(engine) as java.util.PriorityQueue<*>).size)
             method.invoke(engine,NetraCentralEvent("a-70",NetraEventType.BLUETOOTH_BATTERY_BOUNDARY,previousValue=nameA,newValue="70",identityKey="TEST-A"))
-            assertEquals("A newer reading replaces only that device's line",2,(field.get(engine) as java.util.PriorityQueue<*>).size)
+            assertEquals("Later readings stay in-app only",0,(field.get(engine) as java.util.PriorityQueue<*>).size)
         } finally {engine.shutdown()}
     }
-    @Test fun differentDevicesKeepSeparatePendingBatteryLines()=checkBatteryQueue("Test buds A","Test buds B")
+    @Test fun differentDevicesNeverQueueBatterySpeech()=checkBatteryQueue("Test buds A","Test buds B")
     @Test fun identicalDeviceNamesStillKeepSeparatePendingBatteryLines()=checkBatteryQueue("Test buds","Test buds")
 }

@@ -97,10 +97,6 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
     private var lastCriticalOverheatState: Boolean = false
     private val chargerThermalGuard = ChargerThermalGuard()
 
-    // Bluetooth Per-Device State Tracking (Internal for compatibility)
-    private val lastBtConnectionMap = mutableMapOf<String, Boolean>()
-    private val lastBtBatteryBoundaryMap = mutableMapOf<String, Int>()
-
     init {
         try {
             tts = TextToSpeech(context.applicationContext, this)
@@ -208,14 +204,6 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         lastAnnouncementSpeed = state.announcementSpeed
         lastThermalWarningState = (state.temperatureCelsius ?: 0f) >= 40.0f
         lastCriticalOverheatState = (state.temperatureCelsius ?: 0f) >= 45.0f
-
-        state.bluetoothDevices.forEach { device ->
-            val key = device.address.ifBlank { device.name }
-            lastBtConnectionMap[key] = device.isConnected
-            device.batteryPercent?.let {
-                lastBtBatteryBoundaryMap[key] = (it / 10) * 10
-            }
-        }
 
         isBaselineEstablished = true
         Log.d(TAG, "Baseline established in AnnouncementEngine: level=${state.batteryLevel}%, charging=${state.isCharging}")
@@ -349,47 +337,10 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                     )
                 }
             }
-            NetraEventType.BLUETOOTH_CONNECTED -> {
-                if (!settings.announceBluetoothBattery) return
-                enqueue(
-                    AnnouncementItem(
-                        id = "bt_conn_${event.eventId}",
-                        text = btConnectedText(event.newValue, event.previousValue?.toIntOrNull()),
-                        priority = AnnouncementPriority.BLUETOOTH_STATE,
-                        category = "BLUETOOTH_STATE",
-                        subjectKey = event.identityKey,
-                        isNightException = false
-                    )
-                )
-            }
-            NetraEventType.BLUETOOTH_DISCONNECTED -> {
-                if (!settings.announceBluetoothBattery) return
-                enqueue(
-                    AnnouncementItem(
-                        id = "bt_disc_${event.eventId}",
-                        text = btDisconnectedText(event.newValue),
-                        priority = AnnouncementPriority.BLUETOOTH_STATE,
-                        category = "BLUETOOTH_STATE",
-                        subjectKey = event.identityKey,
-                        isNightException = false
-                    )
-                )
-            }
-            NetraEventType.BLUETOOTH_BATTERY_BOUNDARY -> {
-                val batteryPct = event.newValue?.toIntOrNull()
-                if (batteryPct != null && settings.announceBluetoothBattery) {
-                    enqueue(
-                        AnnouncementItem(
-                            id = "bt_battery_${event.eventId}",
-                            text = btText(event.previousValue, batteryPct, false),
-                            priority = AnnouncementPriority.BLUETOOTH_BATTERY,
-                            category = "BLUETOOTH_BATTERY",
-                            subjectKey = event.identityKey,
-                            isNightException = false
-                        )
-                    )
-                }
-            }
+            // Device observations remain in the central UI/history path, never speech.
+            NetraEventType.BLUETOOTH_CONNECTED,
+            NetraEventType.BLUETOOTH_DISCONNECTED,
+            NetraEventType.BLUETOOTH_BATTERY_BOUNDARY -> return
             NetraEventType.THERMAL_WARNING -> {
                 if (settings.announceThermalWarning) {
                     val temp = event.newValue?.toFloatOrNull() ?: 40.0f
@@ -503,19 +454,6 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         }
     }
 
-    /**
-     * Enqueues an announcement item respecting master enabled, night protection, and deduplication.
-     */
-    /** "Power connected, 42 percent." The percent is left out at 100 and at the user's own target, which have their own line. */
-    /** "BT Buds, 60 percent." With no battery info: "BT Buds." The percent is left out at 100 on disconnect. */
-    private fun btText(name: String?, pct: Int?, disconnect: Boolean): String {
-        return btLine(name, pct, disconnect)
-    }
-
-    private fun btConnectedText(name: String?, pct: Int?): String = btConnectedLine(name, pct)
-
-    private fun btDisconnectedText(name: String?): String = btDisconnectedLine(name)
-
     private fun levelText(base: String, type: NetraEventType): String {
         val level = NetraApplication.instance.centralDataCenter.centralState.value.batteryLevel ?: return "$base."
         val target = NetraApplication.instance.settingsRepository.settings.value.chargeTargetPercent
@@ -526,6 +464,10 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
     // Share this monitor with processQueue: producers may run on background threads.
     @Synchronized
     fun enqueue(item: AnnouncementItem) {
+        // Reject old callers/queued compatibility categories regardless of saved preferences.
+        if (item.priority == AnnouncementPriority.BLUETOOTH_STATE ||
+            item.priority == AnnouncementPriority.BLUETOOTH_BATTERY ||
+            item.category == "BLUETOOTH_STATE" || item.category == "BLUETOOTH_BATTERY") return
         val settings = getSettings()
 
         // 1. Global Master Switch Check
@@ -593,8 +535,6 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         // 4. Discard obsolete low-priority announcements where safe
         if (item.priority == AnnouncementPriority.PHONE_BATTERY) {
             queue.removeAll { it.priority == AnnouncementPriority.PHONE_BATTERY }
-        } else if (item.priority == AnnouncementPriority.BLUETOOTH_BATTERY) {
-            queue.removeAll { it.priority == AnnouncementPriority.BLUETOOTH_BATTERY && it.subjectKey == item.subjectKey }
         }
 
         // 5. Interrupt active low priority speaking if a critical thermal event arrives
@@ -844,21 +784,4 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
 
         private const val TAG = "NetraAnnouncementEngine"
     }
-}
-
-internal fun btLine(name: String?, pct: Int?, disconnect: Boolean): String {
-    val n = name?.takeIf { it.isNotBlank() } ?: "device"
-    return if (pct == null || (disconnect && pct >= 100)) "BT $n." else "BT $n, $pct percent."
-}
-
-/** On connect: name, "connected", and the battery percent only when the phone really reports one (1..100). */
-internal fun btConnectedLine(name: String?, pct: Int?): String {
-    val n = name?.takeIf { it.isNotBlank() } ?: "Bluetooth device"
-    return if (pct != null && pct in 1..100) "$n connected, $pct percent." else "$n connected."
-}
-
-/** On disconnect: only the name and "disconnected". Never a battery percent. */
-internal fun btDisconnectedLine(name: String?): String {
-    val n = name?.takeIf { it.isNotBlank() } ?: "Bluetooth device"
-    return "$n disconnected."
 }
