@@ -5,6 +5,18 @@ All user-facing release notes are maintained here. The guarded release workflow 
 ## [Unreleased]
 
 ### Fixed
+- Bluetooth permission loss, failed/empty queries and profile gaps are explicit unavailable observations, not proof that a device disconnected. Both production callers and the legacy input bridge use the same typed observation path. An unavailable observation clears current device readings without inventing disconnect/reconnect speech; prior history remains separately labelled.
+- Poll sightings alone cannot authorize connection transitions. Existing ACL identity evidence bounds connect/disconnect speech; exact adapter OFF can close previously observed connections once. Turning states are unavailable, not OFF. A delayed older query cannot overwrite a newer observation; sequence is captured before service work launches and checked under the existing mutex.
+- Devices tab says REPORTED NOW and explains reported/unavailable/permission states rather than claiming an empty/error list proves no connection. Existing adapter-change broadcast refreshes the same observation path. No new collector, timer, background loop, stored record or permission.
+
+### Verification limits
+- Denied-permission regression fails released production. Local narrowed115distinct tests/13suites pass, plus final15-test observation/render run after UI alignment, zero failures/errors/skips. Compile/time-limited attempts are not passes. Native light/dark component fixtures inspected, not live/full-phone screenshots. Required exact-head CI and owner approval of changed labels/notes remain merge/release gates. Not independently reviewed; not device-verified.
+- Android documents that BluetoothManager and BluetoothProfile connected-device lists can be empty on error. A missing entry is not an exhaustive device census. Missed ACL events/profile readiness can skip a transition line; no unobserved restart history is reconstructed. Existing best-effort battery availability and text rules remain; no name-inferred capability or fabricated percent.
+- No new dependency, endpoint, sampler, persisted record, database migration, backup, audio route, call/media/night rule, signing or package change. Sequence/status are process-local in the existing central state, not a new store. Physical Bluetooth connections, audible output, Android/OEM broadcast delivery, installed-update/reboot and Play Protect acceptance remain NOT VERIFIED. Keep Play Protect ON. Reliability fix, not a vulnerability patch or full Legacy-parity claim.
+
+## [2.2.38]
+
+### Fixed
 - Existing Bluetooth Device & Battery switch now also suppresses connect/disconnect speech when off. Disconnect remains name plus disconnected, never a battery percent; connect uses the reported percent when supported by the existing text policy.
 - Repeated input for one device identity produces one connected-device entry/event. Crossing a 10-percent bucket no longer requires an exact multiple sample: announce only the actual observed percent once, not an invented threshold or replay of missed history.
 - Pending Bluetooth battery lines replace only the same device's older line. Existing event identity distinguishes devices with identical names for queue dedupe; the eight-item priority cap remains. No second announcer, collector, sampler or Legacy code.

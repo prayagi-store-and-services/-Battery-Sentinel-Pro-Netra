@@ -460,7 +460,9 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
     fun onBluetoothDevicesUpdate(devices: List<BluetoothDeviceItem>) {
         scope.launch {
             try {
-                NetraApplication.instance.centralDataCenter.processBluetoothDevices(devices)
+                NetraApplication.instance.centralDataCenter.processBluetoothObservation(
+                    com.example.model.BluetoothObservation(com.example.model.BluetoothObservationState.OBSERVED, devices,
+                        com.example.util.BluetoothHelper.nextObservationSequence()))
             } catch (_: Exception) {}
         }
     }

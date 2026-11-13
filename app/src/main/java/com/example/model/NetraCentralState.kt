@@ -278,6 +278,7 @@ data class NetraCentralState(
     val consumptionPowerWatts: Float? = null, // Phone consumption power
     val chargingSpeed: CanonicalChargingSpeed = CanonicalChargingSpeed.UNAVAILABLE, // Based on raw power
     val announcementSpeed: CanonicalChargingSpeed = CanonicalChargingSpeed.UNAVAILABLE, // Based on net effective power
+    val bluetoothObservationState: BluetoothObservationState = BluetoothObservationState.UNAVAILABLE,
     val bluetoothConnected: Boolean? = null,
     val bluetoothBatteryPercent: Int? = null,
     val bluetoothDevices: List<BluetoothDeviceItem> = emptyList(),

@@ -98,7 +98,7 @@ class BatteryMonitorService : Service() {
                 android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED,
                 android.bluetooth.BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED,
                 android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED -> {
-                    checkBluetoothUpdates()
+                    checkBluetoothUpdates(intent)
                 }
             }
         }
@@ -119,11 +119,17 @@ class BatteryMonitorService : Service() {
         }
     }
 
-    private fun checkBluetoothUpdates() {
+    private fun checkBluetoothUpdates(event: Intent? = null) {
+        val sequence = com.example.util.BluetoothHelper.nextObservationSequence()
         serviceScope.launch {
             try {
-                val devices = com.example.util.BluetoothHelper.getBluetoothDevices(this@BatteryMonitorService)
-                NetraApplication.instance.centralDataCenter.processBluetoothDevices(devices)
+                val observation = com.example.util.BluetoothHelper.observe(this@BatteryMonitorService, sequence)
+                @Suppress("DEPRECATION")
+                val device = event?.getParcelableExtra<android.bluetooth.BluetoothDevice>(android.bluetooth.BluetoothDevice.EXTRA_DEVICE)
+                val identity = runCatching { device?.address }.getOrNull()
+                NetraApplication.instance.centralDataCenter.processBluetoothObservation(observation,
+                    connectedIdentity = identity.takeIf { event?.action == android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED },
+                    disconnectedIdentity = identity.takeIf { event?.action == android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED })
             } catch (_: Exception) {}
         }
     }

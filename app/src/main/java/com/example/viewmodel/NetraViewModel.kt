@@ -170,6 +170,10 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
         .map { it.bluetoothDevices }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val bluetoothObservationState = NetraApplication.instance.centralDataCenter.centralState
+        .map { it.bluetoothObservationState }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), com.example.model.BluetoothObservationState.UNAVAILABLE)
+
     val bluetoothHistory: StateFlow<List<BluetoothDeviceItem>> = NetraApplication.instance.centralDataCenter.centralState
         .map { it.bluetoothHistory }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -241,8 +245,7 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
         val app = getApplication<Application>()
         _systemPermissions.value = PermissionHelper.checkAllPermissions(app)
         viewModelScope.launch(Dispatchers.IO) {
-            val list = BluetoothHelper.getBluetoothDevices(app)
-            NetraApplication.instance.centralDataCenter.processBluetoothDevices(list)
+            NetraApplication.instance.centralDataCenter.processBluetoothObservation(BluetoothHelper.observe(app))
             _appUsageDrain.value = if (PermissionHelper.isUsageAccessGranted(app)) UsageStatsHelper.getAppUsageDrainList(app) else emptyList()
             NetraApplication.instance.centralDataCenter.refreshLocationAndWeather()
         }

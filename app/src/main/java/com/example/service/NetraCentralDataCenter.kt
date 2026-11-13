@@ -35,6 +35,7 @@ class NetraCentralDataCenter(
     private val telemetryMutex = Mutex()
     private val mediaMutex = Mutex()
     private val bluetoothMutex = Mutex()
+    private var lastBluetoothObservationSequence = 0L
     private val chargingSpeedEngine = ChargingSpeedEngine()
     private val fullChargeObservation = FullChargeObservation()
     private var fullChargeSummaryStore: FullChargeSummaryStore? = null
@@ -1116,9 +1117,33 @@ class NetraCentralDataCenter(
         }
     }
 
-    suspend fun processBluetoothDevices(devices: List<com.example.model.BluetoothDeviceItem>, source: String = "BluetoothHelper") {
+    /** Polls authorize positive sightings, not disappearance. ACL/OFF evidence authorizes transitions. */
+    suspend fun processBluetoothObservation(
+        observation: com.example.model.BluetoothObservation,
+        connectedIdentity: String? = null,
+        disconnectedIdentity: String? = null
+    ) {
+        val observed = observation.state == com.example.model.BluetoothObservationState.OBSERVED
+        val off = observation.state == com.example.model.BluetoothObservationState.OFF
+        val devices = if (observed) observation.devices.filterNot { it.address == disconnectedIdentity } else emptyList()
+        processBluetoothDevices(devices, "BluetoothHelper",
+            connectedEvidence = if (observed && connectedIdentity != null) setOf(connectedIdentity) else emptySet(),
+            disconnectedEvidence = if (off) null else if (disconnectedIdentity != null && observation.state != com.example.model.BluetoothObservationState.PERMISSION_REQUIRED) setOf(disconnectedIdentity) else emptySet(),
+            observationState = observation.state, observationSequence = observation.sequence.takeIf { it > 0L })
+    }
+
+    suspend fun processBluetoothDevices(
+        devices: List<com.example.model.BluetoothDeviceItem>, source: String = "BluetoothHelper",
+        connectedEvidence: Set<String>? = null, disconnectedEvidence: Set<String>? = null,
+        observationState: com.example.model.BluetoothObservationState = com.example.model.BluetoothObservationState.OBSERVED,
+        observationSequence: Long? = null
+    ) {
         val eventsToEmit = mutableListOf<NetraCentralEvent>()
         bluetoothMutex.withLock {
+            if (observationSequence != null) {
+                if (observationSequence <= lastBluetoothObservationSequence) return@withLock
+                lastBluetoothObservationSequence = observationSequence
+            }
             val now = System.currentTimeMillis()
             val oldState = _centralState.value
 
@@ -1138,7 +1163,7 @@ class NetraCentralDataCenter(
                 val oldDevice = oldState.bluetoothDevices.find { (it.address.ifBlank { it.name }) == deviceKey }
 
                 val justConnected = device.isConnected && (oldDevice == null || !oldDevice.isConnected)
-                if (justConnected) {
+                if (justConnected && (connectedEvidence == null || deviceKey in connectedEvidence)) {
                     eventsToEmit.add(
                         NetraCentralEvent(
                             eventId = "event_bt_conn_${deviceKey}_$now",
@@ -1180,7 +1205,8 @@ class NetraCentralDataCenter(
             for (oldDevice in oldState.bluetoothDevices) {
                 val deviceKey = oldDevice.address.ifBlank { oldDevice.name }
                 val newDevice = mergedDevices.find { (it.address.ifBlank { it.name }) == deviceKey }
-                if (oldDevice.isConnected && (newDevice == null || !newDevice.isConnected)) {
+                if (oldDevice.isConnected && (newDevice == null || !newDevice.isConnected) &&
+                    (disconnectedEvidence == null || deviceKey in disconnectedEvidence)) {
                     eventsToEmit.add(
                         NetraCentralEvent(
                             eventId = "event_bt_disc_${deviceKey}_$now",
@@ -1229,7 +1255,8 @@ class NetraCentralDataCenter(
 
             // Publish state immediately!
             _centralState.update { current -> current.copy(
-                bluetoothConnected = newState.bluetoothConnected,
+                bluetoothObservationState = observationState,
+                bluetoothConnected = if (observationState in listOf(com.example.model.BluetoothObservationState.UNAVAILABLE, com.example.model.BluetoothObservationState.PERMISSION_REQUIRED)) null else newState.bluetoothConnected,
                 bluetoothBatteryPercent = newState.bluetoothBatteryPercent,
                 bluetoothDevices = newState.bluetoothDevices,
                 bluetoothHistory = newState.bluetoothHistory

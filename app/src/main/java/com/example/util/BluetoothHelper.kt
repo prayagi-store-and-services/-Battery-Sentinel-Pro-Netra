@@ -60,6 +60,34 @@ object BluetoothHelper {
         } catch (_: Exception) {}
     }
 
+    private val observationSequence = java.util.concurrent.atomic.AtomicLong()
+    /** Order is captured before collection so a delayed older query cannot overwrite newer evidence. */
+    internal fun nextObservationSequence(): Long = observationSequence.incrementAndGet()
+    fun observe(context: Context, sequence: Long = nextObservationSequence()): com.example.model.BluetoothObservation =
+        observeCurrent(context).copy(sequence = sequence)
+    /** Do not turn permission/query/profile gaps into connection transitions. */
+    private fun observeCurrent(context: Context): com.example.model.BluetoothObservation {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            Manifest.permission.BLUETOOTH_CONNECT else Manifest.permission.BLUETOOTH
+        if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED)
+            return com.example.model.BluetoothObservation(com.example.model.BluetoothObservationState.PERMISSION_REQUIRED)
+        return try {
+            val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+                ?: return com.example.model.BluetoothObservation(com.example.model.BluetoothObservationState.UNAVAILABLE)
+            val adapter = manager.adapter ?: return com.example.model.BluetoothObservation(com.example.model.BluetoothObservationState.UNSUPPORTED)
+            if (adapter.state == BluetoothAdapter.STATE_OFF)
+                return com.example.model.BluetoothObservation(com.example.model.BluetoothObservationState.OFF)
+            if (adapter.state != BluetoothAdapter.STATE_ON)
+                return com.example.model.BluetoothObservation(com.example.model.BluetoothObservationState.UNAVAILABLE)
+            val devices = getBluetoothDevices(context)
+            // Android documents an empty list on error, even without an exception.
+            com.example.model.BluetoothObservation(if (devices.isEmpty())
+                com.example.model.BluetoothObservationState.UNAVAILABLE else com.example.model.BluetoothObservationState.OBSERVED, devices)
+        } catch (_: Exception) {
+            com.example.model.BluetoothObservation(com.example.model.BluetoothObservationState.UNAVAILABLE)
+        }
+    }
+
     fun getBluetoothDevices(context: Context): List<BluetoothDeviceItem> {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Manifest.permission.BLUETOOTH_CONNECT
