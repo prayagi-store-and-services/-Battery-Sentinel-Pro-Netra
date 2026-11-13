@@ -5,6 +5,19 @@ All user-facing release notes are maintained here. The guarded release workflow 
 ## [Unreleased]
 
 ### Fixed
+- Existing Bluetooth Device & Battery switch now also suppresses connect/disconnect speech when off. Disconnect remains name plus disconnected, never a battery percent; connect uses the reported percent when supported by the existing text policy.
+- Repeated input for one device identity produces one connected-device entry/event. Crossing a 10-percent bucket no longer requires an exact multiple sample: announce only the actual observed percent once, not an invented threshold or replay of missed history.
+- Pending Bluetooth battery lines replace only the same device's older line. Existing event identity distinguishes devices with identical names for queue dedupe; the eight-item priority cap remains. No second announcer, collector, sampler or Legacy code.
+
+### Verification limits
+- New real central-event/queue regressions reproduce missing crossings, duplicate entries, ignored toggle and one device erasing another. Local narrowed verification:100distinct tests/11suites, zero failures/errors/skips. One wider local run exposed an asynchronous location-fixture race; a controlled background dispatcher preserves its assertions while runtime still defaults to IO. Compile/time-limited attempts are not passes. Required exact-head CI remains a release gate. Not independently reviewed; not device-verified.
+- No new UI/control/wording, permission, dependency, endpoint, persisted record, migration, backup, audio routing or call/media/night policy change. Device identity is reused only in existing in-memory event/queue state, not spoken or newly stored. Existing local Bluetooth history is unchanged.
+- This is the first scoped item5 batch, not full Bluetooth parity. Existing collector failures/missing permission can still look like an empty device list; trustworthy unknown-vs-disconnected handling remains open. Previously unobserved connection changes cannot be reconstructed after restart. Battery availability depends on the phone/device; no percentage or capability is invented from a name.
+- Physical Bluetooth connections, audible delivery, Android/OEM reporting, installed-update/reboot and Play Protect acceptance remain NOT VERIFIED. Keep Play Protect ON. Reliability fix, not a vulnerability patch or physical battery-gain claim.
+
+## [2.2.37]
+
+### Fixed
 - After a saver restores brightness but Android rejects restoring adaptive mode, a later manual brightness edit is preserved on retry and process recovery. The existing shared display-restore ledger retains one brightness witness until mode recovery finishes; it does not start a second saver.
 - The witness is committed before the completed brightness journal is discarded. Failed storage retains recovery evidence and blocks automatic writes; unreadable brightness keeps mode recovery pending instead of guessing. An unchanged value still permits restoring the original mode.
 

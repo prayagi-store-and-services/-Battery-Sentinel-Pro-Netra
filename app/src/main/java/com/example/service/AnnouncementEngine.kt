@@ -50,7 +50,8 @@ data class AnnouncementItem(
     val category: String,
     val isNightException: Boolean = false,
     val timestamp: Long = System.currentTimeMillis(),
-    var speechState: AnnouncementSpeechState = AnnouncementSpeechState.QUEUED
+    var speechState: AnnouncementSpeechState = AnnouncementSpeechState.QUEUED,
+    val subjectKey: String? = null
 ) : Comparable<AnnouncementItem> {
     override fun compareTo(other: AnnouncementItem): Int {
         val prioDiff = this.priority.level.compareTo(other.priority.level)
@@ -349,23 +350,27 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 }
             }
             NetraEventType.BLUETOOTH_CONNECTED -> {
+                if (!settings.announceBluetoothBattery) return
                 enqueue(
                     AnnouncementItem(
                         id = "bt_conn_${event.eventId}",
                         text = btConnectedText(event.newValue, event.previousValue?.toIntOrNull()),
                         priority = AnnouncementPriority.BLUETOOTH_STATE,
                         category = "BLUETOOTH_STATE",
+                        subjectKey = event.identityKey,
                         isNightException = false
                     )
                 )
             }
             NetraEventType.BLUETOOTH_DISCONNECTED -> {
+                if (!settings.announceBluetoothBattery) return
                 enqueue(
                     AnnouncementItem(
                         id = "bt_disc_${event.eventId}",
                         text = btDisconnectedText(event.newValue),
                         priority = AnnouncementPriority.BLUETOOTH_STATE,
                         category = "BLUETOOTH_STATE",
+                        subjectKey = event.identityKey,
                         isNightException = false
                     )
                 )
@@ -379,6 +384,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                             text = btText(event.previousValue, batteryPct, false),
                             priority = AnnouncementPriority.BLUETOOTH_BATTERY,
                             category = "BLUETOOTH_BATTERY",
+                            subjectKey = event.identityKey,
                             isNightException = false
                         )
                     )
@@ -546,7 +552,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             }
 
         // 3. Prevent exact duplicate item already waiting in queue
-        if (queue.any { it.text == item.text }) {
+        if (queue.any { it.text == item.text && it.subjectKey == item.subjectKey }) {
             Log.d(TAG, "Duplicate announcement discarded -> ${item.text}")
             return
         }
@@ -573,11 +579,12 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         // The continuous charge alert repeats the same line on purpose until the charger is unplugged.
         if (item.category != "DIRECT_TEST" && item.category != ContinuousChargeAlert.CATEGORY) {
             val nowMs = System.currentTimeMillis()
-            if (isRecentDuplicate(recentSpoken, item.text, nowMs, DEDUPE_WINDOW_MS)) {
+            val dedupeKey = item.subjectKey?.let { "bt:$it:${item.text}" } ?: item.text
+            if (isRecentDuplicate(recentSpoken, dedupeKey, nowMs, DEDUPE_WINDOW_MS)) {
                 Log.d(TAG, "Repeat announcement suppressed by central ledger -> ${item.text}")
                 return
             }
-            recentSpoken[item.text] = nowMs
+            recentSpoken[dedupeKey] = nowMs
             if (recentSpoken.size > 50) recentSpoken.entries.removeAll { nowMs - it.value > DEDUPE_WINDOW_MS }
         }
 
@@ -585,7 +592,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         if (item.priority == AnnouncementPriority.PHONE_BATTERY) {
             queue.removeAll { it.priority == AnnouncementPriority.PHONE_BATTERY }
         } else if (item.priority == AnnouncementPriority.BLUETOOTH_BATTERY) {
-            queue.removeAll { it.priority == AnnouncementPriority.BLUETOOTH_BATTERY }
+            queue.removeAll { it.priority == AnnouncementPriority.BLUETOOTH_BATTERY && it.subjectKey == item.subjectKey }
         }
 
         // 5. Interrupt active low priority speaking if a critical thermal event arrives

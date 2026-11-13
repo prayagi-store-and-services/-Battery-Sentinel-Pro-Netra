@@ -25,8 +25,11 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class NetraCentralDataCenter(
-    private val telemetryClock: () -> Long = { System.currentTimeMillis() }
+    private val telemetryClock: () -> Long = { System.currentTimeMillis() },
+    backgroundDispatcher: kotlinx.coroutines.CoroutineDispatcher = kotlinx.coroutines.Dispatchers.IO
 ) {
+    // Preserve the existing trailing-lambda clock constructor used by callers.
+    constructor(telemetryClock: () -> Long) : this(telemetryClock, kotlinx.coroutines.Dispatchers.IO)
 
     internal var elapsedClock: () -> Long = { android.os.SystemClock.elapsedRealtime() }
     private val telemetryMutex = Mutex()
@@ -50,7 +53,7 @@ class NetraCentralDataCenter(
     )
     val centralEvents: SharedFlow<NetraCentralEvent> = _centralEvents.asSharedFlow()
 
-    private val backgroundScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
+    private val backgroundScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + backgroundDispatcher)
     private var inMemoryBluetoothHistory: MutableList<com.example.model.BluetoothDeviceItem>? = null
 
     private var capabilityRegistry: CentralCapabilityRegistry? = null
@@ -1119,7 +1122,7 @@ class NetraCentralDataCenter(
             val now = System.currentTimeMillis()
             val oldState = _centralState.value
 
-            val mergedDevices = devices.map { device ->
+            val mergedDevices = devices.distinctBy { it.address.ifBlank { it.name } }.map { device ->
                 val deviceKey = device.address.ifBlank { device.name }
                 val oldDevice = oldState.bluetoothDevices.find { (it.address.ifBlank { it.name }) == deviceKey }
 
@@ -1143,7 +1146,8 @@ class NetraCentralDataCenter(
                             timestamp = now,
                             previousValue = device.batteryPercent?.toString(),
                             newValue = device.name,
-                            source = source
+                            source = source,
+                            identityKey = deviceKey
                         )
                     )
                 }
@@ -1153,7 +1157,11 @@ class NetraCentralDataCenter(
                     val currentPercent = device.batteryPercent
                     val oldPercent = oldDevice?.batteryPercent
                     // No separate boundary line on the same tick as the connect line (it would announce the percent twice)
-                    if (!justConnected && currentPercent % 10 == 0 && (oldPercent == null || oldPercent != currentPercent)) {
+                    // Device samples can skip the exact multiple. Announce the observed value,
+                    // never substitute an unobserved threshold or replay every crossed step.
+                    val crossedBoundary = if (oldPercent == null) currentPercent % 10 == 0
+                        else currentPercent / 10 != oldPercent / 10
+                    if (!justConnected && crossedBoundary && oldPercent != currentPercent) {
                         eventsToEmit.add(
                             NetraCentralEvent(
                                 eventId = "event_bt_bat_${deviceKey}_${currentPercent}_$now",
@@ -1161,7 +1169,8 @@ class NetraCentralDataCenter(
                                 timestamp = now,
                                 previousValue = device.name,
                                 newValue = currentPercent.toString(),
-                                source = source
+                                source = source,
+                                identityKey = deviceKey
                             )
                         )
                     }
@@ -1179,7 +1188,8 @@ class NetraCentralDataCenter(
                             timestamp = now,
                             previousValue = oldDevice.batteryPercent?.toString(),
                             newValue = oldDevice.name,
-                            source = source
+                            source = source,
+                            identityKey = deviceKey
                         )
                     )
                 }
