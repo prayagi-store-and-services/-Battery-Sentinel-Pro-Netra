@@ -37,6 +37,7 @@ object SavingSettings {
     private const val B = Settings.System.SCREEN_BRIGHTNESS
     private const val M = Settings.System.SCREEN_BRIGHTNESS_MODE
     private const val T = Settings.System.SCREEN_OFF_TIMEOUT
+    private const val MODE_BRIGHTNESS_WITNESS = "mode_brightness_witness"
     private val fields = listOf(B, M, T)
     private val androidIo = object : SavingSystemIo {
         override fun canWrite(c: Context) = Settings.System.canWrite(c)
@@ -194,6 +195,10 @@ object SavingSettings {
             if (held != null && p.contains("display_error")) { restoreDisplay(c, owner); return false }
             if (held != null && reconcile(c)) return false
             check(p.edit().putString("display_owner", owner).remove("display_error").checkedCommit())
+            // Keep a brightness witness while adaptive-mode restoration is still owned.
+            // It is needed even when brightness already equals the requested saver value.
+            if (!p.contains(MODE_BRIGHTNESS_WITNESS))
+                check(p.edit().putInt(MODE_BRIGHTNESS_WITNESS, io.read(c, B)).checkedCommit())
             change(c, M, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL)
             change(c, B, brightness.coerceIn(0, 255))
             if (timeoutMs != null) change(c, T, timeoutMs)
@@ -244,7 +249,15 @@ object SavingSettings {
             if (pending(c, B)) {
                 val actual = io.read(c, B)
                 if (actual != p.getInt("applied_$B", -1) && actual != p.getInt("before_$B", -1)) forget(c, M)
+            } else if (pending(c, M) && p.contains(MODE_BRIGHTNESS_WITNESS) &&
+                io.read(c, B) != p.getInt(MODE_BRIGHTNESS_WITNESS, -1)) {
+                // Brightness may already have restored successfully in an earlier attempt.
+                // A newer manual edit still takes priority over switching adaptive mode back on.
+                forget(c, M)
             }
+        }.getOrElse {
+            p.edit().putString("display_error", "Restore failed for some display settings; retry").checkedCommit()
+            return false
         }
         var ok = true
         // Independent commits mean a failed mode restore cannot discard its baseline after brightness succeeds.
@@ -256,13 +269,18 @@ object SavingSettings {
                     check(io.write(c, key, before))
                     check(io.read(c, key) == before)
                 }
+                // Commit before discarding the brightness original. A failed commit retains
+                // its journal, so a later retry cannot lose the external-edit comparison.
+                if (key == B && pending(c, M))
+                    check(p.edit().putInt(MODE_BRIGHTNESS_WITNESS, io.read(c, B)).checkedCommit())
                 check(forget(c, key))
                 true
             }.getOrDefault(false)
             if (persistenceFailed) return false
             if (!done) ok = false
         }
-        if (ok) p.edit().remove("display_owner").remove("display_external").remove("display_error").checkedCommit()
+        if (ok) p.edit().remove("display_owner").remove("display_external").remove("display_error")
+            .remove(MODE_BRIGHTNESS_WITNESS).checkedCommit()
         else p.edit().putString("display_error", "Restore failed for some display settings; retry").checkedCommit()
         return ok
     }

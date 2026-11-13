@@ -459,4 +459,95 @@ class SavingConsentTest {
         SavingSettings.retryPending(c)
         assertFalse(SavingSettings.status(c).contains("storage failed"))
     }
+    @Test fun manualBrightnessEditAfterPartialRestoreMustKeepManualMode() {
+        val io = FakeIo(); SavingSettings.io = io
+        SavingConsent.setDisplay(c, true)
+        assertTrue(SavingSettings.display(c, "thermal", 10, 15000))
+        io.fail = { key, value -> key == Settings.System.SCREEN_BRIGHTNESS_MODE && value == 1 }
+        assertFalse(SavingSettings.restoreDisplay(c, "thermal"))
+        assertEquals(190, io.values[Settings.System.SCREEN_BRIGHTNESS])
+        assertEquals(0, io.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
+        // The user picks a new manual brightness before permission/restore succeeds later.
+        io.values[Settings.System.SCREEN_BRIGHTNESS] = 211
+        io.fail = null
+        SavingSettings.retryPending(c)
+        assertEquals(211, io.values[Settings.System.SCREEN_BRIGHTNESS])
+        assertEquals("A later manual edit must not unexpectedly switch adaptive brightness back on", 0,
+            io.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
+    }
+
+    @Test fun manualEditAfterPartialRestoreSurvivesProcessRecovery() {
+        val io = FakeIo(); SavingSettings.io = io
+        SavingConsent.setDisplay(c, true)
+        assertTrue(SavingSettings.display(c, "active", 10, 15000))
+        io.fail = { key, value -> key == Settings.System.SCREEN_BRIGHTNESS_MODE && value == 1 }
+        assertFalse(SavingSettings.restoreDisplay(c, "active"))
+        io.values[Settings.System.SCREEN_BRIGHTNESS] = 211
+        io.fail = null
+        SavingSettings.startNewProcessSessions(c)
+        assertEquals(211, io.values[Settings.System.SCREEN_BRIGHTNESS])
+        assertEquals(0, io.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
+        assertFalse(c.getSharedPreferences("netra_saving_restore_v1",0).contains("display_owner"))
+    }
+
+    @Test fun alreadyAtSaverBrightnessStillPreservesLaterManualEdit() {
+        val io = FakeIo(); SavingSettings.io = io
+        io.values[Settings.System.SCREEN_BRIGHTNESS] = 10
+        SavingConsent.setDisplay(c, true)
+        assertTrue(SavingSettings.display(c, "thermal", 10))
+        io.values[Settings.System.SCREEN_BRIGHTNESS] = 211
+        assertTrue(SavingSettings.restoreDisplay(c, "thermal"))
+        assertEquals(211, io.values[Settings.System.SCREEN_BRIGHTNESS])
+        assertEquals(0, io.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
+    }
+
+    @Test fun partialRestoreWithoutManualEditStillRestoresAdaptiveMode() {
+        val io = FakeIo(); SavingSettings.io = io
+        SavingConsent.setDisplay(c, true)
+        assertTrue(SavingSettings.display(c, "thermal", 10))
+        io.fail = { key, value -> key == Settings.System.SCREEN_BRIGHTNESS_MODE && value == 1 }
+        assertFalse(SavingSettings.restoreDisplay(c, "thermal"))
+        io.fail = null
+        assertTrue(SavingSettings.restoreDisplay(c, "thermal"))
+        assertEquals(190, io.values[Settings.System.SCREEN_BRIGHTNESS])
+        assertEquals(1, io.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
+        assertFalse(c.getSharedPreferences("netra_saving_restore_v1",0).contains("mode_brightness_witness"))
+    }
+
+    @Test fun failedWitnessCommitRetainsOriginalAndRetryDetectsManualEdit() {
+        val io = FakeIo(); SavingSettings.io = io
+        SavingConsent.setDisplay(c, true)
+        assertTrue(SavingSettings.display(c, "thermal", 10, 15000))
+        // At restore, fail the witness commit before the brightness journal can be removed.
+        SavingSettings.editorCommit = { false }
+        assertFalse(SavingSettings.restoreDisplay(c, "thermal"))
+        assertEquals(190, io.values[Settings.System.SCREEN_BRIGHTNESS])
+        assertTrue(c.getSharedPreferences("netra_saving_restore_v1",0).contains("before_screen_brightness"))
+        io.values[Settings.System.SCREEN_BRIGHTNESS] = 211
+        SavingSettings.editorCommit = { it.commit() }
+        SavingSettings.retryPending(c)
+        assertEquals(211, io.values[Settings.System.SCREEN_BRIGHTNESS])
+        assertEquals(0, io.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
+    }
+
+    @Test fun unverifiableBrightnessCannotChangePendingAdaptiveMode() {
+        val base = FakeIo(); SavingSettings.io = base
+        SavingConsent.setDisplay(c, true)
+        assertTrue(SavingSettings.display(c, "thermal", 10))
+        base.fail = { key, value -> key == Settings.System.SCREEN_BRIGHTNESS_MODE && value == 1 }
+        assertFalse(SavingSettings.restoreDisplay(c, "thermal"))
+        base.fail = null
+        SavingSettings.io = object : SavingSystemIo by base {
+            override fun read(c: Context,key:String):Int {
+                if (key==Settings.System.SCREEN_BRIGHTNESS) throw SecurityException("read unavailable")
+                return base.read(c,key)
+            }
+        }
+        assertFalse(SavingSettings.restoreDisplay(c, "thermal"))
+        assertEquals(0,base.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
+        SavingSettings.io = base
+        assertTrue(SavingSettings.restoreDisplay(c, "thermal"))
+        assertEquals(1,base.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
+    }
+
 }
