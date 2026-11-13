@@ -64,23 +64,21 @@ fun DevicesScreen(
     val context = LocalContext.current
     val btDevices by viewModel.bluetoothDevices.collectAsStateWithLifecycle()
     val btHistory by viewModel.bluetoothHistory.collectAsStateWithLifecycle()
+    val observationState by viewModel.bluetoothObservationState.collectAsStateWithLifecycle()
     val permissions by viewModel.systemPermissions.collectAsStateWithLifecycle()
 
     var activeTab by remember { mutableStateOf("LIVE") }
 
-    // Bluetooth on/off, kept live through the system state broadcast (no permission needed to read it).
-    val btAdapter = remember { android.bluetooth.BluetoothAdapter.getDefaultAdapter() }
-    var btEnabled by remember { mutableStateOf(btAdapter?.isEnabled == true) }
+    // Refresh the same observation path on adapter changes, without guessing from isEnabled.
     DisposableEffect(context) {
         val receiver = object : android.content.BroadcastReceiver() {
             override fun onReceive(c: android.content.Context?, i: android.content.Intent?) {
-                btEnabled = btAdapter?.isEnabled == true
+                viewModel.refreshHardwareState()
             }
         }
         context.registerReceiver(receiver, android.content.IntentFilter(android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED))
         onDispose { runCatching { context.unregisterReceiver(receiver) } }
     }
-    val btStatus = com.example.util.bluetoothStatus(btAdapter != null, permissions.isBluetoothGranted, btEnabled)
 
     val btPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
@@ -150,7 +148,7 @@ fun DevicesScreen(
                 FilterChip(
                     selected = activeTab == "LIVE",
                     onClick = { activeTab = "LIVE" },
-                    label = { Text("LIVE CONNECTED (${btDevices.filter { it.isConnected }.size})", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                    label = { Text("REPORTED NOW (${btDevices.filter { it.isConnected }.size})", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = NetraEmerald.copy(alpha = 0.25f),
                         selectedLabelColor = NetraEmerald
@@ -168,6 +166,10 @@ fun DevicesScreen(
                     modifier = Modifier.weight(1f).testTag("tab_history_bt")
                 )
             }
+        }
+
+        if (activeTab == "LIVE" && filteredDevices.isNotEmpty()) {
+            item { com.example.ui.components.BluetoothObservationNote(observationState) }
         }
 
         if (filteredDevices.isEmpty()) {
@@ -189,12 +191,10 @@ fun DevicesScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (btStatus != com.example.util.BluetoothStatus.ON && activeTab == "LIVE") {
-                                com.example.util.bluetoothStatusMessage(btStatus) ?: ""
+                            text = if (activeTab == "LIVE") {
+                                com.example.ui.components.bluetoothObservationMessage(observationState)
                             } else if (!permissions.isBluetoothGranted) {
                                 "Bluetooth permission is required to discover connected peripherals and query battery levels (BAS)."
-                            } else if (activeTab == "LIVE") {
-                                "No connected Bluetooth devices. Connect a peripheral to trace power telemetry."
                             } else {
                                 "No registered historical Bluetooth devices."
                             },

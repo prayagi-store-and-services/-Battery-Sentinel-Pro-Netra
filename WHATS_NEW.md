@@ -1,3 +1,10 @@
+## 2.2.39 - Bluetooth unavailable is not disconnected
+
+- Missing Bluetooth access or an empty/error query no longer invents disconnect/reconnect speech. The current view clears uncertain readings and explains the observation state; history stays separate.
+- REPORTED NOW means only devices Android currently reports. Missing entries do not prove a disconnect. Existing ACL evidence or confirmed Bluetooth OFF bounds transition speech; delayed older queries cannot replace newer observations.
+- No new collector/access/background loop/store or audio rule. Missed events/profile delays may skip a line; unseen restart changes are not reconstructed. Not independently reviewed; not device-verified.
+- Real Bluetooth/audio/OEM/update/reboot/Play Protect are NOT VERIFIED; keep protection ON. Native preview fixtures and automated tests are not live-phone proof.
+
 ## 2.2.38 - Bluetooth event and queue isolation
 
 - Bluetooth Device & Battery OFF also silences connect/disconnect lines. Disconnect never speaks a battery percent.
