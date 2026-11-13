@@ -5,6 +5,17 @@ All user-facing release notes are maintained here. The guarded release workflow 
 ## [Unreleased]
 
 ### Fixed
+- After a saver restores brightness but Android rejects restoring adaptive mode, a later manual brightness edit is preserved on retry and process recovery. The existing shared display-restore ledger retains one brightness witness until mode recovery finishes; it does not start a second saver.
+- The witness is committed before the completed brightness journal is discarded. Failed storage retains recovery evidence and blocks automatic writes; unreadable brightness keeps mode recovery pending instead of guessing. An unchanged value still permits restoring the original mode.
+
+### Verification limits
+- Automated regressions reproduce the old bug and cover partial recovery, later manual edits, startup recovery, unchanged retry, brightness already at the saver target, failed persistence and unreadable settings. Required exact-head CI must pass before merge/release. Not independently reviewed; not device-verified.
+- No new control, visible wording, permission, dependency, endpoint, sampler, database migration or backup operation. One bounded integer is added to the existing private local preference ledger and removed after successful display recovery. Clear data/uninstall loses recovery records. Previously discarded originals cannot be reconstructed; an edit returning to the same observed value cannot be distinguished from no edit.
+- Physical installed-update, real process kill/reboot, Android/OEM setting writes and Play Protect installation acceptance remain NOT VERIFIED. Keep Play Protect ON. Reliability fix, not a vulnerability patch, physical battery-gain claim or full Legacy parity.
+
+## [2.2.36]
+
+### Fixed
 - Charging display auto-open and display holds are blocked from 23:00 until 06:00 in the phone's local clock, including always-on mode. An already-open activity/dialog closes on the existing visible UI tick or clock/time broadcasts.
 - After about one minute of fresh canonical SLOW charging samples, the display closes and releases its own hold. A second actual sample must confirm the duration; UI ticks, unavailable/retained speed, future sample times and gaps over 90 seconds cannot fabricate continuous slow evidence.
 - Normal/faster charging and new charging connections re-arm the slow guard. Once suppressed, missing speed does not repeatedly reopen the same display. This uses the existing service samples and visible UI update loop, not another sampler, alarm or background timer.

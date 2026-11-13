@@ -1,3 +1,9 @@
+## 2.2.37 - Preserve manual brightness after partial restore
+
+- If brightness restores but adaptive-mode recovery fails, a later manual brightness edit stays yours on retry. An unchanged value still allows restoring your original mode.
+- Uses the existing private display-restore ledger. Failed storage or an unreadable current brightness does not authorize guessing. No new controls, access, sampler or backup operation.
+- Automated verification only. Not independently reviewed; not device-verified. Physical update, process-kill/reboot, Android/OEM writes and Play Protect acceptance are NOT VERIFIED. Keep Play Protect ON. Missing older originals cannot be recovered and same-value edits cannot be distinguished.
+
 ## 2.2.36 - Charging display slow/night rules
 
 - Charging display stays closed from 23:00 to 06:00 in the phone's local time, even in always-on mode. An already-open charging window closes too; safe manual preview still works without keeping the display on.

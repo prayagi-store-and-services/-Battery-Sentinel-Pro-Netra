@@ -1,3 +1,9 @@
+## Partial display recovery (v2.2.37)
+
+Reliability fix, not a vulnerability patch. One bounded integer in the existing private display-restore preferences retains the last owned/restored brightness until coupled mode restoration finishes. A later different manual brightness relinquishes mode ownership instead of unexpectedly restoring adaptive mode. The witness commits before the brightness original is discarded; failed persistence keeps evidence and blocks automatic writes. Unreadable brightness leaves restoration pending. Successful display recovery clears the witness. No new raw telemetry, sensitive content, control, visible wording, permission, dependency, endpoint, sampler, database migration or backup operation. Sync ownership and separate consent remain unchanged.
+
+This does not reconstruct previously discarded originals or distinguish edits that return to the same observed value. Clear data/uninstall loses the local recovery records; Android backup remains disabled. Not independently reviewed; not device-verified. Physical installed-update, processkill/reboot, OEM setting writes and Play Protect installation acceptance remain NOT VERIFIED. Keep Play Protect ON. No physical battery-gain, hardware-safety or complete Legacy parity claim.
+
 ## Charging-display slow/night rules (v2.2.36)
 
 Display/reliability change, not a vulnerability patch. One shared in-memory policy reads the existing canonical speed/power state, local wall clock for 23:00-06:00, and monotonic time for a roughly one-minute SLOW interval. A second actual fresh power sample must confirm the duration; retained/unknown power, invalid future times or sample gaps over 90 seconds cannot create continuity. No hardware read, background sampler, timer/alarm, dependency, network endpoint, permission, stored record, migration or backup operation is added. The visible UI reuses its existing update loop and listens for system clock/timezone/tick broadcasts.
