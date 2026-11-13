@@ -1,3 +1,10 @@
+## 2.2.38 - Bluetooth event and queue isolation
+
+- Bluetooth Device & Battery OFF also silences connect/disconnect lines. Disconnect never speaks a battery percent.
+- A skipped 10-percent crossing speaks the actual observed value once. Duplicate input for one device is collapsed; another device's waiting battery line is no longer erased, even when both devices share a name.
+- Uses existing central events and bounded queue, no new controls/access/collector. Not independently reviewed; not device-verified. Real Bluetooth/audio/OEM/update/reboot/Play Protect are NOT VERIFIED; keep protection ON.
+- Partial item5 work: collector errors can still resemble an empty list; unknown-vs-disconnected handling and unobserved restart history remain unresolved. No fake battery/capability claims.
+
 ## 2.2.37 - Preserve manual brightness after partial restore
 
 - If brightness restores but adaptive-mode recovery fails, a later manual brightness edit stays yours on retry. An unchanged value still allows restoring your original mode.

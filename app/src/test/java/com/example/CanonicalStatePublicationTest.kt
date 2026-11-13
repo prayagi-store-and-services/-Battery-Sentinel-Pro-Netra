@@ -64,7 +64,9 @@ class CanonicalStatePublicationTest {
     }
     @Test
     fun staleTelemetryRetainsLatestBluetoothClimateAndCapabilities() = runBlocking {
-        val center = NetraCentralDataCenter()
+        // Keep the registry's automatic location refresh from racing this test's explicit fixture.
+        // Runtime still defaults to IO; the fixture tests stale publication, not real location lookup.
+        val center = NetraCentralDataCenter(backgroundDispatcher = kotlinx.coroutines.test.StandardTestDispatcher())
         center.initCapabilityRegistry(androidx.test.core.app.ApplicationProvider.getApplicationContext())
         center.updateLocationAndWeatherDirect(
             com.example.model.LocationContextState(countryCode = "IN"),
