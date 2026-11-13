@@ -5,6 +5,16 @@ All user-facing release notes are maintained here. The guarded release workflow 
 ## [Unreleased]
 
 ### Changed
+- Defer existing automatic own-cache maintenance at battery temperature>=40C or battery level<15%, or when required per-field context is missing, nonfinite, invalid, historical, future-dated or older than the existing120-second freshness window. Deferred work does not reserve the six-hour attempt budget. No new sampler or maintenance engine.
+- Keep strictly>200MiB threshold, persisted six-hour budget, protected files, bounded traversal and manual cleanup. Existing constructor/manual cache-stat refresh can still scan; this is not an all-scan gate.
+
+### Verification limits
+- Initial released-production deferral regression:8tests failed. Adapted local related regression:35tests/3suites, zero failures/errors/skips. Exact-head CI and final signed artifact audit remain release gates. Not independently reviewed; not device-verified. No physical cooling or battery-saving benefit is claimed.
+- No UI, dependency, permission, endpoint, database, signing/package, weather, AI, tile, backup or Guardian repository deletion change. Keep Play Protect ON.
+
+## [2.2.40]
+
+### Changed
 - Removed all Bluetooth device connected, disconnected and battery-percent announcements. Bluetooth readings remain available inside Devices through the existing observation path. Old saved preferences and compatibility queue callers cannot re-enable Bluetooth speech.
 - Replaced the Bluetooth announcement switch with the owner-approved readings-only explanation. Ordinary phone-battery and thermal announcements, headset routing, call/media/night rules and the master/mute controls are unchanged.
 

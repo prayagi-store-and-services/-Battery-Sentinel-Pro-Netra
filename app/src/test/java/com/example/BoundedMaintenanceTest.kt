@@ -29,24 +29,29 @@ class BoundedMaintenanceTest {
         context.getSharedPreferences("netra_cache_storage_prefs",0).edit().clear().commit()
         context.getSharedPreferences("netra_thermal_guardian",0).edit().clear().commit()
     }
+    private fun safeContext():com.example.model.NetraCentralState {
+        val t=System.currentTimeMillis()
+        return com.example.model.NetraCentralState(batteryLevel=60,temperatureCelsius=30f,
+            fieldStates=com.example.model.TelemetryFieldState(levelStatus=com.example.model.FieldStatus.LIVE,tempStatus=com.example.model.FieldStatus.LIVE,levelObservedAt=t,tempObservedAt=t))
+    }
     private fun file(name: String, bytes: Long): File = File(context.cacheDir,name).also {
         it.parentFile?.mkdirs(); RandomAccessFile(it,"rw").use { r -> r.setLength(bytes) }
     }
     @Test fun charging50MiBAndExactly200NeverAutoClean() = runBlocking {
         val f=file("one.bin",50L*1024*1024)
-        StorageCacheManager(context).autoCleanIfAppropriate(true);assertTrue(f.exists())
+        StorageCacheManager(context).autoCleanIfAppropriate(true,safeContext());assertTrue(f.exists())
         context.getSharedPreferences("netra_cache_storage_prefs",0).edit().clear().commit()
         RandomAccessFile(f,"rw").use { it.setLength(StorageCacheManager.MAX_CACHE_SIZE_BYTES) }
-        StorageCacheManager(context).autoCleanIfAppropriate(false);assertTrue(f.exists())
+        StorageCacheManager(context).autoCleanIfAppropriate(false,safeContext());assertTrue(f.exists())
     }
     @Test fun above200DeletesOnlyPayloadAndReservesAcrossRestart() = runBlocking {
         val bytes=StorageCacheManager.MAX_CACHE_SIZE_BYTES+1
         val f=file("nested/payload.bin",bytes)
         val manager=StorageCacheManager(context)
-        manager.autoCleanIfAppropriate(false)
+        manager.autoCleanIfAppropriate(false,safeContext())
         assertFalse(f.exists());assertEquals(bytes,manager.cacheStats.value.lastFreedBytes)
         val again=file("again.bin",bytes)
-        StorageCacheManager(context).autoCleanIfAppropriate(true);assertTrue(again.exists())
+        StorageCacheManager(context).autoCleanIfAppropriate(true,safeContext());assertTrue(again.exists())
     }
     @Test fun explicitCleanExcludesCodeCacheProtectedFilesAndLinks() = runBlocking {
         val keep=File(context.codeCacheDir,"compiled.bin").also { it.writeText("code") }
@@ -73,8 +78,8 @@ class BoundedMaintenanceTest {
     @Test fun clockRollbackRebasesWithoutCleanup() = runBlocking {
         val f=file("large.bin",StorageCacheManager.MAX_CACHE_SIZE_BYTES+1)
         context.getSharedPreferences("netra_cache_storage_prefs",0).edit().putLong("last_auto_attempt_ms",Long.MAX_VALUE).commit()
-        StorageCacheManager(context).autoCleanIfAppropriate(false);assertTrue(f.exists())
-        StorageCacheManager(context).autoCleanIfAppropriate(false);assertTrue(f.exists())
+        StorageCacheManager(context).autoCleanIfAppropriate(false,safeContext());assertTrue(f.exists())
+        StorageCacheManager(context).autoCleanIfAppropriate(false,safeContext());assertTrue(f.exists())
     }
     @Test fun thermalPendingAndClosedEventsAreBounded() {
         ThermalGuardianLog.init(context);ThermalGuardianLog.beginSession(1,40f,false)
