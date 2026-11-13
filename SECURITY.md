@@ -1,3 +1,13 @@
+## Automatic cache maintenance deferral (v2.2.41)
+
+Reliability/maintenance change, not a vulnerability patch. Existing automatic own-cache maintenance now requires canonical LIVE per-field battery level and finite temperature observed within the existing120-second freshness window, with no future/missing timestamps. Temperature>=40C or level<15% defers before that entry point traverses files or reserves its six-hour attempt. Strictly>200MiB/persisted6h, bounded traversal and protected-file/symlink exclusions remain. Existing constructor/manual cache-stat refresh can still scan; explicit manual cleanup is unchanged. No all-scan, physical cooling or battery-saving guarantee.
+
+No new UI, service, timer, sampler, database, dependency, permission, network endpoint, raw record, signing/package or backup change. No Guardian repository deletion. Local35tests/3suites pass after8baseline failures; exact-head required CI/final artifact audit are separate release gates. Not independently reviewed; not device-verified. Physical-device/OEM/reboot/install/update/Play Protect acceptance remain NOT VERIFIED. Keep Play Protect ON.
+
+## Bluetooth speech removal (v2.2.40)
+
+All Bluetooth device connect/disconnect/battery-percent speech is removed; device readings remain in-app. Old preferences and direct queue categories/priorities cannot re-enable it. Dead speech builders removed, approved Settings readings-only explanation replaces the switch. Ordinary phone/thermal speech and headset/master/mute/call/media/night policies remain. Final guarded992tests/164suites, exact-head CI and signed APK/package/certificate/assets audited for2.2.40. Not independently reviewed; not device-verified. No new permission/dependency/store/sampler or vulnerability-patch claim.
+
 ## Bluetooth observation evidence (v2.2.39)
 
 Reliability fix, not a vulnerability patch. Reuses the same helper, both existing production callers, existing Bluetooth broadcasts and central mutex/state. Permission/read/profile gaps and ambiguous empty lists become explicit unavailable observations. Current readings clear without inventing a disconnect; poll recovery does not invent reconnect history. Positive sightings alone do not authorize connection speech. Existing identity-bound ACL evidence and exact adapter OFF bound transition events; turning states are unknown. A process-local sequence captured before service work launches rejects delayed older results under the existing mutex. No new persisted identifier, raw telemetry record, store, dependency, endpoint, permission, sampler, timer/background loop, migration or backup operation. Existing local Bluetooth history is unchanged. Audio routing/master/call/media/night policies remain unchanged.
