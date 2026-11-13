@@ -279,11 +279,11 @@ The Saver card shows a drawn step guide only when Android may block Notification
 
 ## Supported Versions
 
-Battery Sentinel Pro Nethra is under active development. The first public release is v1.0.0. Only the latest published release receives security fixes.
+Battery Sentinel Pro Netra is under active development. Only the latest published release receives security fixes; an unreleased candidate is not a published support commitment.
 
 | Version | Supported |
 | ------- | --------- |
-| Latest GitHub release (currently v1.0.0) | :white_check_mark: |
+| Latest published GitHub release | :white_check_mark: |
 | Older releases | :x: |
 | Development builds and CI test APKs | Best effort |
 
