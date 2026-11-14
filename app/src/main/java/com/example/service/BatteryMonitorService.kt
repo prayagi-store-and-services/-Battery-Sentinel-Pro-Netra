@@ -46,6 +46,7 @@ class BatteryMonitorService : Service() {
     private val batteryInputs = Channel<Intent>(Channel.CONFLATED)
     private lateinit var lifecycleTracker: LifecycleTracker
     private var isReceiverRegistered = false
+    private var isBluetoothReceiverRegistered = false
     private var lastTemp: Float = 0f
     private var lastTempTimestamp: Long = 0L
     private val continuousChargeAlert = ContinuousChargeAlertController(this, serviceScope)
@@ -94,12 +95,20 @@ class BatteryMonitorService : Service() {
                     val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                     notificationManager.cancel(NOTIFICATION_ALARM_ID)
                 }
+            }
+        }
+    }
+
+    // These are protected platform broadcasts. Bluetooth runs under a privileged UID that is
+    // not necessarily SYSTEM_UID, so it needs its own exported boundary, not the private
+    // battery/screen receiver. Never add an unprotected/custom action to this filter.
+    private val bluetoothReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
                 android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED,
                 android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED,
                 android.bluetooth.BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED,
-                android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED -> {
-                    checkBluetoothUpdates(intent)
-                }
+                android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED -> checkBluetoothUpdates(intent)
             }
         }
     }
@@ -208,10 +217,6 @@ class BatteryMonitorService : Service() {
                     addAction(Intent.ACTION_SCREEN_OFF)
                     addAction(Intent.ACTION_BATTERY_LOW)
                     addAction(Intent.ACTION_BATTERY_OKAY)
-                    addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED)
-                    addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED)
-                    addAction(android.bluetooth.BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED)
-                    addAction(android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED)
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     registerReceiver(batteryReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
@@ -221,6 +226,23 @@ class BatteryMonitorService : Service() {
                 isReceiverRegistered = true
             } catch (e: Exception) {
                 Log.e("BatteryMonitorService", "Error registering battery receiver", e)
+            }
+        }
+
+        if (!isBluetoothReceiverRegistered) {
+            try {
+                val filter = IntentFilter().apply {
+                    addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED)
+                    addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED)
+                    addAction(android.bluetooth.BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED)
+                    addAction(android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED)
+                }
+                androidx.core.content.ContextCompat.registerReceiver(
+                    this, bluetoothReceiver, filter, androidx.core.content.ContextCompat.RECEIVER_EXPORTED
+                )
+                isBluetoothReceiverRegistered = true
+            } catch (e: Exception) {
+                Log.e("BatteryMonitorService", "Error registering Bluetooth receiver", e)
             }
         }
 
@@ -744,6 +766,8 @@ class BatteryMonitorService : Service() {
             unregisterReceiver(batteryReceiver)
         } catch (_: Exception) {}
         isReceiverRegistered = false
+        try { unregisterReceiver(bluetoothReceiver) } catch (_: Exception) {}
+        isBluetoothReceiverRegistered = false
         serviceScope.cancel()
         batteryInputs.close()
     }

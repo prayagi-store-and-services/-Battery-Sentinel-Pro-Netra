@@ -1,3 +1,11 @@
+## Bluetooth runtime receiver partition (v2.2.42)
+
+Reliability fix, not a vulnerability patch. Android documents that privileged Bluetooth senders may run outside SYSTEM_UID and require an exported runtime receiver. The existing four protected Bluetooth ACL/adapter actions now have their own exported boundary; battery/screen/power input stays private. No unprotected/custom action is exported. Registration is idempotent and both boundaries unregister on stop.
+
+The existing permission-aware canonical observation path and Bluetooth speech prohibition remain. No new UI, sampler, timer, polling loop, permission, dependency, endpoint, stored record, migration, signing/package, backup operation or Guardian deletion. No fabricated battery percentage or universal device-support claim. Historical local70tests passed before a local work-area reset; reconstruction and final filter-size assertion have not been locally rerun. Exact-head CI and final signed artifact audit remain gates. Not independently reviewed; not device-verified. Physical Android/OEM delivery, device battery reporting, install/reboot and Play Protect acceptance remain NOT VERIFIED. Keep Play Protect ON. Charging-type and hardware cutoff remain separate work.
+
+Sources: https://developer.android.com/develop/background-work/background-tasks/broadcasts and https://android.googlesource.com/platform/frameworks/base/+/master/core/res/AndroidManifest.xml .
+
 ## Automatic cache maintenance deferral (v2.2.41)
 
 Reliability/maintenance change, not a vulnerability patch. Existing automatic own-cache maintenance now requires canonical LIVE per-field battery level and finite temperature observed within the existing120-second freshness window, with no future/missing timestamps. Temperature>=40C or level<15% defers before that entry point traverses files or reserves its six-hour attempt. Strictly>200MiB/persisted6h, bounded traversal and protected-file/symlink exclusions remain. Existing constructor/manual cache-stat refresh can still scan; explicit manual cleanup is unchanged. No all-scan, physical cooling or battery-saving guarantee.
