@@ -20,7 +20,7 @@ jobs:
           set -euo pipefail
           docker run -d --name bspn-site -e PORT=9090 -p 127.0.0.1:9090:9090 bspn-site:test
           trap 'docker logs bspn-site; docker rm -f bspn-site' EXIT
-          curl --retry 20 --retry-delay 1 --retry-connrefused --fail http://127.0.0.1:9090/healthz | grep -qx ok
+          curl --retry 20 --retry-delay 1 --retry-all-errors --retry-max-time 30 --connect-timeout 2 --max-time 5 --fail http://127.0.0.1:9090/healthz | grep -qx ok
           for file in index.html privacy.html icon.svg counter.js; do
             curl --fail "http://127.0.0.1:9090/$file" -o /tmp/served-file
             cmp "docs/$file" /tmp/served-file
