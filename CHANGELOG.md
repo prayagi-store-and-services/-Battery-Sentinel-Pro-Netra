@@ -4,6 +4,16 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+### Fixed
+- Separate the existing four protected Bluetooth ACL/adapter broadcasts into an exported runtime receiver so privileged Bluetooth senders outside SYSTEM_UID can reach the canonical observation path. Battery/screen/power broadcasts stay private. Both receiver registrations are idempotent and removed on service stop.
+- No Bluetooth speech, new sampler, polling loop, permission, persistence or battery-percentage inference.
+
+### Verification limits
+- Original runtime registration regression failed on released code before the split. Historical local related run:70tests/12suites, zero failures/errors/skips. The local work area was then reset; this patch/test was reconstructed from the reviewed trace and has NOT been locally rerun. Final filter-size assertion was added after the historical pass. Exact-head CI and signed-artifact audit remain gates. Earlier timeouts and test-harness corrections are not passes or production failures.
+- Not independently reviewed; not device-verified. This fixes one event-delivery boundary, not universal Bluetooth battery support. Physical Android/OEM delivery, device percentages, installed update/reboot and Play Protect acceptance remain NOT VERIFIED. Keep Play Protect ON. Charging-type and80%hardware cutoff are not claimed fixed. No UI, dependency, signing/package, settings, backup or Guardian repository deletion change.
+
+## [2.2.41]
+
 ### Changed
 - Defer existing automatic own-cache maintenance at battery temperature>=40C or battery level<15%, or when required per-field context is missing, nonfinite, invalid, historical, future-dated or older than the existing120-second freshness window. Deferred work does not reserve the six-hour attempt budget. No new sampler or maintenance engine.
 - Keep strictly>200MiB threshold, persisted six-hour budget, protected files, bounded traversal and manual cleanup. Existing constructor/manual cache-stat refresh can still scan; this is not an all-scan gate.
