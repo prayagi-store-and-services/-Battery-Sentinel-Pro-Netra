@@ -1,0 +1,31 @@
+name: Static website container
+on:
+  pull_request:
+    paths: ['Dockerfile', '.dockerignore', 'deploy/**', 'docs/**', '.github/workflows/static-website.yml']
+  push:
+    branches: [main]
+    paths: ['Dockerfile', '.dockerignore', 'deploy/**', 'docs/**', '.github/workflows/static-website.yml']
+permissions:
+  contents: read
+jobs:
+  static-website:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build only the existing static website
+        run: docker build -t bspn-site:test .
+      - name: Verify dynamic port, real files and private-source exclusion
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name bspn-site -e PORT=9090 -p 127.0.0.1:9090:9090 bspn-site:test
+          trap 'docker logs bspn-site; docker rm -f bspn-site' EXIT
+          curl --retry 20 --retry-delay 1 --retry-all-errors --retry-max-time 30 --connect-timeout 2 --max-time 5 --fail http://127.0.0.1:9090/healthz | grep -qx ok
+          for file in index.html privacy.html icon.svg counter.js; do
+            curl --fail "http://127.0.0.1:9090/$file" -o /tmp/served-file
+            cmp "docs/$file" /tmp/served-file
+          done
+          for path in app/build.gradle.kts .env .git/config does-not-exist; do
+            test "$(curl -s -o /tmp/not-found-body -w '%{http_code}' "http://127.0.0.1:9090/$path")" = 404
+          done
+          docker exec bspn-site nginx -t

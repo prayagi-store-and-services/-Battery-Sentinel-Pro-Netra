@@ -1,0 +1,6 @@
+**
+!Dockerfile
+!deploy/
+!deploy/default.conf.template
+!docs/
+!docs/**
