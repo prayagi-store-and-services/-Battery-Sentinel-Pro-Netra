@@ -1,3 +1,11 @@
+## Skip speech during detected media (v2.2.43)
+
+Owner-directed behavior change, not a vulnerability patch. All existing announcer priorities, including critical/manual TTS, are skipped when public AudioManager playback observations show media active. Pending speech is discarded, not deferred. Admission, queue draining, async dispatch, final speak and greeting initialization are gated. Audio focus acquisition and central pause/resume calls were removed from the announcement runtime path; its audible fallback respects the same gate. Existing visual safety notifications remain.
+
+No UI, permission, dependency, sampler/timer, storage, endpoint, signing/package, backup or repository-settings change. Detection is best effort: silent video, cast/remote and OEM-hidden playback may not be observable; a final-check-to-speech race remains. Observation failure skips conservatively. No real-device, OEM, installed-update/reboot or Play Protect acceptance claim. Keep Play Protect ON. Exact-head green CI and signed artifact audit remain gates.
+
+Official API source: https://developer.android.com/reference/android/media/AudioManager
+
 ## Bluetooth runtime receiver partition (v2.2.42)
 
 Reliability fix, not a vulnerability patch. Android documents that privileged Bluetooth senders may run outside SYSTEM_UID and require an exported runtime receiver. The existing four protected Bluetooth ACL/adapter actions now have their own exported boundary; battery/screen/power input stays private. No unprotected/custom action is exported. Registration is idempotent and both boundaries unregister on stop.

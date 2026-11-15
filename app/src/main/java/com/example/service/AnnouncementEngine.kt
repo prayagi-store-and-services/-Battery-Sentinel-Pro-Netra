@@ -16,7 +16,6 @@ import com.example.model.NetraEventType
 import com.example.model.AudioRoutingPolicy
 import com.example.model.AudioRouteType
 import com.example.util.AudioRoutingInspector
-import com.example.util.MediaPlaybackController
 import android.media.AudioManager
 import android.media.ToneGenerator
 import kotlinx.coroutines.CoroutineScope
@@ -62,19 +61,15 @@ data class AnnouncementItem(
 /**
  * Centralized Announcement Engine for Battery Sentinel Pro Netra.
  * All voice alerts pass through this engine with controlled priority queuing,
- * state deduplication, night protection, and media playback pausing/resuming.
+ * state deduplication, night protection, and skip-on-active-media admission.
  * Collects state and events autonomously from the Central Unit (NetraCentralDataCenter).
  */
 class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitListener {
 
-    // Transient audio focus: other media pauses while an announcement speaks, resumes when it ends
-    private val ttsAudioFocus = TtsAudioFocusController(context)
-    private var focusWatchdogJob: kotlinx.coroutines.Job? = null
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
-    private val mediaController = MediaPlaybackController(context)
 
     // Controlled Priority Queue
     private val queue = PriorityQueue<AnnouncementItem>()
@@ -464,6 +459,11 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
     // Share this monitor with processQueue: producers may run on background threads.
     @Synchronized
     fun enqueue(item: AnnouncementItem) {
+        if (AnnouncementMediaGate.shouldSkip(context)) {
+            item.speechState = AnnouncementSpeechState.CANCELLED
+            discardPendingForMedia()
+            return
+        }
         // Reject old callers/queued compatibility categories regardless of saved preferences.
         if (item.priority == AnnouncementPriority.BLUETOOTH_STATE ||
             item.priority == AnnouncementPriority.BLUETOOTH_BATTERY ||
@@ -572,6 +572,10 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
 
     @Synchronized
     private fun processQueue() {
+        if (AnnouncementMediaGate.shouldSkip(context)) {
+            discardPendingForMedia()
+            return
+        }
         if (!isTtsReady || isSpeaking.get() || queue.isEmpty()) {
             return
         }
@@ -581,38 +585,33 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         currentPlayingAnnouncement = nextItem
 
         scope.launch(Dispatchers.IO) {
-            val settings = getSettings()
-            if (settings.mediaPlaybackHandlingEnabled) {
-                try {
-                    NetraApplication.instance.centralDataCenter.requestMediaPause(context)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error requesting media pause from central unit", e)
+            // Recheck after the dispatcher hop. Skipped items are discarded, never replayed.
+            if (AnnouncementMediaGate.shouldSkip(context)) {
+                synchronized(this@AnnouncementEngine) {
+                    nextItem.speechState = AnnouncementSpeechState.CANCELLED
+                    discardPendingForMedia()
                 }
+                onSpeechFinished()
+                return@launch
             }
-
-            // Audio routing check and fallback policy evaluation
+            val settings = getSettings()
             val routingStatus = AudioRoutingInspector.inspectRouting(context, settings.audioRoutingPolicy)
             val isCritical = nextItem.priority == AnnouncementPriority.CRITICAL_THERMAL
 
-            // Pause other media with real transient audio focus for the whole utterance.
-            // Released in onSpeechFinished; the watchdog guarantees release even if TTS callbacks never arrive.
-            if (!ttsAudioFocus.acquire()) {
-                Log.w(TAG, "Audio focus not granted; announcement continues and media keeps playing")
-            }
-            focusWatchdogJob?.cancel()
-            focusWatchdogJob = scope.launch(Dispatchers.IO) {
-                kotlinx.coroutines.delay(FOCUS_WATCHDOG_MS)
-                Log.w(TAG, "TTS focus watchdog fired without an utterance callback; releasing audio focus")
-                ttsAudioFocus.release()
-            }
-
             // Fixed behaviour: the phone speaker always speaks first (notification stream).
-            // If a Bluetooth device is connected, the same announcement is replayed there right after (see onDone).
             val params = Bundle().apply {
                 putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, nextItem.id)
                 putString(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_NOTIFICATION.toString())
             }
 
+            if (AnnouncementMediaGate.shouldSkip(context)) {
+                synchronized(this@AnnouncementEngine) {
+                    nextItem.speechState = AnnouncementSpeechState.CANCELLED
+                    discardPendingForMedia()
+                }
+                onSpeechFinished()
+                return@launch
+            }
             nextItem.speechState = AnnouncementSpeechState.SPEAKING
             val result = tts?.speak(nextItem.text, TextToSpeech.QUEUE_FLUSH, params, nextItem.id)
             if (result != TextToSpeech.SUCCESS) {
@@ -642,6 +641,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
      */
     fun triggerSpeakerFallback(item: AnnouncementItem, reason: String) {
         scope.launch(Dispatchers.IO) {
+            if (AnnouncementMediaGate.shouldSkip(context)) return@launch
             try {
                 Log.w(TAG, "Executing Phone Speaker Fallback for '${item.text}' due to: $reason")
                 // Sound alarm/notification chime over speaker to alert user
@@ -664,6 +664,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
      * Emits a standard safety confirmation chime through device speaker using ToneGenerator.
      */
     fun playSpeakerAlertChime() {
+        if (AnnouncementMediaGate.shouldSkip(context)) return
         try {
             val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 95)
             toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 300)
@@ -673,28 +674,19 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         }
     }
 
-    /**
-     * Second pass of the fixed routing: after the phone speaker finished, speak the same text on the default
-     * (media) stream, which Android routes to a connected Bluetooth device. Android does not promise speaker and
-     * Bluetooth at the same moment, so this is sequential. Returns true when a replay was started.
-     */
+    /** Media-blocked pending items are consumed, not delayed until playback ends. */
+    @Synchronized
+    private fun discardPendingForMedia() {
+        queue.forEach { it.speechState = AnnouncementSpeechState.CANCELLED }
+        queue.clear()
+    }
+
     private fun onSpeechFinished() {
-        scope.launch(Dispatchers.IO) {
-            focusWatchdogJob?.cancel()
-            ttsAudioFocus.release()
-            try {
-                val settings = getSettings()
-                if (settings.mediaPlaybackHandlingEnabled) {
-                    NetraApplication.instance.centralDataCenter.requestMediaResume(context)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error restoring media playback via central unit", e)
-            } finally {
+        scope.launch(Dispatchers.Main) {
+            synchronized(this@AnnouncementEngine) {
                 isSpeaking.set(false)
                 currentPlayingAnnouncement = null
-                scope.launch(Dispatchers.Main) {
-                    processQueue()
-                }
+                processQueue()
             }
         }
     }
@@ -748,7 +740,6 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             tts?.stop()
             tts?.shutdown()
         } catch (_: Exception) {}
-        mediaController.restoreAfterAnnouncement()
     }
 
     companion object {
@@ -762,9 +753,6 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 leastUrgent.speechState = AnnouncementSpeechState.CANCELLED
             }
         }
-
-        /** Longest an utterance may hold audio focus without a callback before the watchdog releases it. */
-        private const val FOCUS_WATCHDOG_MS = 90_000L
 
         /** The same announcement text is not spoken again within this window. */
         internal const val DEDUPE_WINDOW_MS = 20_000L
