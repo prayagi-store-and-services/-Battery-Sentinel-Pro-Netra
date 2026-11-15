@@ -400,8 +400,8 @@ class NetraViewModel(application: Application) : AndroidViewModel(application) {
         settingsRepository.setNightSchedule(startHour, endHour)
     }
 
-    fun setMediaPlaybackHandlingEnabled(enabled: Boolean) {
-        settingsRepository.setMediaPlaybackHandlingEnabled(enabled)
+    fun setSkipAnnouncementsDuringMedia(enabled: Boolean) {
+        settingsRepository.setSkipAnnouncementsDuringMedia(enabled)
     }
 
     fun muteAnnouncementsForMinutes(minutes: Int) {

@@ -32,7 +32,7 @@ data class SentinelSettings(
     val nightProtectionEnabled: Boolean = true,
     val nightStartHour: Int = 23, // 11:00 PM
     val nightEndHour: Int = 6,    // 06:00 AM
-    val mediaPlaybackHandlingEnabled: Boolean = true,
+    val skipAnnouncementsDuringMedia: Boolean = true,
     val audioRoutingPolicy: com.example.model.AudioRoutingPolicy = com.example.model.AudioRoutingPolicy.AUTO_BT_WITH_SPEAKER_FALLBACK,
     val screenOffNetworkOptEnabled: Boolean = true,
     val announcementMutedUntilMs: Long = 0L, // 0 = not muted; critical alerts always play
@@ -49,6 +49,12 @@ data class SentinelSettings(
 )
 
 class SettingsRepository(context: Context) {
+    companion object {
+        // Separate from the legacy pause/resume preference. Missing key defaults ON on upgrades too.
+        const val MEDIA_SKIP_KEY = "skip_announcements_during_media"
+        fun isMediaSkipEnabled(context: Context): Boolean =
+            context.getSharedPreferences("netra_sentinel_prefs", Context.MODE_PRIVATE).getBoolean(MEDIA_SKIP_KEY, true)
+    }
     private val prefs: SharedPreferences = context.getSharedPreferences("netra_sentinel_prefs", Context.MODE_PRIVATE)
 
     private val _settings = MutableStateFlow(loadSettings())
@@ -87,7 +93,7 @@ class SettingsRepository(context: Context) {
             nightProtectionEnabled = prefs.getBoolean("night_protection_enabled", true),
             nightStartHour = prefs.getInt("night_start_hour", 23),
             nightEndHour = prefs.getInt("night_end_hour", 6),
-            mediaPlaybackHandlingEnabled = prefs.getBoolean("media_playback_handling", true),
+            skipAnnouncementsDuringMedia = prefs.getBoolean(MEDIA_SKIP_KEY, true),
             audioRoutingPolicy = policy,
             screenOffNetworkOptEnabled = prefs.getBoolean("screen_off_network_opt_enabled", true),
             announcementMutedUntilMs = prefs.getLong("announcement_muted_until", 0L),
@@ -244,9 +250,9 @@ class SettingsRepository(context: Context) {
         _settings.value = _settings.value.copy(nightStartHour = startHour, nightEndHour = endHour)
     }
 
-    fun setMediaPlaybackHandlingEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean("media_playback_handling", enabled).apply()
-        _settings.value = _settings.value.copy(mediaPlaybackHandlingEnabled = enabled)
+    fun setSkipAnnouncementsDuringMedia(enabled: Boolean) {
+        prefs.edit().putBoolean(MEDIA_SKIP_KEY, enabled).apply()
+        _settings.value = _settings.value.copy(skipAnnouncementsDuringMedia = enabled)
     }
 
     fun setAudioRoutingPolicy(policy: com.example.model.AudioRoutingPolicy) {

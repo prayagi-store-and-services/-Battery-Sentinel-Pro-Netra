@@ -88,7 +88,7 @@ fun AnnouncementSettingsCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Real-time state-transition speech engine with priority queuing & media coordination",
+                    text = "Real-time state-transition speech engine with priority queuing & media-aware skip",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -182,57 +182,10 @@ fun AnnouncementSettingsCard(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Media Playback Coordination Card
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(NetraEmerald.copy(alpha = 0.08f))
-                        .border(1.dp, NetraEmerald.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-                        .padding(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            modifier = Modifier.weight(1f),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.MusicNote,
-                                contentDescription = null,
-                                tint = NetraEmerald,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    text = "Media Playback Coordination",
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "Pause playing media → Speak announcement → Resume. Already-paused media stays paused.",
-                                    fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        Switch(
-                            checked = settings.mediaPlaybackHandlingEnabled,
-                            onCheckedChange = { viewModel.setMediaPlaybackHandlingEnabled(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = NetraEmerald,
-                                checkedTrackColor = NetraEmerald.copy(alpha = 0.3f)
-                            ),
-                            modifier = Modifier.testTag("media_handling_switch")
-                        )
-                    }
-                }
+                MediaPlaybackSkipCard(
+                    enabled = settings.skipAnnouncementsDuringMedia,
+                    onEnabledChange = viewModel::setSkipAnnouncementsDuringMedia
+                )
 
                 Spacer(modifier = Modifier.height(14.dp))
 
