@@ -5,6 +5,16 @@ All user-facing release notes are maintained here. The guarded release workflow 
 ## [Unreleased]
 
 ### Fixed
+- Skip TTS announcements, including critical and manual speech, when Android reports active media playback. Pending speech is discarded rather than replayed when playback ends. Recheck after asynchronous dispatch and immediately before speech; the one-time greeting rechecks after TTS initialization too.
+- The announcer no longer requests transient audio focus or asks the central media controller to pause/resume other media. Its audible fallback/chime also respects the media gate. Existing visual notifications are unchanged.
+
+### Verification limits
+- This is best-effort playback observation using AudioManager.isMusicActive and, on Android 8+, the public active-playback list. Silent video, remote/cast or OEM-hidden playback can be invisible, and media can start after the final check. No universal no-interruption guarantee or physical-device verification.
+- No UI, permissions, dependencies, timers, stored-data, package/signing, backup or repository-settings changes. Bluetooth device speech remains forbidden. This is a behavior fix, not a security patch. Exact-head first-attempt CI and signed-artifact audit are required before release; keep Play Protect ON.
+
+## [2.2.42]
+
+### Fixed
 - Separate the existing four protected Bluetooth ACL/adapter broadcasts into an exported runtime receiver so privileged Bluetooth senders outside SYSTEM_UID can reach the canonical observation path. Battery/screen/power broadcasts stay private. Both receiver registrations are idempotent and removed on service stop.
 - No Bluetooth speech, new sampler, polling loop, permission, persistence or battery-percentage inference.
 

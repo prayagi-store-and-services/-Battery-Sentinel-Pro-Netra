@@ -48,7 +48,7 @@ object JayMataDi {
             if (!due(System.currentTimeMillis(), prefs.getBoolean(KEY, false))) return
             if (com.example.data.repository.SettingsRepository(activity.applicationContext).settings.value.announcementsMasterEnabled.not()) return
             val am = activity.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
-            if (!audible(am.ringerMode == AudioManager.RINGER_MODE_NORMAL, am.getStreamVolume(AudioManager.STREAM_MUSIC), am.isMusicActive)) return
+            if (!audible(am.ringerMode == AudioManager.RINGER_MODE_NORMAL, am.getStreamVolume(AudioManager.STREAM_MUSIC), com.example.service.AnnouncementMediaGate.shouldSkip(activity))) return
             prefs.edit().putBoolean(KEY, true).apply()
             Toast.makeText(activity, "Jay Mata Di", Toast.LENGTH_LONG).show()
             val appCtx = activity.applicationContext
@@ -64,6 +64,10 @@ object JayMataDi {
                 } else {
                     engine.language = Locale.US
                     text = "Jay Mata Di"
+                }
+                if (com.example.service.AnnouncementMediaGate.shouldSkip(appCtx)) {
+                    engine.shutdown()
+                    return@TextToSpeech
                 }
                 engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "jay_mata_di")
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ engine.shutdown() }, 6000)
