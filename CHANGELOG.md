@@ -5,6 +5,16 @@ All user-facing release notes are maintained here. The guarded release workflow 
 ## [Unreleased]
 
 ### Fixed
+- Replace the obsolete media pause/resume setting with a working "Skip during media playback" switch. It defaults ON for both fresh installs and upgrades using a new preference, independent of the old pause-media choice. ON discards announcements during detected playback with no later catch-up; OFF allows announcements to speak over media. Neither mode requests media pause/resume or transient audio focus.
+- The switch controls the shared gate for all announcement priorities, manual speech, audible fallback and the one-time greeting. Settings explains both modes and detection limits. Other controls, permissions and stored settings are unchanged.
+
+### Verification limits
+- Playback detection remains best-effort: silent video, remote/cast or OEM-hidden playback can be missed and media can begin after the final check. Physical-phone install, reboot and actual media behavior are NOT VERIFIED. Keep Play Protect ON.
+- This is an owner-approved behavior/UI correction, not a security patch. Thermal repair, tile and backup work are not part of this release. Exact-head first-attempt CI, visual review and signed artifact audit are required before publication.
+
+## [2.2.43] - 2026-11-15
+
+### Fixed
 - Skip TTS announcements, including critical and manual speech, when Android reports active media playback. Pending speech is discarded rather than replayed when playback ends. Recheck after asynchronous dispatch and immediately before speech; the one-time greeting rechecks after TTS initialization too.
 - The announcer no longer requests transient audio focus or asks the central media controller to pause/resume other media. Its audible fallback/chime also respects the media gate. Existing visual notifications are unchanged.
 

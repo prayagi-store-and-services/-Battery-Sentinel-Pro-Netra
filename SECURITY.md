@@ -555,3 +555,7 @@ Battery 2.2.24 adds opt-in movement-triggered location power saving (GPS power s
 
 ## 2.2.30 measured ETA repair
 Existing-feature correctness repair, not a security vulnerability claim. Charge/discharge history v2 is private on-device and intentionally ignores old potentially misleading timing samples. Only actual whole-level intervals in the same mode/temperature band teach it; initial partial intervals, jumps and invalid timing do not. Repeated polls preserve the interval start. Session estimates retain transitions instead of the last20 polls, require2minutes/2points, stop on stale progress and reset on mode/charger/target/invalid data. UI calls them estimates. No new dependency, permission, endpoint, sampler or cloud data. Current microamp display units are unchanged. Automated synthetic-input/Compose tests cannot establish accuracy on the owner's physical phone.
+
+
+### 2.2.44 media-skip setting scope
+The independent media-skip switch defaults ON on install and upgrade. OFF permits overlapping announcements but does not restore pause/resume or audio-focus behavior. This UI/behavior correction is not a vulnerability or OS patch. Detection and physical-device limits remain documented; no thermal, permission or backend change is included.
