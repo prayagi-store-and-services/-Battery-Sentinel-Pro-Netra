@@ -1,3 +1,30 @@
+## 2.2.44 - Working media-skip setting
+- "Skip during media playback" now has a working switch. It defaults ON for fresh installs and upgrades using a separate preference, independent of the old pause-media choice.
+- ON skips announcements during Android-detected playback with no later catch-up. OFF allows speech over media and may disturb playback. Neither mode pauses/resumes media or requests transient audio focus. The shared gate includes manual/critical speech, audible fallback and the one-time greeting.
+- Settings describes both modes and detection limits. Silent video, remote/cast or OEM-hidden playback may be missed; media can start after the final check. Physical installation, reboot, actual playback/OEM behavior and Play Protect acceptance are NOT VERIFIED. Keep Play Protect ON. Behavior/UI correction, not a security patch.
+- Release evidence: [v2.2.44](https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/tag/v2.2.44), code124. Guarded Release passed first attempt:1,027 unit tests/169 suites and2 Android PDF instrumentation tests; actual ON/OFF light/dark card and PDF fixture pixels reviewed. Automated/component/emulator checks are not physical-device certification.
+
+## 2.2.43 - Skip announcements during detected media
+- Announcements, including critical/manual speech and the one-time greeting, skip when Android reports active media. Pending speech is discarded, not replayed later. Audible fallback also respects the gate. Visual notifications are unchanged.
+- The announcer no longer requests transient audio focus or central pause/resume. The old Settings copy/toggle mismatch was accepted for this urgent release, then corrected with the independent working switch in2.2.44.
+- Best-effort detection only; silent video/cast/OEM-hidden playback and the final check race remain. Physical installation/reboot/media behavior NOT VERIFIED. Keep Play Protect ON. Behavior fix, not a security patch.
+- Release evidence: [v2.2.43](https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/tag/v2.2.43), code123; guarded1,019 unit tests/167 suites and2 Android PDF instrumentation tests passed. Fixture checks are not phone proof.
+
+## 2.2.42 - Bluetooth runtime receiver boundary
+- Split the existing four protected Bluetooth ACL/adapter broadcasts into an exported runtime receiver so privileged Bluetooth senders outside SYSTEM_UID can reach the observation path. Battery/screen/power broadcasts stay private. Registrations are idempotent and removed on service stop.
+- No Bluetooth speech, new sampler, polling loop, permission or inferred battery percentage. This fixes one delivery boundary, not universal Bluetooth battery support. Actual Android/OEM/device battery/install/reboot/Play Protect remain NOT VERIFIED. Keep Play Protect ON. Reliability fix, not a vulnerability patch.
+- Release evidence: [v2.2.42](https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/tag/v2.2.42), code122; guarded1,013 unit tests/166 suites and2 Android PDF instrumentation tests passed. Component/PDF fixtures are not a physical phone.
+
+## 2.2.41 - Defer automatic own-cache work with unsafe or missing context
+- Existing automatic own-cache maintenance defers at battery temperature>=40C or battery level<15%, and when required context is missing, invalid, historical, future-dated or older than120seconds. Deferral does not reserve the six-hour budget.
+- Strictly>200MiB threshold, persisted six-hour budget, protected files and bounded traversal remain. Constructor/manual cache-stat refresh can still scan: this is not an all-scan gate. No measured cooling or battery-saving benefit is claimed.
+- Release evidence: [v2.2.41](https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/tag/v2.2.41), code121; guarded1,012 unit tests/165 suites, Android PDF instrumentation and CodeQL passed. Physical sensor/OEM/update/reboot/performance/Play Protect acceptance NOT VERIFIED. Keep Play Protect ON. Not full Legacy/Guardian completion.
+
+## 2.2.40 - Bluetooth readings only, no device speech
+- Removed Bluetooth connect/disconnect/battery-percent announcements. Old saved preferences and compatibility callers cannot re-enable that speech. Devices retains readings Android supplies through the existing observation path; no fabricated percentages.
+- Replaced the Bluetooth announcement switch with the approved readings-only explanation. Ordinary phone/thermal speech and headset routing were preserved in this release. Later media behavior changes are described above.
+- Release evidence: [v2.2.40](https://github.com/prayagi-store-and-services/-Battery-Sentinel-Pro-Netra/releases/tag/v2.2.40), code120; guarded992 unit tests/164 suites, Android PDF instrumentation and CodeQL passed. Physical Bluetooth/audio/OEM/installed update/reboot/Play Protect acceptance NOT VERIFIED. Keep Play Protect ON. Speech-removal update, not full Legacy/Guardian parity or a security patch.
+
 ## 2.2.39 - Bluetooth unavailable is not disconnected
 
 - Missing Bluetooth access or an empty/error query no longer invents disconnect/reconnect speech. The current view clears uncertain readings and explains the observation state; history stays separate.
