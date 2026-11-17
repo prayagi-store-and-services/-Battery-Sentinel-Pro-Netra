@@ -4,6 +4,10 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+No unreleased changes recorded on main.
+
+## [2.2.44] - 2026-11-15
+
 ### Fixed
 - Replace the obsolete media pause/resume setting with a working "Skip during media playback" switch. It defaults ON for both fresh installs and upgrades using a new preference, independent of the old pause-media choice. ON discards announcements during detected playback with no later catch-up; OFF allows announcements to speak over media. Neither mode requests media pause/resume or transient audio focus.
 - The switch controls the shared gate for all announcement priorities, manual speech, audible fallback and the one-time greeting. Settings explains both modes and detection limits. Other controls, permissions and stored settings are unchanged.
