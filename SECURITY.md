@@ -1,3 +1,6 @@
+## 2.2.44 media-skip setting scope
+The independent media-skip switch defaults ON on install and upgrade. OFF permits overlapping announcements but does not restore pause/resume or audio-focus behavior. This UI/behavior correction is not a vulnerability or OS patch. Detection and physical-device limits remain documented; no thermal, permission or backend change is included.
+
 ## Skip speech during detected media (v2.2.43)
 
 Owner-directed behavior change, not a vulnerability patch. All existing announcer priorities, including critical/manual TTS, are skipped when public AudioManager playback observations show media active. Pending speech is discarded, not deferred. Admission, queue draining, async dispatch, final speak and greeting initialization are gated. Audio focus acquisition and central pause/resume calls were removed from the announcement runtime path; its audible fallback respects the same gate. Existing visual safety notifications remain.
@@ -78,29 +81,29 @@ Reliability fixes, not a vulnerability patch. Screen-off and battery-state event
 
 No new permission, dependency, network endpoint, sampler, stored-data field or database schema. Existing local session data and device-admin opt-in are unchanged. No private Legacy APK or decompiled code is included. Physical installed-update, reboot, background, lock-screen and OEM acceptance remain NOT VERIFIED; no physical battery-safety or full Legacy-parity claim.
 
-## Unreleased opt-in gauge animations
+## 2.2.29 opt-in gauge animations
 
 Gauge animations are off by default and purely presentational: they read the same in-memory central state (charging, temperature, health life) as the gauges, compute rising/falling trends with small hysteresis in memory, and draw only while the app is resumed, visible, interactive and the data is fresh. Flat, missing or unknown readings animate nothing. No new permission, sampler, dependency, network endpoint, or stored data beyond the one stored switch.
 
-## Unreleased timely update notices
+## 2.2.28 timely update notices
 
 Update checks stay metadata-only (one small GitHub releases/latest read; artifact fields are never read, nothing downloads). Cadence rises from once a day to app start plus at most every 6 hours; a failed attempt still backs off and never retries in a tight loop. The settings card no longer renders static explainer text and appears only when a newer version verifies. No new permission, dependency, endpoint or stored data.
 
-## Unreleased voice-only alert and percentage announcements
+## 2.2.27 voice-only alert and percentage announcements
 
 - **Ringtone removed from the Continuous Unplug Alert.** No audio playback component remains in the continuous alert path: only the spoken line repeats until unplug. This also removes the alarm-volume media stream use (the ringtone played on USAGE_ALARM) and the risk that users disable the safety feature to stop the noise. The separate Target Charge Alarm ringtone option is unchanged.
 - **Battery Percentage Announcement is opt-in, on-device voice.** The master toggle defaults to OFF. Step crossing is evaluated in memory only; nothing is recorded, synced, or sent anywhere. Announcements go through the existing engine, so the master announcements switch and Night Protection rules apply unchanged.
 - **No new permission, dependency, endpoint, sampler, persistent record or schema.** Both changes reuse the existing foreground service and Text-to-Speech announcement engine.
 
-## Unreleased EST estimate visibility
+## 2.2.26 EST estimate visibility
 
 Presentation change only, not a vulnerability patch. Time estimates that already existed (single-session progression and the learned charge curve) are now displayed instead of being hidden behind a confidence gate; session-based values are labelled (est.) and missing estimates still say the app is learning. No new permission, dependency, endpoint, sampler, persistent record or schema. Estimates are computed on-device from existing readings; no guarantee or physical-device claim.
 
-## Unreleased battery health life core ring
+## 2.2.25 battery health life core ring
 
 Presentation change only, not a vulnerability patch. The third dot ring now shows Battery Health Life: phone-reported capacity (full-charge vs design) when the phone shares it, otherwise a documented on-device estimate from the latest measured temperature and battery level. Estimated values are labelled "est."; missing readings stay Unavailable with no invented fill. No new permission, dependency, endpoint, sampler, persistent record or schema. No physical-device battery, lifespan or safety claim.
 
-## Unreleased inverse temperature display
+## 2.2.24 inverse temperature display
 
 Presentation change only, not a vulnerability patch. Reuses measured temperature and the existing 0-100 C, 100-slot scale in reverse. No new permission, dependency, endpoint, sampler, persistent record or schema. Unknown/non-finite temperature has no invented fill; warning colours still use measured temperature. Finite animation and idle/background/screen-off/power-saving gates are unchanged. No physical-device or safety-performance claim.
 
@@ -555,7 +558,3 @@ Battery 2.2.24 adds opt-in movement-triggered location power saving (GPS power s
 
 ## 2.2.30 measured ETA repair
 Existing-feature correctness repair, not a security vulnerability claim. Charge/discharge history v2 is private on-device and intentionally ignores old potentially misleading timing samples. Only actual whole-level intervals in the same mode/temperature band teach it; initial partial intervals, jumps and invalid timing do not. Repeated polls preserve the interval start. Session estimates retain transitions instead of the last20 polls, require2minutes/2points, stop on stale progress and reset on mode/charger/target/invalid data. UI calls them estimates. No new dependency, permission, endpoint, sampler or cloud data. Current microamp display units are unchanged. Automated synthetic-input/Compose tests cannot establish accuracy on the owner's physical phone.
-
-
-### 2.2.44 media-skip setting scope
-The independent media-skip switch defaults ON on install and upgrade. OFF permits overlapping announcements but does not restore pause/resume or audio-focus behavior. This UI/behavior correction is not a vulnerability or OS patch. Detection and physical-device limits remain documented; no thermal, permission or backend change is included.
