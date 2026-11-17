@@ -6,7 +6,8 @@ import kotlin.math.ceil
 
 /** Measured level trend in one uninterrupted session. Never derives runtime from one current reading. */
 internal class SessionEtaEstimator {
-    data class Estimate(val chargingMinutes: Int? = null, val dischargingMinutes: Int? = null, val allowHistory: Boolean = false)
+    data class Progress(val fromLevel: Int, val toLevel: Int, val minutes: Double, val sinceLastMinutes: Double)
+    data class Estimate(val chargingMinutes: Int? = null, val dischargingMinutes: Int? = null, val allowHistory: Boolean = false, val progress: Progress? = null, val modeCharging: Boolean? = null)
     private data class Sample(val level: Int, val at: Long)
     private data class Session(val charging: Boolean, val plugged: Int, val target: Int)
     private var session: Session? = null
@@ -53,9 +54,15 @@ internal class SessionEtaEstimator {
         val stepMs = if (last.level != baseline.level) (last.at - baseline.at) / abs(last.level - baseline.level) else 0L
         val stallLimit = maxOf(5 * 60_000L, stepMs * 3)
         if (now - last.at > stallLimit) { finishAt = null; return Estimate() }
-        val left = finishAt?.minus(now)?.takeIf { it > 0 } ?: return Estimate(allowHistory = now - samples.first().at < 120_000L)
+        val elapsed = (last.at - baseline.at) / 60_000.0
+        val remaining = if (incoming.charging) incoming.target - level else level
+        val progress = if (elapsed >= 2.0 && abs(last.level - baseline.level) >= 2 && remaining > 0) {
+            Progress(baseline.level, last.level, elapsed, (now - last.at) / 60_000.0)
+        } else null
+        val left = finishAt?.minus(now)?.takeIf { it > 0 }
+            ?: return Estimate(allowHistory = now - samples.first().at < 120_000L, progress = progress, modeCharging = incoming.charging)
         val minutes = ceil(left / 60_000.0).toInt()
-        return if (incoming.charging) Estimate(chargingMinutes = minutes) else Estimate(dischargingMinutes = minutes)
+        return if (incoming.charging) Estimate(chargingMinutes = minutes, progress = progress, modeCharging = true) else Estimate(dischargingMinutes = minutes, progress = progress, modeCharging = false)
     }
 
     companion object {

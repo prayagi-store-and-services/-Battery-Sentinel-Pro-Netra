@@ -656,22 +656,17 @@ class NetraCentralDataCenter(
 
             // Only raw valid levels/status may establish current-session progression.
             // Invalid input clears ETA evidence while last-valid display telemetry stays intact.
-            // The learned charge curve (phone's own history, temperature-banded) wins when it
-            // has data; the single-session linear estimate remains the honest fallback.
+            // The shared policy scales the learned remaining shape by this session's measured
+            // pace over the same levels; missing history keeps the measured linear fallback.
             ChargeCurveLearner.observeTransition(validatedLevel, status, plugged, tempCelsius, now)
-            val learnedCharge = if (status == BatteryManager.BATTERY_STATUS_CHARGING && plugged > 0 && validatedLevel != null) {
-                ChargeCurveLearner.estimateMinutes(validatedLevel, 100, true, tempCelsius)
-            } else null
-            val learnedDischarge = if (status == BatteryManager.BATTERY_STATUS_DISCHARGING && plugged == 0 && validatedLevel != null) {
-                ChargeCurveLearner.estimateMinutes(validatedLevel, 0, false, tempCelsius)
-            } else null
             val eta = sessionEtaEstimator.observe(validatedLevel, status, plugged, now)
-            // Prefer this session's measured workload/charger trend. A confident historical
-            // curve can cover warm-up only; it must not override changed conditions.
-            val mergedChargingEta = eta.chargingMinutes ?: learnedCharge?.takeIf { it.confident && eta.allowHistory }?.minutes
-            val mergedDischargingEta = eta.dischargingMinutes ?: learnedDischarge?.takeIf { it.confident && eta.allowHistory }?.minutes
-            val chargingEtaConfidentNow = learnedCharge?.confident == true
-            val dischargingEtaConfidentNow = learnedDischarge?.confident == true
+            val curve = { from: Int, to: Int, charging: Boolean ->
+                MeasuredEtaPolicy.learned(from, to, charging, tempCelsius)
+            }
+            val mergedChargingEta = MeasuredEtaPolicy.select(eta, validatedLevel, 100, true, curve)
+            val mergedDischargingEta = MeasuredEtaPolicy.select(eta, validatedLevel, 0, false, curve)
+            val chargingEtaConfidentNow = false // Approximate even when backed by a learned curve.
+            val dischargingEtaConfidentNow = false
 
             // 2. Deduplication & Event Generation
             if (isConnected != null && isConnected != lastConnectedState) {
