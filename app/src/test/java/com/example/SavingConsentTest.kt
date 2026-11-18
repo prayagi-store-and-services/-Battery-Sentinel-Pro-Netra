@@ -101,6 +101,52 @@ class SavingConsentTest {
         assertEquals(1, io.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
         assertEquals(190, io.values[Settings.System.SCREEN_BRIGHTNESS])
     }
+    @Test fun rejectedLaterBrightnessTargetRestoresOriginalNotPriorDim() {
+        val io = FakeIo(); SavingSettings.io = io
+        SavingConsent.setDisplay(c, true)
+        assertTrue(SavingSettings.display(c, "thermal", 95))
+        io.fail = { key, value -> key == Settings.System.SCREEN_BRIGHTNESS && value == 90 }
+        assertFalse(SavingSettings.display(c, "thermal", 90))
+        assertEquals(190, io.values[Settings.System.SCREEN_BRIGHTNESS])
+        assertEquals(1, io.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
+    }
+    @Test fun rejectedLaterTimeoutTargetRestoresOriginalAndBrightness() {
+        val io = FakeIo(); SavingSettings.io = io
+        SavingConsent.setDisplay(c, true)
+        assertTrue(SavingSettings.display(c, "test", 95, 30000))
+        io.fail = { key, value -> key == Settings.System.SCREEN_OFF_TIMEOUT && value == 15000 }
+        assertFalse(SavingSettings.display(c, "test", 90, 15000))
+        assertEquals(60000, io.values[Settings.System.SCREEN_OFF_TIMEOUT])
+        assertEquals(190, io.values[Settings.System.SCREEN_BRIGHTNESS])
+        assertEquals(1, io.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
+    }
+    @Test fun failedTargetAndDeniedRollbackKeepPriorWitnessForRetry() {
+        val io = FakeIo(); SavingSettings.io = io
+        SavingConsent.setDisplay(c, true)
+        assertTrue(SavingSettings.display(c, "thermal", 95))
+        io.fail = { key, value -> key == Settings.System.SCREEN_BRIGHTNESS && (value == 90 || value == 190) }
+        assertFalse(SavingSettings.display(c, "thermal", 90))
+        assertEquals(95, io.values[Settings.System.SCREEN_BRIGHTNESS])
+        io.fail = null
+        SavingSettings.retryPending(c)
+        assertEquals(190, io.values[Settings.System.SCREEN_BRIGHTNESS])
+        assertEquals(1, io.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
+    }
+    @Test fun manualChangeAfterFailedTargetWinsOverPriorWitness() {
+        val io = FakeIo(); SavingSettings.io = io
+        SavingConsent.setDisplay(c, true)
+        assertTrue(SavingSettings.display(c, "thermal", 95))
+        io.fail = { key, value ->
+            (key == Settings.System.SCREEN_BRIGHTNESS && (value == 90 || value == 190)) ||
+                (key == Settings.System.SCREEN_BRIGHTNESS_MODE && value == 1)
+        }
+        assertFalse(SavingSettings.display(c, "thermal", 90))
+        io.values[Settings.System.SCREEN_BRIGHTNESS] = 210
+        io.fail = null
+        SavingSettings.retryPending(c)
+        assertEquals(210, io.values[Settings.System.SCREEN_BRIGHTNESS])
+        assertEquals(0, io.values[Settings.System.SCREEN_BRIGHTNESS_MODE])
+    }
     @Test fun brightnessRestoreSuccessCannotDiscardFailedModeRestore() {
         val io = FakeIo(); SavingSettings.io = io
         SavingConsent.setDisplay(c, true)
