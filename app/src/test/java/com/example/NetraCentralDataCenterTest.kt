@@ -35,6 +35,22 @@ class NetraCentralDataCenterTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var dataCenter: NetraCentralDataCenter
 
+    // Synthetic observed ENERGY_COUNTER fixtures. Five-second samples cover the
+    // ten-second rate window plus ten-second stable-category requirement.
+    private var energyTime = 0L
+    private var energyNwh = 20_000_000_000L
+    private suspend fun energySamples(deltaNwh: Long, currentMicroAmps: Int, count: Int = 5) {
+        dataCenter.elapsedClock = { energyTime }
+        repeat(count) {
+            dataCenter.processRawInput(50, 100,
+                android.os.BatteryManager.BATTERY_STATUS_CHARGING,
+                android.os.BatteryManager.BATTERY_PLUGGED_AC,
+                300, 4000, currentMicroAmps, null, null, energyCounterNwh = energyNwh)
+            energyTime += 5_000L
+            energyNwh += deltaNwh
+        }
+    }
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -164,14 +180,12 @@ class NetraCentralDataCenterTest {
             dataCenter.centralEvents.toList(events)
         }
 
-        // 12W Fast
-        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 3000000, null, null)
-        // 15W Fast
-        dataCenter.processRawInput(51, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 3750000, null, null)
-
-        job.cancel()
-
+        energySamples(25_000_000L, 3_000_000) // 18W stored-energy rate, FAST
+        energySamples(25_000_000L, 3_750_000, count = 3) // electrical power changes only
+        assertEquals(CanonicalChargingSpeed.FAST, dataCenter.centralState.value.chargingSpeed)
+        assertEquals(15.0f, dataCenter.centralState.value.powerWatts!!, 0.01f)
         assertEquals(1, events.count { it.eventType == NetraEventType.SPEED_CHANGED })
+        job.cancel()
     }
 
     @Test
@@ -181,14 +195,12 @@ class NetraCentralDataCenterTest {
             dataCenter.centralEvents.toList(events)
         }
 
-        // 3W Slow (< 5W)
-        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_USB, 300, 4000, 750000, null, null)
-        // 15W Fast (10W to 20W)
-        dataCenter.processRawInput(51, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 3750000, null, null)
-
-        job.cancel()
-
+        energySamples(4_000_000L, 750_000) // 2.88W, SLOW
+        assertEquals(CanonicalChargingSpeed.SLOW, dataCenter.centralState.value.chargingSpeed)
+        energySamples(25_000_000L, 3_750_000, count = 7) // 18W, FAST after both windows
+        assertEquals(CanonicalChargingSpeed.FAST, dataCenter.centralState.value.chargingSpeed)
         assertEquals(2, events.count { it.eventType == NetraEventType.SPEED_CHANGED })
+        job.cancel()
     }
 
     @Test
@@ -265,11 +277,13 @@ class NetraCentralDataCenterTest {
             dataCenter.centralEvents.toList(events)
         }
 
-        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 3000000, null, null)
-        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_UNKNOWN, -1, 0, 0, 0, null, null)
-        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 3000000, null, null)
-
+        energySamples(25_000_000L, 3_000_000)
         assertEquals(1, events.count { it.eventType == NetraEventType.SPEED_CHANGED })
+        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_UNKNOWN, -1, 0, 0, 0, null, null)
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, dataCenter.centralState.value.chargingSpeed)
+        energySamples(25_000_000L, 3_000_000)
+        assertEquals(CanonicalChargingSpeed.FAST, dataCenter.centralState.value.chargingSpeed)
+        assertEquals(2, events.count { it.eventType == NetraEventType.SPEED_CHANGED })
         job.cancel()
     }
 
@@ -398,18 +412,15 @@ class NetraCentralDataCenterTest {
             dataCenter.centralEvents.toList(events)
         }
 
-        // 6.1W (4000mV * 1525mA = 6.1W + consumption)
-        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 1525000, null, null)
-        // 6.4W
-        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 1600000, null, null)
-        // 7.2W
-        dataCenter.processRawInput(50, 100, android.os.BatteryManager.BATTERY_STATUS_CHARGING, android.os.BatteryManager.BATTERY_PLUGGED_AC, 300, 4000, 1800000, null, null)
-
-        job.cancel()
-
+        energySamples(10_000_000L, 1_525_000) // 7.2W stored-energy rate, NORMAL
+        assertEquals(6.1f, dataCenter.centralState.value.powerWatts!!, 0.01f)
+        energySamples(10_000_000L, 1_600_000, count = 1)
+        assertEquals(6.4f, dataCenter.centralState.value.powerWatts!!, 0.01f)
+        energySamples(10_000_000L, 1_800_000, count = 1)
+        assertEquals(7.2f, dataCenter.centralState.value.powerWatts!!, 0.01f)
         assertEquals(1, events.count { it.eventType == NetraEventType.SPEED_CHANGED })
-        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
-        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, dataCenter.centralState.value.chargingSpeed)
+        assertEquals(CanonicalChargingSpeed.NORMAL, dataCenter.centralState.value.chargingSpeed)
+        job.cancel()
     }
 
     @Test

@@ -183,18 +183,21 @@ class PerformanceLatencyTest {
 
     @Test
     fun testRawChargingPowerPreservedUnderBudget() = runBlocking {
-        // 4000 mV * 3000 mA = 12.0W (Fast)
-        dataCenter.processRawInput(
-            level = 45,
-            scale = 100,
-            status = android.os.BatteryManager.BATTERY_STATUS_CHARGING,
-            plugged = android.os.BatteryManager.BATTERY_PLUGGED_AC,
-            temperatureRaw = 310,
-            voltage = 4000,
-            currentMicroAmps = 3000000,
-            bluetoothConnected = false,
-            bluetoothBattery = null
-        )
+        // Electrical telemetry stays 12W independently of the synthetic 18W
+        // observed stored-energy rate used to establish the FAST category.
+        var elapsed = 0L
+        dataCenter.elapsedClock = { elapsed }
+        repeat(5) { sample ->
+            elapsed = sample * 5_000L
+            dataCenter.processRawInput(
+                level = 45, scale = 100,
+                status = android.os.BatteryManager.BATTERY_STATUS_CHARGING,
+                plugged = android.os.BatteryManager.BATTERY_PLUGGED_AC,
+                temperatureRaw = 310, voltage = 4000, currentMicroAmps = 3_000_000,
+                bluetoothConnected = false, bluetoothBattery = null,
+                energyCounterNwh = 20_000_000_000L + sample * 25_000_000L
+            )
+        }
 
         val state = dataCenter.centralState.value
         assertEquals(12.0f, state.powerWatts ?: 0f, 0.05f)
