@@ -32,8 +32,11 @@ class CrashRecoveryGateTest {
         assertTrue(CrashRecoveryGate.allowed(c,1000))
     }
     @Test fun pausedStickyServicesStopWithoutCollectorsAndTeardownSafely() {
-        val now=System.currentTimeMillis()
+        // Crash timestamps describe completed events, never future wall-clock instants.
+        // A future pause may correctly trigger the production clock-rebase guard.
+        val now=System.currentTimeMillis()-1000L
         repeat(3){CrashRecoveryGate.recordCrash(c,now+it)}
+        assertFalse("Pause must be active before service creation",CrashRecoveryGate.allowed(c))
         val monitor=org.robolectric.Robolectric.buildService(BatteryMonitorService::class.java).create()
         assertNotNull(org.robolectric.Shadows.shadowOf(monitor.get()).lastForegroundNotification)
         assertTrue(org.robolectric.Shadows.shadowOf(monitor.get()).isStoppedBySelf)
