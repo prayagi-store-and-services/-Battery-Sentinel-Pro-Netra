@@ -4,6 +4,18 @@ All user-facing release notes are maintained here. The guarded release workflow 
 
 ## [Unreleased]
 
+### Changed
+- Charging type uses Android ENERGY_COUNTER changes over elapsed time to estimate net stored-energy rate. It does not classify from voltage times current or claim charger-output watts. Missing, unsupported, stale, invalid or insufficient observations show Unavailable, without a Normal fallback. Electrical sensor telemetry and ETA keep their separate existing roles.
+- Existing charging-type speech uses short type-only phrases through the existing announcement owner. Saved OFF remains OFF. Stale or superseded queued types are discarded, with the existing media/call/night gates retained. Bluetooth device speech remains forbidden.
+- The existing power card labels the estimated stored-energy rate separately from battery-side sensor power. No second charging engine, polling loop or TTS instance is added.
+
+### Verification limits
+- Final PR326 automated evidence: 1046 tests/174 suites plus the separate four-test community-render job, zero failures/errors/skips. Final immutable release candidate must independently pass exact-head checks and signed APK identity/certificate/hash readback. Fixture renders are not live phone measurements.
+- Physical ENERGY_COUNTER support/accuracy, install/upgrade, reboot/background event delivery, actual TTS/headset/media/night behavior, drain and thermal measurements are NOT RUN. No watt accuracy, charging hardware control, cooling, power saving, device-stability or OS security-patch claim. Keep Play Protect ON.
+- Scope: PR326 only plus release metadata. Pending PR323/324/325 and future Guardian ports are excluded. No guard, signing, permission, dependency or repository-settings change.
+
+## [2.2.44]
+
 ### Fixed
 - Replace the obsolete media pause/resume setting with a working "Skip during media playback" switch. It defaults ON for both fresh installs and upgrades using a new preference, independent of the old pause-media choice. ON discards announcements during detected playback with no later catch-up; OFF allows announcements to speak over media. Neither mode requests media pause/resume or transient audio focus.
 - The switch controls the shared gate for all announcement priorities, manual speech, audible fallback and the one-time greeting. Settings explains both modes and detection limits. Other controls, permissions and stored settings are unchanged.
