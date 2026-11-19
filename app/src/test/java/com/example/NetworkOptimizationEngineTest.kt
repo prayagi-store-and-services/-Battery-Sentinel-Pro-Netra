@@ -335,27 +335,33 @@ class NetworkOptimizationEngineTest {
 
         // 4W -> Slow (< 5W)
         val slow = speedEngine.calculate(isCharging = true, voltageMv = 4000, currentMa = 1000)
-        assertEquals(CanonicalChargingSpeed.SLOW, slow.speedCategory)
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, slow.speedCategory)
         assertEquals(4.0f, slow.rawPowerWatts ?: 0f, 0.01f)
 
         // 6W -> Normal (5W to < 10W)
         val normal = speedEngine.calculate(isCharging = true, voltageMv = 4000, currentMa = 1500)
-        assertEquals(CanonicalChargingSpeed.NORMAL, normal.speedCategory)
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, normal.speedCategory)
 
         // 12W -> Fast (10W to < 20W)
         val fast = speedEngine.calculate(isCharging = true, voltageMv = 4000, currentMa = 3000)
-        assertEquals(CanonicalChargingSpeed.FAST, fast.speedCategory)
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, fast.speedCategory)
 
         // 24W -> Super Fast (20W to < 40W)
         val superFast = speedEngine.calculate(isCharging = true, voltageMv = 4000, currentMa = 6000)
-        assertEquals(CanonicalChargingSpeed.SUPER_FAST, superFast.speedCategory)
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, superFast.speedCategory)
 
         // 40W -> Ultra Fast (>= 40W)
         val ultraFast = speedEngine.calculate(isCharging = true, voltageMv = 4000, currentMa = 10000)
-        assertEquals(CanonicalChargingSpeed.ULTRA_FAST, ultraFast.speedCategory)
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, ultraFast.speedCategory)
 
         // Discharging -> Unavailable charging speed, strictly independent power
         val discharging = speedEngine.calculate(isCharging = false, voltageMv = 3800, currentMa = -500)
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
         assertEquals(CanonicalChargingSpeed.UNAVAILABLE, discharging.speedCategory)
     }
 }

@@ -298,7 +298,9 @@ class BatteryMonitorService : Service() {
             temperatureRaw = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0),
             voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0),
             currentMicroAmps = rawCurrent,
-            bluetoothConnected = null, bluetoothBattery = null
+            bluetoothConnected = null, bluetoothBattery = null,
+            energyCounterNwh = runCatching { batteryManager?.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER) }
+                .getOrNull()?.takeIf { it > 0L && it != Long.MIN_VALUE }
         )
         val canonical = center.centralState.value
 
@@ -327,6 +329,8 @@ class BatteryMonitorService : Service() {
             CanonicalChargingSpeed.FAST -> ChargerSpeed.FAST to "Fast Charging"
             CanonicalChargingSpeed.SUPER_FAST -> ChargerSpeed.RAPID to "Super Fast Charging"
             CanonicalChargingSpeed.ULTRA_FAST -> ChargerSpeed.SUPER to "Ultra Fast Charging"
+            CanonicalChargingSpeed.HYPER_FAST -> ChargerSpeed.SUPER to "Hyper Fast Charging"
+            CanonicalChargingSpeed.EXTREME_FAST -> ChargerSpeed.SUPER to "Extreme Fast Charging"
             CanonicalChargingSpeed.UNAVAILABLE -> ChargerSpeed.UNKNOWN to "Unavailable"
         }
 

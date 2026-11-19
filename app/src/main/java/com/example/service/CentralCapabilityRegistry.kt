@@ -216,19 +216,10 @@ class CentralCapabilityRegistry(private val context: Context) {
             CapabilityStatus.UNAVAILABLE
         }
 
-        // 19. Charging Speed Calculation
-        map[CapabilityType.CHARGING_SPEED_CALCULATION] = if (hasPowerInputs) {
-            CapabilityStatus.AVAILABLE
-        } else {
-            CapabilityStatus.UNAVAILABLE
-        }
-
-        // 20. Fast Charging Detection
-        map[CapabilityType.FAST_CHARGING_DETECTION] = if (hasPowerInputs) {
-            CapabilityStatus.AVAILABLE
-        } else {
-            CapabilityStatus.UNAVAILABLE
-        }
+        // A point-in-time electrical snapshot cannot prove the observed energy-rate window.
+        // The central ChargingSpeedEngine promotes these only after valid temporal evidence.
+        map[CapabilityType.CHARGING_SPEED_CALCULATION] = CapabilityStatus.UNAVAILABLE
+        map[CapabilityType.FAST_CHARGING_DETECTION] = CapabilityStatus.UNAVAILABLE
 
         // 21. Bluetooth LE (Low Energy)
         // AVAILABLE only when the phone has BLE, Bluetooth is on and the permission is granted; otherwise an action state.

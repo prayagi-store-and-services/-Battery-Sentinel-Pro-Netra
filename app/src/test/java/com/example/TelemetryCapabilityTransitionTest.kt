@@ -36,9 +36,9 @@ class TelemetryCapabilityTransitionTest {
             0, temperature, voltage, current, null, null)
     }
     private fun assertPower(center: NetraCentralDataCenter, status: CapabilityStatus) {
-        for (type in listOf(CapabilityType.BATTERY_POWER_CALCULATION,
-            CapabilityType.CHARGING_SPEED_CALCULATION, CapabilityType.FAST_CHARGING_DETECTION)) {
-            assertEquals(status, center.centralState.value.capabilities[type])
+        assertEquals(status, center.centralState.value.capabilities[CapabilityType.BATTERY_POWER_CALCULATION])
+        for (type in listOf(CapabilityType.CHARGING_SPEED_CALCULATION, CapabilityType.FAST_CHARGING_DETECTION)) {
+            assertEquals(CapabilityStatus.UNAVAILABLE, center.centralState.value.capabilities[type])
         }
     }
     @Test fun zeroCurrentPromotesCapabilityInFastPath() = runTest {

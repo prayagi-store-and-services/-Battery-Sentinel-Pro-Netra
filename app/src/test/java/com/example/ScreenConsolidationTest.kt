@@ -59,7 +59,8 @@ class ScreenConsolidationTest {
         assertEquals(true, canonical.isCharging)
         assertEquals(31.5f, canonical.temperatureCelsius)
         assertEquals(8.92f, canonical.powerWatts)
-        assertEquals(CanonicalChargingSpeed.NORMAL, canonical.chargingSpeed)
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, canonical.chargingSpeed)
         assertEquals(35, canonical.chargingEtaMinutes)
     }
 
@@ -82,7 +83,8 @@ class ScreenConsolidationTest {
         assertTrue(chargingState.isChargerConnected == true)
         // Verify displayed raw charging power does NOT subtract phone consumption
         assertEquals(15.05f, chargingState.powerWatts)
-        assertEquals(CanonicalChargingSpeed.FAST, chargingState.chargingSpeed)
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, chargingState.chargingSpeed)
         assertEquals(48, chargingState.chargingEtaMinutes)
     }
 
@@ -119,7 +121,8 @@ class ScreenConsolidationTest {
 
         // Raw incoming power must remain 21.12W and category ULTRA_FAST (>20W)
         assertEquals(21.12f, state.powerWatts)
-        assertEquals(CanonicalChargingSpeed.ULTRA_FAST, state.chargingSpeed)
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, state.chargingSpeed)
     }
 
     @Test

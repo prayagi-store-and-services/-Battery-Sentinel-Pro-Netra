@@ -12,9 +12,11 @@ enum class CanonicalChargingSpeed {
     SLOW,       // < 5W
     NORMAL,     // 5W to < 10W
     FAST,       // 10W to < 20W
-    SUPER_FAST, // 20W to < 40W
-    ULTRA_FAST, // >= 40W
-    UNAVAILABLE;
+    SUPER_FAST, // Legacy historical category; not emitted by the energy-counter policy
+    ULTRA_FAST, // 20W to <50W
+    UNAVAILABLE,
+    HYPER_FAST, // 50W to <100W
+    EXTREME_FAST; // >=100W
 
     val displayLabel: String
         get() = when (this) {
@@ -23,6 +25,8 @@ enum class CanonicalChargingSpeed {
             FAST -> "Fast Charging"
             SUPER_FAST -> "Super Fast Charging"
             ULTRA_FAST -> "Ultra Fast Charging"
+            HYPER_FAST -> "Hyper Fast Charging"
+            EXTREME_FAST -> "Extreme Fast Charging"
             UNAVAILABLE -> "Unavailable"
         }
 
@@ -32,17 +36,21 @@ enum class CanonicalChargingSpeed {
             NORMAL -> "5W–<10W"
             FAST -> "10W–<20W"
             SUPER_FAST -> "20W–<40W"
-            ULTRA_FAST -> "≥ 40W"
+            ULTRA_FAST -> "20W–<50W"
+            HYPER_FAST -> "50W–<100W"
+            EXTREME_FAST -> "≥100W"
             UNAVAILABLE -> "N/A"
         }
 
     val fullLabelWithTier: String
         get() = when (this) {
             SLOW -> "Slow (<5W)"
-            NORMAL -> "Normal (5W–10W)"
+            NORMAL -> "Normal (5W–<10W)"
             FAST -> "Fast (10W–<20W)"
             SUPER_FAST -> "Super Fast (20W–<40W)"
-            ULTRA_FAST -> "Ultra Fast (≥40W)"
+            ULTRA_FAST -> "Ultra Fast (20W–<50W)"
+            HYPER_FAST -> "Hyper Fast (50W–<100W)"
+            EXTREME_FAST -> "Extreme Fast (≥100W)"
             UNAVAILABLE -> "Unavailable"
         }
 }
@@ -276,8 +284,8 @@ data class NetraCentralState(
     val powerWatts: Float? = null, // Raw incoming charging power (or discharge power if discharging)
     val netPowerWatts: Float? = null, // Net effective power (Raw incoming - consumption)
     val consumptionPowerWatts: Float? = null, // Phone consumption power
-    val chargingSpeed: CanonicalChargingSpeed = CanonicalChargingSpeed.UNAVAILABLE, // Based on raw power
-    val announcementSpeed: CanonicalChargingSpeed = CanonicalChargingSpeed.UNAVAILABLE, // Based on net effective power
+    val chargingSpeed: CanonicalChargingSpeed = CanonicalChargingSpeed.UNAVAILABLE, // Observed stored-energy rate
+    val announcementSpeed: CanonicalChargingSpeed = CanonicalChargingSpeed.UNAVAILABLE, // Same stable energy category
     val bluetoothObservationState: BluetoothObservationState = BluetoothObservationState.UNAVAILABLE,
     val bluetoothConnected: Boolean? = null,
     val bluetoothBatteryPercent: Int? = null,
@@ -326,7 +334,9 @@ data class NetraCentralState(
     // Adaptive Screen-Off Network Optimization State
     val networkOptimizationState: NetworkOptimizationState = NetworkOptimizationState(),
     // Real-Time Pipeline Latency Instrumentation (Target: <= 100ms)
-    val pipelineLatency: PipelineLatencyMetrics? = null
+    val pipelineLatency: PipelineLatencyMetrics? = null,
+    val estimatedStoredEnergyRateWatts: Float? = null,
+    val energySpeedObservedAtElapsedMillis: Long? = null
 )
 
 data class PipelineLatencyMetrics(

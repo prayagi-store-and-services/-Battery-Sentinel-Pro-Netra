@@ -213,9 +213,9 @@ class Part20FinalProtectionIntegrationTest {
         assertEquals(10, state.targetBrightnessPercent)
     }
 
-    // 8. Raw 15W remains Fast despite 6W phone consumption
+    // 8. Raw 15W alone does not establish a charging type
     @Test
-    fun `test 8 Raw 15W remains Fast regardless of phone consumption`() = runTest(testDispatcher) {
+    fun `test 8 Raw 15W stays electrical telemetry without speed evidence`() = runTest(testDispatcher) {
         // 5000mV * 3000mA = 15.0W raw power
         dataCenter.processRawInput(
             level = 60, scale = 100,
@@ -226,7 +226,8 @@ class Part20FinalProtectionIntegrationTest {
 
         val state = dataCenter.centralState.value
         assertEquals(15.0f, state.powerWatts ?: 0f, 0.1f)
-        assertEquals(CanonicalChargingSpeed.FAST, state.chargingSpeed)
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, state.chargingSpeed)
     }
 
     // 9. <5W unconfirmed USB is not Slow Charging
@@ -240,6 +241,7 @@ class Part20FinalProtectionIntegrationTest {
         )
 
         val state = dataCenter.centralState.value
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
         assertEquals(CanonicalChargingSpeed.UNAVAILABLE, state.chargingSpeed)
         assertEquals(CanonicalChargerState.CHARGER_CONNECTED_NOT_CHARGING, state.canonicalChargerState)
     }

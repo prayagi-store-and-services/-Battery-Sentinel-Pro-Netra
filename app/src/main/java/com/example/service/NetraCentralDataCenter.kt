@@ -399,7 +399,9 @@ class NetraCentralDataCenter(
             currentMicroAmps = rawCurrent,
             bluetoothConnected = null,
             bluetoothBattery = null,
-            source = source
+            source = source,
+            energyCounterNwh = runCatching { batteryManager?.getLongProperty(BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER) }
+                .getOrNull()?.takeIf { it > 0L && it != Long.MIN_VALUE }
         )
     }
 
@@ -413,7 +415,8 @@ class NetraCentralDataCenter(
         currentMicroAmps: Int,
         bluetoothConnected: Boolean?,
         bluetoothBattery: Int?,
-        source: String = "BatteryMonitorService"
+        source: String = "BatteryMonitorService",
+        energyCounterNwh: Long? = null
     ) {
         val t0Nanos = System.nanoTime()
         val eventsToEmit = mutableListOf<NetraCentralEvent>()
@@ -505,13 +508,17 @@ class NetraCentralDataCenter(
             val isDischargingNow = status == BatteryManager.BATTERY_STATUS_DISCHARGING ||
                 (isCharging == false && plugged == 0)
 
+            val energyObservedAt = elapsedClock()
             // Central ChargingSpeedEngine: classify charging input or discharge draw from the
-            // same fresh sample; never carry a charging wattage into a discharge session.
+            // same fresh sample; speed comes only from the remaining-energy counter.
             val speedResult = chargingSpeedEngine.calculate(
-                isCharging = isCharging,
+                isCharging = isCharging?.let { it && isConnected == true },
                 voltageMv = voltageMv,
                 currentMa = currentMa,
-                isDischarging = isDischargingNow
+                isDischarging = isDischargingNow,
+                energyCounterNwh = energyCounterNwh,
+                observedAtElapsedMillis = energyObservedAt,
+                isFull = status == BatteryManager.BATTERY_STATUS_FULL || validatedLevel == 100
             )
             val currentPowerReading = when {
                 isCharging == true -> speedResult.rawPowerWatts
@@ -529,11 +536,8 @@ class NetraCentralDataCenter(
                         oldState.isCharging == false && oldState.isChargerConnected == false
                     }
             } else null
-            val mergedSpeed = if (mergedIsCharging == true) {
-                if (speedResult.speedCategory != CanonicalChargingSpeed.UNAVAILABLE) speedResult.speedCategory else oldState.chargingSpeed
-            } else {
-                CanonicalChargingSpeed.UNAVAILABLE
-            }
+            // Missing current energy evidence invalidates the category, never last-valid retention.
+            val mergedSpeed = speedResult.speedCategory
             val mergedAnnouncementSpeed = speedResult.announcementCategory
 
             // Calculate precise FieldStatus for each telemetry parameter
@@ -571,7 +575,7 @@ class NetraCentralDataCenter(
             )
 
             // Fast in-memory capability update (no blocking Binder IPC calls in critical path)
-            val detectedCapabilities = if (oldState.capabilities.isNotEmpty()) {
+            val detectedCapabilities = (if (oldState.capabilities.isNotEmpty()) {
                 val updated = oldState.capabilities.toMutableMap()
                 val currentAvailable = currentMicroAmps != Int.MIN_VALUE
                 val voltageAvailable = voltage > 0
@@ -581,8 +585,8 @@ class NetraCentralDataCenter(
                 updated[CapabilityType.BATTERY_VOLTAGE] = if (voltageAvailable) CapabilityStatus.AVAILABLE else CapabilityStatus.UNAVAILABLE
                 val powerStatus = if (powerAvailable) CapabilityStatus.AVAILABLE else CapabilityStatus.UNAVAILABLE
                 updated[CapabilityType.BATTERY_POWER_CALCULATION] = powerStatus
-                updated[CapabilityType.CHARGING_SPEED_CALCULATION] = powerStatus
-                updated[CapabilityType.FAST_CHARGING_DETECTION] = powerStatus
+                updated[CapabilityType.CHARGING_SPEED_CALCULATION] = if (mergedSpeed != CanonicalChargingSpeed.UNAVAILABLE) CapabilityStatus.AVAILABLE else CapabilityStatus.UNAVAILABLE
+                updated[CapabilityType.FAST_CHARGING_DETECTION] = if (mergedSpeed != CanonicalChargingSpeed.UNAVAILABLE) CapabilityStatus.AVAILABLE else CapabilityStatus.UNAVAILABLE
                 updated
             } else {
                 capabilityRegistry?.detectAllCapabilities(
@@ -591,6 +595,12 @@ class NetraCentralDataCenter(
                     voltageRaw = voltage,
                     connectedBluetoothCount = oldState.bluetoothDevices.count { it.isConnected }
                 ) ?: oldState.capabilities
+            }
+
+            ).toMutableMap().apply {
+                val energyStatus = if (mergedSpeed != CanonicalChargingSpeed.UNAVAILABLE) CapabilityStatus.AVAILABLE else CapabilityStatus.UNAVAILABLE
+                this[CapabilityType.CHARGING_SPEED_CALCULATION] = energyStatus
+                this[CapabilityType.FAST_CHARGING_DETECTION] = energyStatus
             }
 
             val mergedBluetoothConnected = bluetoothConnected ?: oldState.bluetoothConnected
@@ -723,6 +733,7 @@ class NetraCentralDataCenter(
                 )
             }
 
+            if (mergedAnnouncementSpeed == CanonicalChargingSpeed.UNAVAILABLE) lastSpeedCategory = CanonicalChargingSpeed.UNAVAILABLE
             if (mergedAnnouncementSpeed != CanonicalChargingSpeed.UNAVAILABLE) {
                 if (lastSpeedCategory != mergedAnnouncementSpeed) {
                     val prev = lastSpeedCategory?.name ?: "UNAVAILABLE"
@@ -957,6 +968,8 @@ class NetraCentralDataCenter(
                 consumptionPowerWatts = mergedConsumption,
                 chargingSpeed = mergedSpeed,
                 announcementSpeed = mergedAnnouncementSpeed,
+                estimatedStoredEnergyRateWatts = speedResult.estimatedStoredEnergyRateWatts,
+                energySpeedObservedAtElapsedMillis = energyObservedAt,
                 bluetoothConnected = mergedBluetoothConnected,
                 bluetoothBatteryPercent = mergedBluetoothBattery,
                 bluetoothDevices = oldState.bluetoothDevices,
@@ -1044,6 +1057,8 @@ class NetraCentralDataCenter(
             consumptionPowerWatts = candidate.consumptionPowerWatts,
             chargingSpeed = candidate.chargingSpeed,
             announcementSpeed = candidate.announcementSpeed,
+            estimatedStoredEnergyRateWatts = candidate.estimatedStoredEnergyRateWatts,
+            energySpeedObservedAtElapsedMillis = candidate.energySpeedObservedAtElapsedMillis,
             bluetoothConnected = bluetoothConnected ?: current.bluetoothConnected,
             bluetoothBatteryPercent = bluetoothBattery ?: current.bluetoothBatteryPercent,
             lastUpdateTimestamp = candidate.lastUpdateTimestamp,
@@ -1100,11 +1115,14 @@ class NetraCentralDataCenter(
                 val powerInputsLive = agedFields.currentStatus == FieldStatus.LIVE &&
                     agedFields.voltageStatus == FieldStatus.LIVE
                 if (!powerInputsLive) {
-                    for (type in listOf(CapabilityType.BATTERY_POWER_CALCULATION,
-                        CapabilityType.CHARGING_SPEED_CALCULATION, CapabilityType.FAST_CHARGING_DETECTION)) {
+                    for (type in listOf(CapabilityType.BATTERY_POWER_CALCULATION)) {
                         if (this[type] == CapabilityStatus.AVAILABLE) this[type] = CapabilityStatus.UNAVAILABLE
                     }
                 }
+            }
+            if (state.energySpeedObservedAtElapsedMillis?.let { elapsedClock() - it in 0..10_000L } != true) {
+                agedCapabilities[CapabilityType.CHARGING_SPEED_CALCULATION] = CapabilityStatus.UNAVAILABLE
+                agedCapabilities[CapabilityType.FAST_CHARGING_DETECTION] = CapabilityStatus.UNAVAILABLE
             }
             state.copy(
                 fieldStates = agedFields, isDataFresh = fresh, capabilities = agedCapabilities,
@@ -1112,7 +1130,9 @@ class NetraCentralDataCenter(
                 dischargingEtaMinutes = if (fresh) state.dischargingEtaMinutes else null,
                 chargingEtaConfident = if (fresh) state.chargingEtaConfident else false,
                 dischargingEtaConfident = if (fresh) state.dischargingEtaConfident else false,
-                announcementSpeed = if (agedFields.powerStatus == FieldStatus.LIVE) state.announcementSpeed else CanonicalChargingSpeed.UNAVAILABLE
+                announcementSpeed = if (state.energySpeedObservedAtElapsedMillis?.let { elapsedClock() - it in 0..10_000L } == true) state.announcementSpeed else CanonicalChargingSpeed.UNAVAILABLE,
+                chargingSpeed = if (state.energySpeedObservedAtElapsedMillis?.let { elapsedClock() - it in 0..10_000L } == true) state.chargingSpeed else CanonicalChargingSpeed.UNAVAILABLE,
+                estimatedStoredEnergyRateWatts = state.estimatedStoredEnergyRateWatts.takeIf { state.energySpeedObservedAtElapsedMillis?.let { elapsedClock() - it in 0..10_000L } == true }
         )
         }
     }
