@@ -24,4 +24,22 @@ class CrashRecoveryPolicyTest {
         val future=CrashRecoveryState(100,3,99999999)
         assertEquals(CrashRecoveryState(),CrashRecoveryPolicy.normalized(future,1000))
     }
+    @Test fun pauseClockRebaseBoundaryIsExact() {
+        val thirdCrashAt=1000L
+        var s=CrashRecoveryState()
+        repeat(3){s=CrashRecoveryPolicy.record(s,thirdCrashAt)}
+        assertEquals(thirdCrashAt+CrashRecoveryPolicy.COOLDOWN_MS,s.pauseUntilMs)
+        // At the last crash instant the full cooldown is valid, not future evidence.
+        assertEquals(s,CrashRecoveryPolicy.normalized(s,thirdCrashAt))
+        // One millisecond earlier makes pauseUntil exceed now+cooldown and resets.
+        assertEquals(CrashRecoveryState(),CrashRecoveryPolicy.normalized(s,thirdCrashAt-1))
+    }
+    @Test fun completedPastCrashesKeepPauseUntilExactExpiry() {
+        val observationAt=10000L
+        var s=CrashRecoveryState()
+        repeat(3){s=CrashRecoveryPolicy.record(s,observationAt-1000L+it)}
+        assertEquals(s,CrashRecoveryPolicy.normalized(s,observationAt))
+        assertEquals(s,CrashRecoveryPolicy.normalized(s,s.pauseUntilMs-1))
+        assertEquals(CrashRecoveryState(),CrashRecoveryPolicy.normalized(s,s.pauseUntilMs))
+    }
 }
