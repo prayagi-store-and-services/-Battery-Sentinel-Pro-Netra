@@ -18,8 +18,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [34], application = Application::class)
 class VoltageCapabilityTruthfulnessTest {
     private val context: Context get() = ApplicationProvider.getApplicationContext()
-    private val dependent = listOf(CapabilityType.BATTERY_POWER_CALCULATION,
-        CapabilityType.CHARGING_SPEED_CALCULATION, CapabilityType.FAST_CHARGING_DETECTION)
+    private val dependent = listOf(CapabilityType.BATTERY_POWER_CALCULATION)
 
     @Test fun missingVoltageDoesNotClaimVoltageOrPowerAvailable() {
         val registry = CentralCapabilityRegistry(context)
@@ -54,4 +53,10 @@ class VoltageCapabilityTruthfulnessTest {
             assertEquals(CapabilityStatus.UNAVAILABLE, missing[it])
         }
     }
+    @Test fun electricalPointSnapshotCannotProveSpeedWindow() {
+        val result = CentralCapabilityRegistry(context).detectAllCapabilities(currentMicroAmps=2_000_000,voltageRaw=4000)
+        assertEquals(CapabilityStatus.UNAVAILABLE,result[CapabilityType.CHARGING_SPEED_CALCULATION])
+        assertEquals(CapabilityStatus.UNAVAILABLE,result[CapabilityType.FAST_CHARGING_DETECTION])
+    }
+
 }

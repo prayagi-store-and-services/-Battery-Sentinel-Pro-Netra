@@ -141,22 +141,25 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
 
             tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                 override fun onStart(utteranceId: String?) {
+                    if (currentPlayingAnnouncement?.id != utteranceId) return
                     Log.d(TAG, "TTS started: $utteranceId")
                     currentPlayingAnnouncement?.speechState = AnnouncementSpeechState.SPEAKING
                 }
 
                 override fun onDone(utteranceId: String?) {
+                    if (currentPlayingAnnouncement?.id != utteranceId) return
                     Log.d(TAG, "TTS done: $utteranceId")
                     currentPlayingAnnouncement?.let {
                         if (it.speechState == AnnouncementSpeechState.SPEAKING) {
                             it.speechState = AnnouncementSpeechState.COMPLETED
                         }
                     }
-                    onSpeechFinished()
+                    onSpeechFinished(utteranceId)
                 }
 
                 @Deprecated("Deprecated in Java")
                 override fun onError(utteranceId: String?) {
+                    if (currentPlayingAnnouncement?.id != utteranceId) return
                     Log.e(TAG, "TTS error on utterance: $utteranceId")
                     val failedItem = currentPlayingAnnouncement
                     currentPlayingAnnouncement?.let {
@@ -167,10 +170,11 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                     if (failedItem != null) {
                         triggerSpeakerFallback(failedItem, "TTS error callback")
                     }
-                    onSpeechFinished()
+                    onSpeechFinished(utteranceId)
                 }
 
                 override fun onError(utteranceId: String?, errorCode: Int) {
+                    if (currentPlayingAnnouncement?.id != utteranceId) return
                     Log.e(TAG, "TTS error ($errorCode) on utterance: $utteranceId")
                     val failedItem = currentPlayingAnnouncement
                     currentPlayingAnnouncement?.let {
@@ -181,7 +185,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                     if (failedItem != null) {
                         triggerSpeakerFallback(failedItem, "TTS error code $errorCode")
                     }
-                    onSpeechFinished()
+                    onSpeechFinished(utteranceId)
                 }
             })
 
@@ -223,35 +227,41 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             )
         }
 
-        if (state.isCharging == true && state.announcementSpeed != CanonicalChargingSpeed.UNAVAILABLE) {
-            val currentSpeed = state.announcementSpeed
-            val coolingDown = isInCooldown(lastByCategory["CHARGING_SPEED"], now, CATEGORY_COOLDOWN_MS.getValue("CHARGING_SPEED"))
-            if (currentSpeed != lastAnnouncementSpeed && !coolingDown) {
-                lastAnnouncementSpeed = currentSpeed
-                // Near full the phone tapers the current on purpose, so "slow" there says nothing about the charger.
-                val taperAtFull = currentSpeed == CanonicalChargingSpeed.SLOW && (state.batteryLevel ?: 0) >= ChargerThermalGuard.NEAR_FULL_PERCENT
-                if (settings.announceChargingSpeed && !taperAtFull) {
-                    val speechText = when (currentSpeed) {
-                        CanonicalChargingSpeed.SLOW -> "Slow charging."
-                        CanonicalChargingSpeed.NORMAL -> "Normal charging."
-                        CanonicalChargingSpeed.FAST -> "Fast charging."
-                        CanonicalChargingSpeed.ULTRA_FAST -> "Ultra fast charging."
-                        else -> "Normal charging."
-                    }
-                    enqueue(
-                        AnnouncementItem(
-                            id = "speed_${now}",
-                            text = speechText,
-                            priority = AnnouncementPriority.CHARGING_SPEED,
-                            category = "CHARGING_SPEED",
-                            isNightException = false
-                        )
-                    )
-                }
-            }
-        } else {
+        val currentSpeed = state.announcementSpeed.takeIf { state.isCharging == true && settings.announceChargingSpeed }
+            ?: CanonicalChargingSpeed.UNAVAILABLE
+        invalidateSupersededSpeed(currentSpeed)
+        if (currentSpeed != CanonicalChargingSpeed.UNAVAILABLE && currentSpeed != lastAnnouncementSpeed) {
+            lastAnnouncementSpeed = currentSpeed
+            speedSpeech(currentSpeed)?.let { text -> enqueue(AnnouncementItem(
+                id = "speed_${now}", text = text, priority = AnnouncementPriority.CHARGING_SPEED,
+                category = "CHARGING_SPEED", isNightException = false,
+                subjectKey = currentSpeed.name
+            )) }
+        } else if (currentSpeed == CanonicalChargingSpeed.UNAVAILABLE) {
             lastAnnouncementSpeed = CanonicalChargingSpeed.UNAVAILABLE
         }
+    }
+
+    @Synchronized
+    private fun invalidateSupersededSpeed(speed: CanonicalChargingSpeed) {
+        queue.removeAll { it.category == "CHARGING_SPEED" && (speed == CanonicalChargingSpeed.UNAVAILABLE || it.subjectKey != speed.name) }
+        val active = currentPlayingAnnouncement
+        if (active?.category == "CHARGING_SPEED" && (speed == CanonicalChargingSpeed.UNAVAILABLE || active.subjectKey != speed.name)) {
+            active.speechState = AnnouncementSpeechState.CANCELLED
+            runCatching { tts?.stop() }
+            isSpeaking.set(false)
+            currentPlayingAnnouncement = null
+        }
+    }
+
+    private fun speedStillCurrent(item: AnnouncementItem): Boolean {
+        if (item.category != "CHARGING_SPEED") return true
+        val state = NetraApplication.instance.centralDataCenter.centralState.value
+        val age = state.energySpeedObservedAtElapsedMillis?.let { android.os.SystemClock.elapsedRealtime() - it }
+        return getSettings().announceChargingSpeed && getSettings().announcementsMasterEnabled &&
+            state.isCharging == true && item.subjectKey == state.announcementSpeed.name &&
+            state.announcementSpeed != CanonicalChargingSpeed.UNAVAILABLE && age != null && age in 0..10_000L &&
+            !state.isNightProtectionActive && System.currentTimeMillis() >= getSettings().announcementMutedUntilMs
     }
 
     private fun handleCanonicalEvent(event: NetraCentralEvent) {
@@ -438,16 +448,11 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
     }
 
     /**
-     * Categorizes power speed based on raw/net watts (kept for unit test coverage).
+     * Legacy compatibility entry point, never a second speed classifier.
      */
-    fun categorizePowerSpeed(powerWatts: Float): String {
-        return when {
-            powerWatts >= 20.0f -> "ULTRA_FAST"
-            powerWatts >= 10.0f -> "FAST"
-            powerWatts >= 5.0f -> "NORMAL"
-            else -> "SLOW"
-        }
-    }
+    @Deprecated("Electrical watts are not charging-speed evidence. Use the central energy-counter policy.")
+    fun categorizePowerSpeed(@Suppress("UNUSED_PARAMETER") powerWatts: Float): String = "UNAVAILABLE"
+
 
     private fun levelText(base: String, type: NetraEventType): String {
         val level = NetraApplication.instance.centralDataCenter.centralState.value.batteryLevel ?: return "$base."
@@ -469,6 +474,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
             item.priority == AnnouncementPriority.BLUETOOTH_BATTERY ||
             item.category == "BLUETOOTH_STATE" || item.category == "BLUETOOTH_BATTERY") return
         val settings = getSettings()
+        if (!speedStillCurrent(item)) return
 
         // 1. Global Master Switch Check
         if (!settings.announcementsMasterEnabled) {
@@ -581,6 +587,11 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         }
 
         val nextItem = queue.poll() ?: return
+        if (!speedStillCurrent(nextItem)) {
+            nextItem.speechState = AnnouncementSpeechState.CANCELLED
+            processQueue()
+            return
+        }
         isSpeaking.set(true)
         currentPlayingAnnouncement = nextItem
 
@@ -591,7 +602,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                     nextItem.speechState = AnnouncementSpeechState.CANCELLED
                     discardPendingForMedia()
                 }
-                onSpeechFinished()
+                onSpeechFinished(nextItem.id)
                 return@launch
             }
             val settings = getSettings()
@@ -609,7 +620,12 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                     nextItem.speechState = AnnouncementSpeechState.CANCELLED
                     discardPendingForMedia()
                 }
-                onSpeechFinished()
+                onSpeechFinished(nextItem.id)
+                return@launch
+            }
+            if (!speedStillCurrent(nextItem) || nextItem.speechState == AnnouncementSpeechState.CANCELLED) {
+                nextItem.speechState = AnnouncementSpeechState.CANCELLED
+                onSpeechFinished(nextItem.id)
                 return@launch
             }
             nextItem.speechState = AnnouncementSpeechState.SPEAKING
@@ -622,7 +638,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
                 if (routingStatus.isBluetoothA2dpConnected) {
                     triggerSpeakerFallback(nextItem, "TTS speak API returned failure")
                 }
-                onSpeechFinished()
+                onSpeechFinished(nextItem.id)
             } else {
                 Log.i(TAG, "Spoken: '${nextItem.text}' [Priority: ${nextItem.priority}, Route: ${routingStatus.activePrimaryRoute}]")
                 logAnnouncementToDb(nextItem)
@@ -640,6 +656,7 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
      * Fallback policy execution when primary Bluetooth speech delivery is disrupted or muted.
      */
     fun triggerSpeakerFallback(item: AnnouncementItem, reason: String) {
+        if (item.category == "CHARGING_SPEED") return
         scope.launch(Dispatchers.IO) {
             if (AnnouncementMediaGate.shouldSkip(context)) return@launch
             try {
@@ -681,9 +698,10 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         queue.clear()
     }
 
-    private fun onSpeechFinished() {
+    private fun onSpeechFinished(expectedId: String? = null) {
         scope.launch(Dispatchers.Main) {
             synchronized(this@AnnouncementEngine) {
+                if (expectedId != null && currentPlayingAnnouncement?.id != expectedId) return@synchronized
                 isSpeaking.set(false)
                 currentPlayingAnnouncement = null
                 processQueue()
@@ -758,6 +776,15 @@ class AnnouncementEngine(private val context: Context) : TextToSpeech.OnInitList
         internal const val DEDUPE_WINDOW_MS = 20_000L
 
         /** Minimum gap between two announcements of the same category. */
+        internal fun speedSpeech(speed: CanonicalChargingSpeed): String? = when (speed) {
+            CanonicalChargingSpeed.SLOW -> "Slow charging"
+            CanonicalChargingSpeed.NORMAL -> "Normal charging"
+            CanonicalChargingSpeed.FAST -> "Fast charging"
+            CanonicalChargingSpeed.ULTRA_FAST -> "Ultra Fast charging"
+            CanonicalChargingSpeed.HYPER_FAST -> "Hyper Fast charging"
+            CanonicalChargingSpeed.EXTREME_FAST -> "Extreme Fast charging"
+            else -> null
+        }
         internal val CATEGORY_COOLDOWN_MS: Map<String, Long> = mapOf("CHARGING_SPEED" to 60_000L)
 
         /** True when something was announced less than [cooldownMs] ago. */

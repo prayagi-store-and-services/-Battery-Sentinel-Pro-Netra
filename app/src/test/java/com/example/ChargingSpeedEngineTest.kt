@@ -11,22 +11,32 @@ class ChargingSpeedEngineTest {
     @Test
     fun testChargingSpeedThresholds() {
         // Positive CURRENT_NOW sign convention.
-        assertEquals(CanonicalChargingSpeed.SLOW, engine.calculate(true, 4000, 1000).speedCategory) // 4W
-        assertEquals(CanonicalChargingSpeed.NORMAL, engine.calculate(true, 4000, 1500).speedCategory) // 6W
-        assertEquals(CanonicalChargingSpeed.FAST, engine.calculate(true, 4000, 3000).speedCategory) // 12W
-        assertEquals(CanonicalChargingSpeed.SUPER_FAST, engine.calculate(true, 4000, 6000).speedCategory) // 24W
-        assertEquals(CanonicalChargingSpeed.ULTRA_FAST, engine.calculate(true, 4000, 10000).speedCategory) // 40W
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, engine.calculate(true, 4000, 1000).speedCategory) // 4W
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, engine.calculate(true, 4000, 1500).speedCategory) // 6W
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, engine.calculate(true, 4000, 3000).speedCategory) // 12W
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, engine.calculate(true, 4000, 6000).speedCategory) // 24W
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, engine.calculate(true, 4000, 10000).speedCategory) // 40W
     }
 
     @Test
     fun chargingSpeedUsesCurrentMagnitudeWhenDeviceReportsNegativeChargingCurrent() {
         // Some device fuel-gauge implementations report charging current with a negative sign.
         // When Android confirms charging, the sign must not collapse the calculated power to 0W.
-        assertEquals(CanonicalChargingSpeed.SLOW, engine.calculate(true, 4000, -1000).speedCategory) // 4W
-        assertEquals(CanonicalChargingSpeed.NORMAL, engine.calculate(true, 4000, -1500).speedCategory) // 6W
-        assertEquals(CanonicalChargingSpeed.FAST, engine.calculate(true, 4000, -3000).speedCategory) // 12W
-        assertEquals(CanonicalChargingSpeed.SUPER_FAST, engine.calculate(true, 4000, -6000).speedCategory) // 24W
-        assertEquals(CanonicalChargingSpeed.ULTRA_FAST, engine.calculate(true, 4000, -10000).speedCategory) // 40W
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, engine.calculate(true, 4000, -1000).speedCategory) // 4W
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, engine.calculate(true, 4000, -1500).speedCategory) // 6W
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, engine.calculate(true, 4000, -3000).speedCategory) // 12W
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, engine.calculate(true, 4000, -6000).speedCategory) // 24W
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, engine.calculate(true, 4000, -10000).speedCategory) // 40W
     }
 
     @Test
@@ -58,6 +68,7 @@ class ChargingSpeedEngineTest {
         )
         assertEquals(3.0f, negativeCurrent.rawPowerWatts!!, 0.001f)
         assertEquals(3.0f, negativeCurrent.consumptionPowerWatts!!, 0.001f)
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
         assertEquals(CanonicalChargingSpeed.UNAVAILABLE, negativeCurrent.speedCategory)
 
         val positiveCurrent = engine.calculate(
@@ -76,6 +87,7 @@ class ChargingSpeedEngineTest {
         assertEquals(3000, engine.normalizeToMilliAmps(3_000_000, true))   // reported in uA
         assertEquals(3, engine.normalizeToMilliAmps(3000, false))          // not actively charging: uA
         assertEquals(-3000, engine.normalizeToMilliAmps(-3000, true))
-        assertEquals(CanonicalChargingSpeed.FAST, engine.calculate(true, 4000, engine.normalizeToMilliAmps(-3000, true)).speedCategory)
+        // No ENERGY_COUNTER observations were supplied; electrical power is not a speed fallback.
+        assertEquals(CanonicalChargingSpeed.UNAVAILABLE, engine.calculate(true, 4000, engine.normalizeToMilliAmps(-3000, true)).speedCategory)
     }
 }

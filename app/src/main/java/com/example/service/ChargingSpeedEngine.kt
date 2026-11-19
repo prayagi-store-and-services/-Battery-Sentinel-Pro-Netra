@@ -7,10 +7,12 @@ data class SpeedEngineResult(
     val rawPowerWatts: Float?,
     val consumptionPowerWatts: Float?,
     val speedCategory: CanonicalChargingSpeed,
-    val announcementCategory: CanonicalChargingSpeed
+    val announcementCategory: CanonicalChargingSpeed,
+    val estimatedStoredEnergyRateWatts: Float? = null
 )
 
 class ChargingSpeedEngine {
+    private val energyPolicy = EnergyCounterSpeedPolicy()
 
     companion object {
         /**
@@ -28,11 +30,15 @@ class ChargingSpeedEngine {
     fun normalizeToMilliAmps(raw: Int, activeCurrentFlow: Boolean): Int =
         ChargingSpeedEngine.normalizeToMilliAmps(raw, activeCurrentFlow)
 
+    @Synchronized
     fun calculate(
         isCharging: Boolean?,
         voltageMv: Int?,
         currentMa: Int?,
-        isDischarging: Boolean = false
+        isDischarging: Boolean = false,
+        energyCounterNwh: Long? = null,
+        observedAtElapsedMillis: Long? = null,
+        isFull: Boolean = false
     ): SpeedEngineResult {
         val batteryPowerWatts = if (voltageMv != null && currentMa != null) {
             (voltageMv.toFloat() * currentMa.toFloat()) / 1_000_000f
@@ -52,25 +58,24 @@ class ChargingSpeedEngine {
         // Never derive a discharge value from a stale charging sample.
         val consumptionWatts = if (isDischarging) observedPowerWatts else null
 
-        // Canonical raw-power tiers: <5W Slow, 5W-<10W Normal, 10W-<20W Fast, 20W-<40W Super Fast, >=40W Ultra Fast
-        // Rely exclusively on raw battery input power. No 'effective' or 'net' charging power calculations.
-        val speedCategory = if (isCharging == true && rawPowerWatts != null) {
-            when {
-                rawPowerWatts >= 40.0f -> CanonicalChargingSpeed.ULTRA_FAST
-                rawPowerWatts >= 20.0f -> CanonicalChargingSpeed.SUPER_FAST
-                rawPowerWatts >= 10.0f -> CanonicalChargingSpeed.FAST
-                rawPowerWatts >= 5.0f -> CanonicalChargingSpeed.NORMAL
-                else -> CanonicalChargingSpeed.SLOW
-            }
-        } else {
-            CanonicalChargingSpeed.UNAVAILABLE
+        val energyReading = energyPolicy.observe(isCharging == true && !isFull,
+            energyCounterNwh, observedAtElapsedMillis)
+        val speedCategory = when (energyReading.speed) {
+            EnergySpeed.SLOW -> CanonicalChargingSpeed.SLOW
+            EnergySpeed.NORMAL -> CanonicalChargingSpeed.NORMAL
+            EnergySpeed.FAST -> CanonicalChargingSpeed.FAST
+            EnergySpeed.ULTRA_FAST -> CanonicalChargingSpeed.ULTRA_FAST
+            EnergySpeed.HYPER_FAST -> CanonicalChargingSpeed.HYPER_FAST
+            EnergySpeed.EXTREME_FAST -> CanonicalChargingSpeed.EXTREME_FAST
+            null -> CanonicalChargingSpeed.UNAVAILABLE
         }
 
         return SpeedEngineResult(
             rawPowerWatts = rawPowerWatts,
             consumptionPowerWatts = consumptionWatts,
             speedCategory = speedCategory,
-            announcementCategory = speedCategory
+            announcementCategory = speedCategory,
+            estimatedStoredEnergyRateWatts = energyReading.watts?.toFloat()
         )
     }
 }

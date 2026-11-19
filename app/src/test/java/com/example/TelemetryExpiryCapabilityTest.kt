@@ -21,8 +21,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [34], application = Application::class)
 class TelemetryExpiryCapabilityTest {
     private val types = listOf(CapabilityType.BATTERY_TEMPERATURE, CapabilityType.BATTERY_VOLTAGE,
-        CapabilityType.BATTERY_CURRENT, CapabilityType.BATTERY_POWER_CALCULATION,
-        CapabilityType.CHARGING_SPEED_CALCULATION, CapabilityType.FAST_CHARGING_DETECTION)
+        CapabilityType.BATTERY_CURRENT, CapabilityType.BATTERY_POWER_CALCULATION)
     private fun center(clock: () -> Long): NetraCentralDataCenter {
         val context: Context = ApplicationProvider.getApplicationContext()
         shadowOf(context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager)

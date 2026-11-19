@@ -197,91 +197,7 @@ fun BatteryScreen(
 
                 // 3. Electrical Telemetry & Raw Incoming Power Card
                 item {
-                    SentinelCard(
-                        title = "Raw Incoming Power & Electrical Telemetry",
-                        icon = Icons.Default.Bolt,
-                        dotState = if (canonical.isCharging == true) DotState.CONNECTED else DotState.STANDBY,
-                        accentColor = NetraCyan
-                    ) {
-                        val rawPowerStr = canonical.powerWatts?.let { "${String.format(Locale.US, "%.2f", it)} W" } ?: "Unavailable"
-                        val speedCategoryStr = when (canonical.chargingSpeed) {
-                            CanonicalChargingSpeed.SLOW -> "Slow (<5W)"
-                            CanonicalChargingSpeed.NORMAL -> "Normal (5W–10W)"
-                            CanonicalChargingSpeed.FAST -> "Fast (10W–<20W)"
-                            CanonicalChargingSpeed.SUPER_FAST -> "Super Fast (20W–<40W)"
-                            CanonicalChargingSpeed.ULTRA_FAST -> "Ultra Fast (≥40W)"
-                            CanonicalChargingSpeed.UNAVAILABLE -> "Unavailable"
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = if (canonical.isCharging == true) "Raw Incoming Charging Power" else "Active Power Draw",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = rawPowerStr,
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = if (canonical.isCharging == true) NetraEmerald else NetraCyan
-                                )
-                            }
-
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = "Charging Speed Tier",
-                                    fontSize = 11.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = speedCategoryStr,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (canonical.isCharging == true) NetraEmerald else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        // Hide a reading entirely when Android does not report it (no "Unavailable" filler).
-                        if (canonical.voltageMv != null || canonical.currentMa != null || canonical.consumptionPowerWatts != null) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                canonical.voltageMv?.let { mv ->
-                                    ElectricBadge(
-                                        label = "VOLTAGE",
-                                        value = "$mv mV",
-                                        accent = NetraCyan,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                                canonical.currentMa?.let { ma ->
-                                    ElectricBadge(
-                                        label = "CURRENT",
-                                        value = "$ma mA",
-                                        accent = if (ma >= 0) NetraEmerald else StatusAmber,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                                canonical.consumptionPowerWatts?.let { w ->
-                                    ElectricBadge(
-                                        label = "PHONE DRAIN",
-                                        value = "${String.format(Locale.US, "%.2f", w)} W",
-                                        accent = StatusAmber,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    BatteryElectricalPowerCard(canonical)
                 }
 
                 // 4. Canonical ETA & Charger Session Timings
@@ -513,6 +429,96 @@ internal fun ChargingSessionItemRow(session: ChargingSession) {
         }
         Spacer(Modifier.height(4.dp))
         Text("Gaps and restarts can omit earlier readings.", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+
+/** The existing battery-screen card, extracted for real Compose verification. */
+@Composable
+internal fun BatteryElectricalPowerCard(canonical: com.example.model.NetraCentralState) {
+    SentinelCard(
+        title = "Battery Power & Electrical Telemetry",
+        icon = Icons.Default.Bolt,
+        dotState = if (canonical.isCharging == true) DotState.CONNECTED else DotState.STANDBY,
+        accentColor = NetraCyan
+    ) {
+        val rawPowerStr = canonical.powerWatts?.let { "${String.format(Locale.US, "%.2f", it)} W" } ?: "Unavailable"
+        val speedCategoryStr = canonical.chargingSpeed.fullLabelWithTier
+
+
+        Text("Net stored-energy rate (estimated): " +
+            (canonical.estimatedStoredEnergyRateWatts?.let { String.format(Locale.US, "%.2f W", it) } ?: "Unavailable"),
+            fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Speed uses remaining-energy change over observed time, not charger output or V × I.",
+            fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = if (canonical.isCharging == true) "Battery-side sensor power" else "Active Power Draw",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = rawPowerStr,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = if (canonical.isCharging == true) NetraEmerald else NetraCyan
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "Charging Speed Tier",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = speedCategoryStr,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (canonical.isCharging == true) NetraEmerald else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Hide a reading entirely when Android does not report it (no "Unavailable" filler).
+        if (canonical.voltageMv != null || canonical.currentMa != null || canonical.consumptionPowerWatts != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                canonical.voltageMv?.let { mv ->
+                    ElectricBadge(
+                        label = "VOLTAGE",
+                        value = "$mv mV",
+                        accent = NetraCyan,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                canonical.currentMa?.let { ma ->
+                    ElectricBadge(
+                        label = "CURRENT",
+                        value = "$ma mA",
+                        accent = if (ma >= 0) NetraEmerald else StatusAmber,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                canonical.consumptionPowerWatts?.let { w ->
+                    ElectricBadge(
+                        label = "PHONE DRAIN",
+                        value = "${String.format(Locale.US, "%.2f", w)} W",
+                        accent = StatusAmber,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
         }
     }
 }
