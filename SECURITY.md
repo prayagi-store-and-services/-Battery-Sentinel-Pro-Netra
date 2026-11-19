@@ -559,3 +559,21 @@ Existing-feature correctness repair, not a security vulnerability claim. Charge/
 
 ### 2.2.44 media-skip setting scope
 The independent media-skip switch defaults ON on install and upgrade. OFF permits overlapping announcements but does not restore pause/resume or audio-focus behavior. This UI/behavior correction is not a vulnerability or OS patch. Detection and physical-device limits remain documented; no thermal, permission or backend change is included.
+
+
+## 2.2.45 observed-energy charging scope
+
+Application behavior/wording correction from PR326, not a security vulnerability
+or Android OS patch. Existing central refresh inputs feed the existing charging
+owner. ENERGY_COUNTER deltas estimate net stored-energy rate, not charger-output
+watts; unavailable evidence stays unavailable. Electrical readings and ETA remain
+independent. Short type speech retains saved settings and media/call/night rules;
+Bluetooth device announcements remain forbidden. No new permission, sampler,
+network endpoint, dependency, secret, signing key or repository-settings change.
+
+The guarded exact-head release pipeline remains unchanged. Automated regression
+and fixture renders cannot prove physical ENERGY_COUNTER support, measurement
+accuracy, background delivery, TTS routing, installed upgrade/reboot or drain.
+These device checks are NOT RUN. No hardware charging cutoff, cooling, measured
+saving or device-stability guarantee. Keep Play Protect ON. PR323/324/325 and
+future Guardian ports are excluded from this release.
