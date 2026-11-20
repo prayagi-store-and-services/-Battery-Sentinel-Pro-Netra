@@ -38,6 +38,20 @@ class CanonicalStatePublicationTest {
     }
 
     @Test
+    fun thermalRegistrationFailureClearsOnlyOsEvidence() {
+        val center = NetraCentralDataCenter()
+        val candidate = center.centralState.value.copy(batteryLevel = 65, temperatureCelsius = 42f)
+        center.updateThermalStatus(4)
+        center.updateThermalStatus(null, com.example.model.ThermalStatusAvailability.REGISTRATION_FAILED)
+        center.publishTelemetryState(candidate)
+        val state = center.centralState.value
+        org.junit.Assert.assertNull(state.thermalStatus)
+        assertEquals(com.example.model.ThermalStatusAvailability.REGISTRATION_FAILED, state.thermalStatusAvailability)
+        assertEquals(42f, state.temperatureCelsius)
+        assertEquals(65, state.batteryLevel)
+    }
+
+    @Test
     fun simultaneousMediaAndTelemetryPublicationsKeepBothResults() = runBlocking {
         val center = NetraCentralDataCenter()
         repeat(250) { index ->

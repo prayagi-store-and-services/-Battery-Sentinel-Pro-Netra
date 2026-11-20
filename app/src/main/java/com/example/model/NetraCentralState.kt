@@ -270,7 +270,8 @@ data class NetraCentralState(
     val isCharging: Boolean? = null,
     val isChargerConnected: Boolean? = null,
     val canonicalChargerState: CanonicalChargerState = CanonicalChargerState.UNKNOWN,
-    val thermalStatus: Int = android.os.PowerManager.THERMAL_STATUS_NONE, // Android Thermal Status
+    val thermalStatus: Int? = null, // No platform observation is not NORMAL.
+    val thermalStatusAvailability: ThermalStatusAvailability = ThermalStatusAvailability.AWAITING_OBSERVATION,
     val chargingOptimizationMode: ChargingOptimizationMode = ChargingOptimizationMode.NORMAL,
     val chargerConnectedAt: Long? = null,
     val chargingStartedAt: Long? = null,

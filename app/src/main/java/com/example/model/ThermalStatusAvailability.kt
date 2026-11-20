@@ -1,0 +1,6 @@
+package com.example.model
+
+enum class ThermalStatusAvailability {
+    AWAITING_OBSERVATION, OBSERVED, UNSUPPORTED, REGISTRATION_FAILED,
+    INVALID_OBSERVATION, REMOVAL_FAILED, STOPPED
+}

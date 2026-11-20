@@ -267,8 +267,14 @@ class NetraCentralDataCenter(
         ) }
     }
 
-    fun updateThermalStatus(status: Int) {
-        _centralState.update { current -> current.copy(thermalStatus = status) }
+    fun updateThermalStatus(
+        status: Int?,
+        availability: com.example.model.ThermalStatusAvailability = com.example.model.ThermalStatusAvailability.OBSERVED
+    ) {
+        _centralState.update { current -> current.copy(
+            thermalStatus = status,
+            thermalStatusAvailability = availability
+        ) }
     }
 
     fun updateChargingOptimizationMode(mode: com.example.model.ChargingOptimizationMode) {
