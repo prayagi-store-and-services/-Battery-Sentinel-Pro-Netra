@@ -47,6 +47,7 @@ class BatteryMonitorService : Service() {
     private lateinit var lifecycleTracker: LifecycleTracker
     private var isReceiverRegistered = false
     private var isBluetoothReceiverRegistered = false
+    private var thermalStatusListener: OwnedThermalStatusListener<PowerManager.OnThermalStatusChangedListener>? = null
     private var lastTemp: Float = 0f
     private var lastTempTimestamp: Long = 0L
     private val continuousChargeAlert = ContinuousChargeAlertController(this, serviceScope)
@@ -153,13 +154,7 @@ class BatteryMonitorService : Service() {
         startLifecycleSupervisor()
         GpsPowerController.ensureRunning(this)
         
-        // Add thermal status listener
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
-            powerManager?.addThermalStatusListener(mainExecutor) { status ->
-                NetraApplication.instance.centralDataCenter.updateThermalStatus(status)
-            }
-        }
+        startThermalStatusListener()
 
         serviceScope.launch {
             for (batteryIntent in batteryInputs) {
@@ -170,6 +165,26 @@ class BatteryMonitorService : Service() {
                 }
             }
         }
+    }
+
+    private fun startThermalStatusListener() {
+        if (thermalStatusListener != null) return
+        val center = NetraApplication.instance.centralDataCenter
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            center.updateThermalStatus(null, com.example.model.ThermalStatusAvailability.UNSUPPORTED)
+            return
+        }
+        val manager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+        thermalStatusListener = OwnedThermalStatusListener(
+            supported = true,
+            createListener = { callback -> PowerManager.OnThermalStatusChangedListener { callback(it) } },
+            register = { listener ->
+                checkNotNull(manager) { "Power service unavailable" }
+                    .addThermalStatusListener(mainExecutor, listener)
+            },
+            remove = { listener -> manager?.removeThermalStatusListener(listener) },
+            publish = { status, availability -> center.updateThermalStatus(status, availability) }
+        ).also { it.start() }
     }
 
     private fun startCollectorsAndPolling() {
@@ -763,6 +778,7 @@ class BatteryMonitorService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        thermalStatusListener?.stop()
         super.onDestroy()
         continuousChargeAlert.stop()
         if (::lifecycleTracker.isInitialized) lifecycleTracker.stop()
