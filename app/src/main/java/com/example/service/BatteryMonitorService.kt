@@ -55,6 +55,7 @@ class BatteryMonitorService : Service() {
     private var lastNotified80PercentSession = false
     private var lastNotifiedTargetValue = -1
     private var lastTargetAlarmAt = 0L
+    private val targetEtaEstimator = SessionEtaEstimator()
     private var lastOverheatAlertTime = 0L
     private var lastThresholdAlertTime = 0L
     private var alertSessionInitialized = false
@@ -372,14 +373,22 @@ class BatteryMonitorService : Service() {
         // Time to Full / Remaining discharge estimate
         val timeToFullMinutes: Int? = canonical.chargingEtaMinutes
         val estimatedDischargeHours: Float? = canonical.dischargingEtaMinutes?.let { it / 60.0f }
-        // Learned minutes to the charge target; null until the curve has real data for it
+        // Target ETA uses the same rule as full/empty and live readings. Feed RAW inputs,
+        // never retained display values, so missing/paused observations clear evidence.
         val targetPercent = try {
             NetraApplication.instance.settingsRepository.settings.value.chargeTargetPercent
         } catch (_: Exception) { -1 }
-        val timeToTargetMinutes: Int? = if (isCharging && targetPercent in (batteryPct + 1)..100) {
-            ChargeCurveLearner.init(applicationContext)
-            ChargeCurveLearner.estimateMinutes(batteryPct, targetPercent, true, canonical.temperatureCelsius)?.minutes
-        } else null
+        val rawLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val rawScale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        val etaLevel = rawLevel.takeIf { rawScale > 0 && it in 0..rawScale }?.let { (it.toLong() * 100 / rawScale).toInt() }
+        val targetSession = targetEtaEstimator.observe(etaLevel,
+            intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1),
+            intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1), android.os.SystemClock.elapsedRealtime(), targetPercent)
+        val etaTemperature = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
+            .takeIf { it in -400..1000 }?.div(10f)
+        val timeToTargetMinutes = MeasuredEtaPolicy.select(targetSession, etaLevel, targetPercent, true) { from, to, charging ->
+            MeasuredEtaPolicy.learned(from, to, charging, etaTemperature)
+        }
 
         val isOverheat = tempCelsius >= 40.0f
         val isCritical = tempCelsius >= 45.0f

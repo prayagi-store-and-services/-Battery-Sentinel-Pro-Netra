@@ -1,3 +1,9 @@
+## Unreleased measured/learned ETA policy
+
+Reliability fix, not a vulnerability patch. Full/empty, selected-target and foreground live estimates share one selection rule. Confident temperature-banded phone history supplies the remaining level-curve shape; the current session's observed time over the same historical level range scales that shape. Missing/incomplete history keeps the measured-session fallback. No universal80%taper or charging-rate assumption is added. Invalid/paused/stalled input cannot revive history. A target or charger change clears the old measured pace; a new session may use confident history briefly during warm-up, with no promise of the current charger's future behavior. Estimates remain approximate, capped, and may be wrong as the phone changes conditions.
+
+No new UI controls, permission, dependency, endpoint, sampler, timer, persisted field or data store. Raw battery inputs, not retained display values, drive target evidence. This does not change charging speed, stop charging, open OEM settings or implement the separate pending charging-settings shortcut. Not physical-device/OEM/update/PlayProtect verified. Local Kotlin/JUnit subset testing uses Android constants and unavailable-history stubs; full Android CI and the real-learner integration fixture remain separate gates. No release is authorized by this change.
+
 ## Skip speech during detected media (v2.2.43)
 
 Owner-directed behavior change, not a vulnerability patch. All existing announcer priorities, including critical/manual TTS, are skipped when public AudioManager playback observations show media active. Pending speech is discarded, not deferred. Admission, queue draining, async dispatch, final speak and greeting initialization are gated. Audio focus acquisition and central pause/resume calls were removed from the announcement runtime path; its audible fallback respects the same gate. Existing visual safety notifications remain.

@@ -24,7 +24,7 @@ internal object ChargeCurveLearner {
     enum class Band(val id: Int) { COOL(0), WARM(1), HOT(2) }
 
     /** [minutes] is the learned estimate; [confident] means at least 80% of the summed levels have their own observations. */
-    data class Eta(val minutes: Int, val confident: Boolean)
+    data class Eta(val minutes: Int, val confident: Boolean, val exactMinutes: Double = minutes.toDouble())
 
     private const val PREFS_NAME = "charge_curve_learner_v2"
     private const val ALPHA = 0.35f
@@ -172,7 +172,7 @@ internal object ChargeCurveLearner {
         val cap = if (charging) MAX_CHARGING_MINUTES else MAX_DISCHARGING_MINUTES
         if (minutes !in 1..cap) return null
         val confident = covered.toDouble() / levels >= CONFIDENT_FRACTION
-        return Eta(minutes, confident)
+        return Eta(minutes, confident, totalSec / 60.0)
     }
 
     private fun bandAverage(mode: Int, band: Int): Float? {

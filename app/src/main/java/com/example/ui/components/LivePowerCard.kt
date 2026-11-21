@@ -41,7 +41,7 @@ internal val sharedTelemetry = LivePowerTelemetry(sessionStartEpochMs = { mode -
         PowerMode.DISCHARGING -> com.example.service.CanonicalSessionTime.startEpochMs(state, charging = false)
         else -> null
     }
-})
+}).apply { etaCurve = com.example.service.MeasuredEtaPolicy::learned }
 
 internal fun readSnapshot(c: Context): BatterySnapshot {
     val i: Intent? = c.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))

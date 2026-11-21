@@ -44,6 +44,7 @@ class LivePowerTelemetry(
     private val wallClock: () -> Long = { System.currentTimeMillis() }
 ) {
     private val etaEstimator = SessionEtaEstimator()
+    internal var etaCurve: (Int, Int, Boolean, Float?) -> MeasuredEtaPolicy.Curve? = { _, _, _, _ -> null }
     private var sessionMode: PowerMode? = null
     private var sessionStartMs = 0L
     private var canonicalEpochMs: Long? = null
@@ -142,7 +143,10 @@ class LivePowerTelemetry(
         val result = etaEstimator.observe(percent?.toInt(), s.status, s.plugged, nowMs, targetPercent)
         if (percent == null) return UNAVAILABLE
         if (charging && percent >= targetPercent.coerceIn(1, 100)) return "00:00:00"
-        val minutes = if (charging) result.chargingMinutes else result.dischargingMinutes
+        val temperature = s.temperatureTenthsC?.takeIf { it in -400..1000 }?.div(10f)
+        val minutes = MeasuredEtaPolicy.select(result, percent.toInt(), if (charging) targetPercent else 0, charging) { from, to, mode ->
+            etaCurve(from, to, mode, temperature)
+        }
         return minutes?.let { "~" + formatDuration(it * 60L) + " (est.)" }
             ?: if (nowMs - sessionStartMs < 120_000L) CALCULATING else UNAVAILABLE
     }
