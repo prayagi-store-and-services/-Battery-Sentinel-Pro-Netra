@@ -1,0 +1,247 @@
+path,sha256,lines,pattern_candidates_not_proven_defects
+app/src/main/AndroidManifest.xml,adf4ecad659ee63d31b3ab5618370fcd23f3035f49753e8c27df8cb06ecab8a4,192,none matched
+app/src/main/java/com/example/Brand.kt,cac459f3181e4eb52270599ee5ad7b12474d7fd4a39f7d48d7b859b7af926003,42,none matched
+app/src/main/java/com/example/MainActivity.kt,dd3fca1caa4892b883b3c76e7dcae39f70c1b6844afdfc0c1cb9db39a7c6786f,270,"coroutine_or_handler_clock:181,201"
+app/src/main/java/com/example/NetraApplication.kt,176c0d7527b794c93c1fcc2b4ae6322af19486a4b3e6c16e5828491b054e8a3c,133,none matched
+app/src/main/java/com/example/NetraMainActivity.kt,61e12a72ebc7fb7495be44c7b0de988ad091bbbe5c363935a585dc2b2d580a64,4,none matched
+app/src/main/java/com/example/PowerSettingsActivity.kt,3f0736faac6c8622895f9e04b22776521f12a0e9eac112344ffd9cd194980a1c,35,none matched
+app/src/main/java/com/example/StorageSettingsActivity.kt,ac399d8841fb838205e27a6091c03f15bde11eceac2b8d5b25cc97667ab9ea28,16,none matched
+app/src/main/java/com/example/ai/BatteryCalibrationManager.kt,d6b25381a466f0439ccd8c61bfe933075bb2d24acb859fea5b780e15b2b71ee3,21,none matched
+app/src/main/java/com/example/ai/BatteryDegradationPredictor.kt,fe8c361c89c6c0bd9e39b9d2c763d291af1fd78dd5170e342669024b00ce07e3,71,none matched
+app/src/main/java/com/example/ai/FirebaseAiHealthService.kt,c0ae055cbc90aab1a76b53b98b35d9744aae18730a85814b69adcab3b57f9704,278,"network_transport:7,13,27,30,31,40,48,56,68,70,76,80,162,164"
+app/src/main/java/com/example/ai/GeminiAiService.kt,5fc1fd8cf3799f7a42e6fba65cfac187cdc31345e591e285fed13a2eda92a049,284,"network_transport:10,21,33"
+app/src/main/java/com/example/ai/GeminiModelRotation.kt,91cb345913b7b766c7ce74c0b97b9a551a6067eab4dc532b58ff6443c74aa2d2,59,none matched
+app/src/main/java/com/example/ai/NightChargingThrottler.kt,0ea242bac0e76d42624d32b6a254ec1ee3ae0d6e2df6ffea7617b2fc4d371297,23,none matched
+app/src/main/java/com/example/ai/ObservationTrendPolicy.kt,983eaa5a8ffb27e144b5dd2b5a48be3139318a44e138c3d8b40161cdffabf98e,49,none matched
+app/src/main/java/com/example/ai/OptimalChargingWindowAdvisor.kt,31d306d1493bce6c83f01322e0eb762972892b371a5808dcd0815b4496ac5613,39,none matched
+app/src/main/java/com/example/ai/PowerProfileManager.kt,8bf1703d5993a66d43f51b2b43659311c2477269846d51c837ea5c71497db3b5,111,"persistent_state:16,40,93"
+app/src/main/java/com/example/ai/ProfileApplier.kt,c3be49c46f8112cf001bbf1d5e4417d0487223172d87a0dae28956ea34d47647,28,none matched
+app/src/main/java/com/example/community/CommunityBrowser.kt,0b2a4fff79c333456de8ddf6f92102f80d536fbd64e2f95ddc4562d4817d7a35,28,none matched
+app/src/main/java/com/example/community/CommunityCard.kt,fd9800123b6db304cb38f800f6d50c8bad41b5c76c42c3f20450fb7b6e075c35,34,none matched
+app/src/main/java/com/example/community/CommunityLinks.kt,a2854aeea82b64564ecd7cf6669a0c6f0cb5304c3cc0587dc9eebacaf38f1060,15,"network_transport:7,8,9,10,11,13,14"
+app/src/main/java/com/example/data/local/ActivityLog.kt,af4503c1a6c9ddad6cdde740b4ad6ca1ac98cbba55d2e88c132a1a65bbe27afd,16,none matched
+app/src/main/java/com/example/data/local/ActivityLogDao.kt,89b28ee9e6c73b08825fe48a35600c1ab06666a21f6cb41d9ddfa8591453dcd4,39,none matched
+app/src/main/java/com/example/data/local/BatteryDao.kt,7fcda1247bfde8d041ad7e477efe37486618ede6cb06a90792a45ad688497d2c,46,none matched
+app/src/main/java/com/example/data/local/BatteryRecord.kt,034822166739e73c7a5a535d9cc21972d9c4ef3ed570616bd9c6f17283856c41,20,none matched
+app/src/main/java/com/example/data/local/ChargingSession.kt,f8781a4914ff841334ae93ae43622fce089932427de540dffccee860f1b0ba2d,22,none matched
+app/src/main/java/com/example/data/local/ChargingSessionDao.kt,a9b1ce495a0449a0626a37aa100e3897a2fcba396b0ccfb576178a7f12bccf4d,26,none matched
+app/src/main/java/com/example/data/local/NetraDatabase.kt,c73cf106c8efd7d8bde13c86d94eeef8a4072943cf7e9db0c2b2a41b7fe0b5dd,41,"persistent_state:8,29"
+app/src/main/java/com/example/data/repository/BatteryRepository.kt,9668ce96343feb42a1fcb781ec0e0efb1bfe4394d589198aa99622763e190331,182,none matched
+app/src/main/java/com/example/data/repository/CacheMaintenancePolicy.kt,247bfc605c10456acea85b2e28107be5912200fcd20e5bd54da81563676b7cfa,21,none matched
+app/src/main/java/com/example/data/repository/SettingsRepository.kt,38ac99ce5392c937986460fe76355bd539edc9370b41eeec683d4ab80ccd4896,278,"persistent_state:56,58,112,117,122,127,132,137,143,148,153,158,163,168,173,178,183,188,193,198,203,208,213,218,224,229,234,239,244,249,254,259,265,270,275"
+app/src/main/java/com/example/data/repository/StorageCacheManager.kt,6e8fa606833b43af163e861923074b825e8e85651e86c8a256636e9d4a0cb77e,137,"persistent_state:30,83,97,100"
+app/src/main/java/com/example/festival/FestivalBanner.kt,cceaa2e1fa8faa6e40aa8bc922c817dc8cea4fdfd0f8e69b19726e1c1d6be8cd,56,none matched
+app/src/main/java/com/example/festival/FestivalData.kt,47161ee5fb01d60e1fae053f188f0375b15d5ba82e6aa3a72d5d1cc01581f9ca,147,none matched
+app/src/main/java/com/example/festival/FestiveColors.kt,ca111073739d8c4485c9ab202c5d77286e04f1a98a17a35070bbc6fcd58e2d22,25,none matched
+app/src/main/java/com/example/festival/JayMataDi.kt,dcb97a26f616705b896fae6140dc4bfc72800e798c1348a4db2beea643a86062,112,"coroutine_or_handler_clock:73; persistent_state:47,52"
+app/src/main/java/com/example/geo/GeoGuard.kt,15308437423d4992162851b4b410155d43f180c8379477ac796f5f1e4db8aa17,32,none matched
+app/src/main/java/com/example/model/BatteryTelemetry.kt,caa838af628a6710e818bcbf2ae7d742c046120fcd0add1735fc1a6a124e43b7,50,none matched
+app/src/main/java/com/example/model/BluetoothObservation.kt,fdc4dc43de24bf095662098d8de701acad48810525701de0e8706dc8fada6ae7,9,none matched
+app/src/main/java/com/example/model/CalibrationModels.kt,c5535f1386853c74b2912b39eb8d88f7caeefc1618cefd6301a641b5a1d8fb07,22,none matched
+app/src/main/java/com/example/model/CrashReport.kt,10b99325053c6a25e4c32dddecabd42b338ae4838498e33ba2fa650c9ef91572,21,none matched
+app/src/main/java/com/example/model/LiveChargingTelemetry.kt,0d96f3256c851bc2c1b6ff14ff7aa7530ff6b366b31842ea0b6a39b8b52d4953,48,none matched
+app/src/main/java/com/example/model/NetraCentralEvent.kt,f6a15a1899433ac9c6ebcf06a22b6211c67eccd433f4bb4a988c72b3d708c79b,37,none matched
+app/src/main/java/com/example/model/NetraCentralState.kt,357808c6db4ac42dadf19f8a49cefea9916d628836a1dc2078cbb6b346b354d9,358,none matched
+app/src/main/java/com/example/model/NetworkOptimizationModels.kt,23053f61378ac8b4c088ade88481de96fc86bfc5bf2a261aad6838efcab8874d,47,none matched
+app/src/main/java/com/example/model/OtherModels.kt,25c66b2cbba1a1dcf856ad6bf86ed714ae069e4fa10ef3e3f7a22e2e752f9a9b,49,none matched
+app/src/main/java/com/example/model/PowerProfile.kt,65f58215a22f3897a8627b8fa49a01d54d6733780b7d4d76244ed9dcc8563115,27,none matched
+app/src/main/java/com/example/model/ThermalStatusAvailability.kt,57fe00ecba2e61efea6577590560ee1902ba26e01c205409021bc13c33c2043a,6,none matched
+app/src/main/java/com/example/permissions/PermissionOnboarding.kt,664f0f3f387b37f326af4ad9feeac54da4444a56ba443d99f11788ebc4131d4a,138,"persistent_state:60,91,97,112"
+app/src/main/java/com/example/permissions/PermissionOnboardingHost.kt,11c95fad050f0b8919c3ffaa527e0e40f52304515c1a34089bcf42b054989295,102,none matched
+app/src/main/java/com/example/receiver/AlarmActionReceiver.kt,fc442d1871ec9409cb856b88a35253a70b1a05c5c869073e33784cbfeabef988,46,none matched
+app/src/main/java/com/example/receiver/BootCompletedReceiver.kt,ec92930b1e3a0609b596e98eb268d9b7adaae0b949c9c5ad7a0ef0b1b238c259,20,none matched
+app/src/main/java/com/example/receiver/NetraDeviceAdmin.kt,95d74274f53efef89706e419c74c4c044ccc45327cbb9a2a48c61f58d5b20e2a,6,none matched
+app/src/main/java/com/example/service/ActivePowerSaver.kt,2579190a3f0626c679a28f3f9b54b231cb89bfd85958122c0f9b96fad521ee32,83,"persistent_state:32,36,44,50,59,70,75"
+app/src/main/java/com/example/service/AlertDeliveryState.kt,21fa536f94341111daf85aeaba29371d2d818dc774ab07d00c02fc9361cd81da,126,"persistent_state:12,38,62,90,99,117,124"
+app/src/main/java/com/example/service/AnnouncementEngine.kt,25a51d5f7b6068c3a9350e00098ed6e39c898539035af59c4e290a975fe9f1ab,802,none matched
+app/src/main/java/com/example/service/AnnouncementMediaGate.kt,df2952bc6a8e7a853fd026927eb911760fc4211e23be64ddf08671c1db6b4236,24,none matched
+app/src/main/java/com/example/service/BatteryBoundary.kt,6ce616134fdea3cacee6a079220ec113e5571e2d29ecfd7678de0180d958763e,11,none matched
+app/src/main/java/com/example/service/BatteryMonitorService.kt,428f54ef6aefe0541384843de309750bcd20c950781157581c92bc61b60fc6f5,840,"coroutine_or_handler_clock:279; foreground_service:153,784,831; persistent_state:121"
+app/src/main/java/com/example/service/BatteryNotificationIds.kt,c4ec272aa49b1f0cbc671a2b30645d3423762e44dc5c59e6fe09b61e18aec39e,10,none matched
+app/src/main/java/com/example/service/BatteryTracker.kt,b0b341aae503497b59cac02a0fda93d64868d41963a479a9f519205c23bb102f,199,"persistent_state:31,34"
+app/src/main/java/com/example/service/CanonicalSessionTime.kt,ce050c3ae2ed922a5b06918c04b0cd3d9101b271800850270c4c87a20f0747ec,19,none matched
+app/src/main/java/com/example/service/CentralCapabilityRegistry.kt,619c60d41f8628ad820687ca6533cc728e6161fd3369a33a5469578ff466f0e5,349,alarm_or_wakelock:235
+app/src/main/java/com/example/service/CentralPowerWorkContext.kt,6ac9a8bd07fcea2b467caf46f843c02b263afb550533bc466c0afaa9d6ce5a44,31,none matched
+app/src/main/java/com/example/service/ChargeCurveLearner.kt,42996527637bcbb13f509959f56c4b4e97794e06589b5f42a1c89742d15baced,259,"persistent_state:56,63,254"
+app/src/main/java/com/example/service/ChargerThermalGuard.kt,81ad804170c17c23b40a95ccaa42ebdba615ba7b4131e9c2b228726fb0e6acf0,105,none matched
+app/src/main/java/com/example/service/ChargingOptimizationEngine.kt,a2b8c2234eb8a2afe8fb709ce7c49ccfaad5084ae16fd85536af457a1faf23cc,54,none matched
+app/src/main/java/com/example/service/ChargingSpeedEngine.kt,169f6de851b429939a75b3627faceef4fcbc47d8fbcf0749afcdcd7bbf1aa312,81,none matched
+app/src/main/java/com/example/service/ClimateBaselineEngine.kt,a0259a7d988b4855c2776352f3f61c69ba135dfd7e7668f7f45c6dd42284f6a2,173,none matched
+app/src/main/java/com/example/service/ContinuousChargeAlert.kt,333d34932cb8c75724b77d59fcc6a5bb9e52c3f19ad311a30ebd3e33f0b6828b,36,none matched
+app/src/main/java/com/example/service/ContinuousChargeAlertController.kt,39309954a249b151c4a1edcaac1872b25c6b8ae4f643e29bd2dfc83e468cc4a1,93,coroutine_or_handler_clock:74
+app/src/main/java/com/example/service/CrashRecoveryGate.kt,4418ad5df74d792a63aa92b44586a418324738b35530a7b7a22316947a8efbad,61,"persistent_state:35,38,39"
+app/src/main/java/com/example/service/CrashRecoveryPolicy.kt,83afc0ebbf3b6b80b864f3c1b2a14e91e09136899dca7a54e1c1debe200ff4ec,22,none matched
+app/src/main/java/com/example/service/CrashStabilitySentinel.kt,38496afce5452127b138b08ca8188c61c63661116f353379aa6c7674cd3d3fd0,61,none matched
+app/src/main/java/com/example/service/DischargeAnchor.kt,864748676fc8d418f9572454675eebd86bec16db4852afc2443509135fc6a900,49,"persistent_state:17,19,20"
+app/src/main/java/com/example/service/DrainMeasure.kt,940ac3ff3123a7f46ee88eed9abfcec19dc0f62a65b3ef19523ffe443d6eceb3,30,none matched
+app/src/main/java/com/example/service/DrivingFlag.kt,8a3d1ac8488779ae58b28a79efd664a48f6c26349eeb4909d3f73c5235ba9036,20,none matched
+app/src/main/java/com/example/service/EmergencySaverPlan.kt,98e212ff59348f23f8b7fcb901e47448af2b6e16ce559cdd079a3f3eafd3bd02,197,none matched
+app/src/main/java/com/example/service/EnergyCounterSpeedPolicy.kt,4430f44708897d4ad7fc8b8a0418e2f7ffcdf527eee671104cbc4fb431a3c220,72,none matched
+app/src/main/java/com/example/service/FullChargeObservation.kt,1b19f7b0086d8e1aeb3514c03627221069171c934b9f41cc15fd025067b0d4ae,61,none matched
+app/src/main/java/com/example/service/FullChargeSilence.kt,073bf7409d8af43ca958b055848151ebbaf64b06939932b5dab4008b97e48a4c,11,none matched
+app/src/main/java/com/example/service/FullChargeSummaryStore.kt,775673d85c44099286240fc69b1ef061f27bf5a80505776eed50341b1789378b,52,"persistent_state:8,31,38"
+app/src/main/java/com/example/service/GpsPowerController.kt,9b805cb762dba84c6cb43dcd6b5c046c5ec8b3f7a0534d298ebb0a54733133c6,200,"coroutine_or_handler_clock:133; sensor_registration:127,142; persistent_state:98,104,147,150,163,165,169"
+app/src/main/java/com/example/service/GpsPowerPolicy.kt,fb5bb61bb34bedcc33ecaca2e8858d16547e61144398eaed7198224cb5e90591,63,none matched
+app/src/main/java/com/example/service/IdealResourcePolicy.kt,ff85a7177c6b5cf267610d22974489f23870798240490a236b40929fa300763e,8,none matched
+app/src/main/java/com/example/service/IdealStateEngine.kt,95e7164649ab60a2738c6ac38db3bd4b4d1ccb05c36c6e7fd6b5b75ac041b515,43,none matched
+app/src/main/java/com/example/service/JunkPolicy.kt,fc9519f8c2c2b07fcf951569483d6e7e76525dcb7906c47d0fabd7a1bf86f648,19,none matched
+app/src/main/java/com/example/service/JunkWatcher.kt,52c351287b12cc9fae68f54b623818819391614fe191c89e804065ea13094736,144,"persistent_state:118,121,142"
+app/src/main/java/com/example/service/LifecycleAwarePolling.kt,f471f7dbbaec2db55472faafb7a00c482dbb087df9a9e39682b129f31ee697d1,75,coroutine_or_handler_clock:40
+app/src/main/java/com/example/service/LiveChargingSessionEngine.kt,150ccab065241e0b60c36298855cd3120398406209571df47f31945ca54b03c8,549,coroutine_or_handler_clock:290
+app/src/main/java/com/example/service/LivePowerReading.kt,7cecdd6a3ef040aca90c47b1903ff53c81916ea2673fb1b82c686493708460c7,42,none matched
+app/src/main/java/com/example/service/LivePowerTelemetry.kt,9f78be6ca072569b720290d1020a103c1cd0cc933ef25167ca0fe8707f2a8a8e,188,none matched
+app/src/main/java/com/example/service/LocationCountryResolver.kt,d339e3b8d496cf0041c5353eb9a6a5af979085bde6df5cf86b56eb75885d024e,134,none matched
+app/src/main/java/com/example/service/MeasuredEtaPolicy.kt,1d209ee1ad13f2732e023cf8e4a2ff2473be02fddf0d7b736b8f28a231baa03a,34,none matched
+app/src/main/java/com/example/service/NetraCentralDataCenter.kt,e539df07011b3246742af1c44d056dcaeeb9bef888fc02b3db0d4295d23e9828,1439,"persistent_state:190,1301,1314,1322"
+app/src/main/java/com/example/service/NetworkDownswitchPolicy.kt,a4a939011e9ef10e9438561a084fb487fe80412e9521e05134234983c674130b,56,none matched
+app/src/main/java/com/example/service/NetworkOptimizationEngine.kt,da0e97a3d17119218528198a6d535a0f54d4196554f7e7010c3710eeed9fd969,519,coroutine_or_handler_clock:260
+app/src/main/java/com/example/service/NetworkSwitchCoordinator.kt,860de3bcffd714325cdda922552015604dc762d7f0a5c1a7b654a4a762fd6e5f,197,"persistent_state:41,94,156,170,192"
+app/src/main/java/com/example/service/NotificationStatusLines.kt,cdd98c8c6173a7876265a476d54fc2ebd89d8374cdb88ed6fa90fd98b3be4189,76,none matched
+app/src/main/java/com/example/service/OwnedThermalStatusListener.kt,b4fd4a43bc3e58c51dea12102bc41fb98b03e1e582f8af9d07386a88dd3f7c20,72,none matched
+app/src/main/java/com/example/service/PausedServiceStop.kt,6bbea50473bb70a064e7749db801607a67b02e865c532132413eaf6ee664ea6c,30,foreground_service:23
+app/src/main/java/com/example/service/PercentAnnouncement.kt,8ec0331e7f3565fa225c2ba5c80aaed6e55ee12df47682fb1814613eb4e36f47,34,none matched
+app/src/main/java/com/example/service/PercentAnnouncementController.kt,a9b0f313d6f386d5e2a58fa4f8731fd88ae77c17b6130029646bfb7358e0cba1,60,none matched
+app/src/main/java/com/example/service/PowerRecommendations.kt,b3e3d0d87019baf74b7dbfd532d95a6e92d3db7bdb1d4a76fc9032ddc4d7991b,78,"persistent_state:19,23,38,47,61"
+app/src/main/java/com/example/service/PowerWorkDecisionPolicy.kt,c02666c57c2a209530efd5ba24bac38344251f7be3599acfde2f7595013662d1,64,none matched
+app/src/main/java/com/example/service/SaverEngine.kt,3d33d253f3a93519c5caad58c793b246c0ec6be7c14b9b818fd2fa2def4b1fe7,209,"coroutine_or_handler_clock:167; persistent_state:54,63,103,110,120,126,166,207"
+app/src/main/java/com/example/service/SaverPolicy.kt,728c882e8338e971a9b750e10c42241c60e1c5d6dc0430b16dcd6d1371250a41,128,none matched
+app/src/main/java/com/example/service/SavingConsent.kt,ec1bb0ed7118f378628f1171a4aaa0683c074aba7bd2ec678c39bf5e3f024b54,373,"persistent_state:12,51,60,61,86,87,88,321,325,326,343"
+app/src/main/java/com/example/service/ScreenLock.kt,42a5946b2515c9b934b8f8aaa513c5692a53fab0c468bb669915ad4e26574b3a,44,"persistent_state:23,25"
+app/src/main/java/com/example/service/ScreenOffSaver.kt,09b1c644f25abf72cdf0c13a930e1012960c7e459c3f5b43d18d66102aa4f7a2,57,"persistent_state:32,49,55"
+app/src/main/java/com/example/service/SelfMeter.kt,0235dce972764da7e4e13039e25069df8842c7814b04822b0951eda34ea0a605,21,none matched
+app/src/main/java/com/example/service/SentinelStatusNotification.kt,2d618d0f00348a937f7ed0a3734c8444eddd16c53345b8341e60ea136da997c6,141,none matched
+app/src/main/java/com/example/service/SessionEtaEstimator.kt,b669441d3f6e4c71fa940e8cd041581786a0723606e435b81bf85ded6c8b5505,72,none matched
+app/src/main/java/com/example/service/SessionSnapshot.kt,2cabb6c38567c2b13518e9efd12db3a4a99f1f9bdf1f3a269802a544cb16eaa4,49,"persistent_state:27,47"
+app/src/main/java/com/example/service/StabilityDiagnosticPolicy.kt,ca50991113d7ec30b2f6d9dda7e0ae24645f5befcb2200e1f54bdcd30f7a9200,18,none matched
+app/src/main/java/com/example/service/StabilityHealthScheduler.kt,eff9899333a2498957e8b1843d8efe720ea1d791b6599654de75304e5b37a532,23,"worker_or_job:5,13,17"
+app/src/main/java/com/example/service/StabilityHealthWorker.kt,1c71fde9db4a66589bbbc76b7a47f6cac38a3ad79d316c53fd3e018126f28256,24,worker_or_job:21
+app/src/main/java/com/example/service/StabilitySentinel.kt,c6b1813a4d4a23a7964dba7fa28a819c901fa094f42325874dc2a4a4d47c2a25,237,"network_transport:226; persistent_state:55,159"
+app/src/main/java/com/example/service/TargetAlarmRepeat.kt,6d173fd6647f6231ca6a7ad63ff3d357d4e1c202826d0432a084524648f3e42f,28,none matched
+app/src/main/java/com/example/service/TargetAlert.kt,a44ebb597cb703895e7e8fa9d9b972d0a7a22b010880ce678a4e742c4ecab355,63,none matched
+app/src/main/java/com/example/service/TelemetrySentinel.kt,76a4fd89866993478471a588e06951cf0ab160f23df38b955fb533e0caf6fa4f,139,none matched
+app/src/main/java/com/example/service/ThermalAnnouncementText.kt,e22affdc22bb0181412bef9ea356ef43ede93e4c3bfa442eb75e89b624a1034c,21,none matched
+app/src/main/java/com/example/service/ThermalCauseInvestigator.kt,13fbc192e2232cfc9ed29e9333bfd6e66a6cf32b725584eb6470a60811bd65d7,104,"sensor_registration:35,42"
+app/src/main/java/com/example/service/ThermalGuardianController.kt,e3ae0b24b0b5e2842cc92ce985067809c709997d6ab947aab4b2f16187a1a1cf,292,coroutine_or_handler_clock:114
+app/src/main/java/com/example/service/ThermalGuardianLog.kt,573531d2f44f4b9e3b4a001e06874ce24ee525a0e0abec734dcc2b4edce1dc23,174,"persistent_state:53,67,75,87,121,137"
+app/src/main/java/com/example/service/ThermalGuardianPolicy.kt,84cabf91dc6a26f9577389af7be243e4bdd437785b393fbcba504f3a53236cd8,359,none matched
+app/src/main/java/com/example/service/ThermalSilentPolicy.kt,6a992bff0717d4908a4530b149f8e7b620663c8ae8d548725bc34d2244435f1d,6,none matched
+app/src/main/java/com/example/service/TtsAudioFocusController.kt,fd243a5090524326fb95d19170e5e53d6a88ad2ad5d26e9e6478bf7be5d67f66,67,none matched
+app/src/main/java/com/example/service/WeatherContextEngine.kt,45fd2f1bc22e415ea121147b7b99751a9963791c7d2aac1b2b9c5021daec8ae9,186,"sensor_registration:36; network_transport:15,89,91,98"
+app/src/main/java/com/example/stats/UsageCountCard.kt,615ad056a9eef0310379645c7836c393b09575b78490a7e362b4328220f4a4c5,43,none matched
+app/src/main/java/com/example/stats/UsagePing.kt,bf938e3fba1e3583f5cd255064e2a2f99336c96347ea2560413e4f433ad48a14,87,"network_transport:6,25,73; persistent_state:29,32,63,67,68"
+app/src/main/java/com/example/ui/ChargingScreenActivity.kt,8550b8aae6a4a063526d3eced8f7cf00e3fd1a682da91ae94e5a0842bfc5cb4e,77,none matched
+app/src/main/java/com/example/ui/components/AnnouncementSettingsCard.kt,c3f4aa1b40234210c59fc4cfda75242897213e93e517649bbafac76d17895654,453,none matched
+app/src/main/java/com/example/ui/components/BatteryCalibrationWizardCard.kt,3db0660de3cdbe190e1ecbf76e43c9580bec9e3a8abc3cce9c9982c9d33e0e92,43,none matched
+app/src/main/java/com/example/ui/components/BatteryDotRings.kt,3a373140e87b1f7d983163d64c30b403e5cf554b5aeba9be44f45e21ba6dc8af,196,none matched
+app/src/main/java/com/example/ui/components/BatteryHealthCard.kt,600dec391a563069ca4c8fafb1b83f7c9809154db7340d929b81bc78bf7094a4,93,none matched
+app/src/main/java/com/example/ui/components/BatteryHealthTrendLineChart.kt,ef067eef809c3377c92831f962b2fcb1012f493aade475134ac22f4405759c1e,36,none matched
+app/src/main/java/com/example/ui/components/BluetoothObservationNote.kt,1f92bfff7a853cdb93664178f94270be72630bccc9c9a1b6459c5780ac251846,20,none matched
+app/src/main/java/com/example/ui/components/BoosterCard.kt,6dee067518c8c24b51af9ded8f9c039c8e14a2b333e3296b91477ab69c514ec0,95,"persistent_state:49,76"
+app/src/main/java/com/example/ui/components/BsPermissionsCard.kt,71fcb061194b58b5e5efd56997d73414be0db289e560802850a23a5221648ca6,108,none matched
+app/src/main/java/com/example/ui/components/CacheStorageDetails.kt,adc7d9988ae19431096183140258c5119238f5024b282a12589b1694f48fe17c,25,none matched
+app/src/main/java/com/example/ui/components/ChargingScreenCard.kt,76eda96865d83c11b8f0e55fb10253281484f144919b0f4fcfe88c321e42e314,343,"coroutine_or_handler_clock:199,238; persistent_state:74,86,88,119,123,128,129,131,145"
+app/src/main/java/com/example/ui/components/ChargingScreenDisplayPolicy.kt,a22d4e5c68c1e554dbd081f3fb85aa392a78f6bbd3b496adbca419dd0a362e86,97,none matched
+app/src/main/java/com/example/ui/components/ChargingScreenEventPolicy.kt,5a8b4bc34fde930452f977340e337c9f5614ce6d2aec90b900ed2910694a17c0,19,none matched
+app/src/main/java/com/example/ui/components/ChargingScreenGuard.kt,1d92728514a78b56027d861af0983c49bb984465b1a0f6757ef8800102b04c7c,51,persistent_state:26
+app/src/main/java/com/example/ui/components/ChargingScreenStyle.kt,21c6b2585b89f34e28fae59736edbdf8096b4e983ac8b31fc46562faeee1e0c5,143,"persistent_state:53,69,73"
+app/src/main/java/com/example/ui/components/ChargingSpeedEfficiencyDashboard.kt,e01fe509c698b8ca96933779c30560081ad5c04fb5c6808b86b6fade4418e072,360,none matched
+app/src/main/java/com/example/ui/components/CircularBatteryGauge.kt,59b5fbe6a6b49f05ba8d46e607772c263f28a0942cd2e553ccb2131a8b433f56,150,none matched
+app/src/main/java/com/example/ui/components/CrashRecoveryNotice.kt,6923e4e0af410cfb9505ee1f20a56cdb381d7cc00c81d828e5bea379fd87dbd8,49,none matched
+app/src/main/java/com/example/ui/components/CsvExportCard.kt,fb745280bb1f29f870daba7720fdea59740c7d192a0ab6afb18caf807ca9c3b0,92,none matched
+app/src/main/java/com/example/ui/components/EmergencySaverCard.kt,07524e1c34c2cb0bfb1acde8340a387cb1414cc55546868b6444898321a5bd68,257,none matched
+app/src/main/java/com/example/ui/components/FeedbackCard.kt,0f0239053ece32ba6f7fcb0d161a54cc1344f7e2e8a596de0be5502d547b43a6,139,none matched
+app/src/main/java/com/example/ui/components/FestivalBannerCard.kt,6737d4143804bf95cad5dadc873b15fc86a31e7c111ab6b127a0a02e0407af95,55,coroutine_or_handler_clock:34
+app/src/main/java/com/example/ui/components/GaugeEffects.kt,158e81fdb5e31471d14c228a0bf239dfd57d9f81232e4dc7a2d13b2e0b4ba04c,88,none matched
+app/src/main/java/com/example/ui/components/GaugeTrend.kt,4d3eb11e3863657d14054ee19b8efb36c69ae48e53cd76357a54fd4f34efbddd,48,none matched
+app/src/main/java/com/example/ui/components/GeminiHealthInsightsCard.kt,b423ad4467f9e877af6a1f0992d1f387a1a0f1b905350934518e66beb5852924,463,"network_transport:82,198"
+app/src/main/java/com/example/ui/components/GeoClimateAdaptiveCard.kt,b67298aab7f04da37faa133b6adb3957e4c7ca796a6cad4773967057315048aa,396,coroutine_or_handler_clock:116
+app/src/main/java/com/example/ui/components/InteractiveTelemetryGraph.kt,9c379ef8af4b1474ca3eeb9a50171b605148df2aab5eaa9a7ff384ac03022c02,298,none matched
+app/src/main/java/com/example/ui/components/LiveBatteryGraphic.kt,19cf0fd2041311da9460603ac3a92d6df852abed8eb368a4e238a5353d6f62b7,261,none matched
+app/src/main/java/com/example/ui/components/LiveChargingGraph.kt,74331cbc754277a663797afcade59872519c8699259c9f57aa2578d37bb6d140,278,none matched
+app/src/main/java/com/example/ui/components/LiveChargingHistoryTable.kt,e120db57d82f8bc37c69dc7f544172c909bcf2175f26a19fb1de40c74d018b66,142,none matched
+app/src/main/java/com/example/ui/components/LiveChargingMonitorSection.kt,0c3b5b1ede7975f9bb874bf4ba7eea3687f58750789e3e73005b192ee39a29a1,437,none matched
+app/src/main/java/com/example/ui/components/LivePowerCard.kt,028e2fb7c027c1232cfd695eabb5253459ca9a1a05376b7c9f4e46babfc8d6e0,124,coroutine_or_handler_clock:73
+app/src/main/java/com/example/ui/components/MediaPlaybackSkipCard.kt,f1d271ae1a66d8e5ca9b1fccb59c43a59d3b3fbc4bd6edfb228566e759872412,41,none matched
+app/src/main/java/com/example/ui/components/NetworkSavingCard.kt,ae9064b667c73c24bd46b3e925ab674eb30eec8065f67562c95fbe6e58b3ef5e,64,"persistent_state:33,44"
+app/src/main/java/com/example/ui/components/NightChargingThrottleCard.kt,af090be5951cbcbd26557e40dc8f3ac2af95c5f55544b372beed7a359b6572ce,45,none matched
+app/src/main/java/com/example/ui/components/OptimalChargingWindowCard.kt,efaa4c980dbc3098ef5551a8ef6d6abadca733a55f50a7074b77a57a4103a208,33,none matched
+app/src/main/java/com/example/ui/components/PowerPreferencesBody.kt,6b9544c9493964dd0d754ec37efdbd7013ac50af4e935ffd96038bfc9ebed969,150,"persistent_state:40,41"
+app/src/main/java/com/example/ui/components/PowerSavingProfileCard.kt,3ecd8f1cafd252acd596164227f4b3243d852ad6b9e52a4d7dcda4e8078adafb,200,none matched
+app/src/main/java/com/example/ui/components/QuickDrainActionsBottomSheet.kt,49d0d34469608f51326b465057a8cff080baab01653b8d981ee6e6ea406cce72,385,none matched
+app/src/main/java/com/example/ui/components/SaverCard.kt,199d90dfc2d76f444e99097414125a11b5cd21afca32037f7e784d8b776a57f8,116,"persistent_state:35,52,65,66,71,77,78,84,85,93,94,99"
+app/src/main/java/com/example/ui/components/SavingConsentCard.kt,c4a40367daf99ba0fd4c6c39ca6ec677f8e41cbe70c3384c482dbab2c4705835,76,persistent_state:41
+app/src/main/java/com/example/ui/components/ScreenLockCard.kt,7ebd535d801dfac48acfaace11fee785d134f7d45711de575fbed3c33ddeb3ba,57,none matched
+app/src/main/java/com/example/ui/components/ScreenOffSaverCard.kt,f2b401a97f15b1d4dc102a7d319fb604be0aa5c5edb2f64575ab01f359a8d5a1,54,"persistent_state:31,40"
+app/src/main/java/com/example/ui/components/SentinelCards.kt,cb730e4aa875dee91375ae3667e83e822ea0313d8e2b176adb10b2008694bf50,100,none matched
+app/src/main/java/com/example/ui/components/SparklineChart.kt,36e0072b16d31583d1c4f4b7588296aa86402d0ae587f126aa6ba93c77d92605,111,none matched
+app/src/main/java/com/example/ui/components/StatusDot.kt,016da7d7bdae8f9c6cdb47653272aeaedf29b585eed11e0423a02494076287fc,109,none matched
+app/src/main/java/com/example/ui/components/TargetAlertStatusCard.kt,6842ad24345dbb0f9302330a0fba474036ec54330d62e36fc861c2f719ee1d6b,37,coroutine_or_handler_clock:29
+app/src/main/java/com/example/ui/components/TelemetryRow.kt,6a0c9b74b3b68714817e6b2dc6a5fdcbf8fed0dd2425229bdbd63a49927d6d6a,22,none matched
+app/src/main/java/com/example/ui/components/ThermalAppCorrelationHeatmap.kt,6322638748aa002114172ed7dab5f69168fa0959c152d807887b8483e326db58,32,none matched
+app/src/main/java/com/example/ui/components/ThermalGuardianCard.kt,4e98566cbeb88608d8814f0282fa9ebd272d420bdc0064a6437278056aecd4d1,147,none matched
+app/src/main/java/com/example/ui/components/UltraBatterySaverBanner.kt,93dbb78a491f7e20d6767d405bce87b5bed92059891fd732f4a208b8a820df7a,108,none matched
+app/src/main/java/com/example/ui/components/UpdateCheckCard.kt,9d97cfd14a38a6ae375b9c745f2271db5ab8c08ee85444e84393ec06a299d3f8,2,none matched
+app/src/main/java/com/example/ui/components/VicoBatteryTrendsDashboard.kt,f53382fc4dd18132a4bcc0fcac70d6b8770265cca15238b7f409765dc4ce5db7,434,none matched
+app/src/main/java/com/example/ui/components/WidgetCustomizationCard.kt,e2924b8b5c005c1973549b740eb12a4436937bacfb038368e0d7771f8955a469,271,none matched
+app/src/main/java/com/example/ui/navigation/NetraBottomNav.kt,0a48a8369e616257986e8d353be4a7833993e140a4f89a9ad33696845ca2d420,125,none matched
+app/src/main/java/com/example/ui/screens/AndroidBatterySettingsCard.kt,72f6587696cbca09152d48364b6a3394bbfc296b9ea5a0935177b610f238ea27,43,none matched
+app/src/main/java/com/example/ui/screens/AppBatteryUsageScreen.kt,2f1559da441870f3ea9dc987f8a0a666dde007aeb185a085f5897ebe2e7144be,522,none matched
+app/src/main/java/com/example/ui/screens/BatteryScreen.kt,ce48d7937b1ee5c033d8684d3a39f5cbbb9a8aef63bb955d4a4160415896186f,524,none matched
+app/src/main/java/com/example/ui/screens/ChargingScreen.kt,6d27d39b8f15e8d3b4bfee966d857f824f4392a93cf64bb46bb18cdc18145c44,419,none matched
+app/src/main/java/com/example/ui/screens/DevicesScreen.kt,f9282ad1a77d8d626b5de9cc257c982c8b97a3fef717c86e53d9c81f4151676c,352,none matched
+app/src/main/java/com/example/ui/screens/DischargingScreen.kt,03ff53b1b28e1add39c80cb48e572dbf077dae7e2ce867fb17129672ad80e8e9,314,none matched
+app/src/main/java/com/example/ui/screens/FullChargeSummaryCard.kt,f57dd9a3138ca0aba10bf680c53994455fb08446ac2aea2d5cf6b78b443c63c1,27,none matched
+app/src/main/java/com/example/ui/screens/GraphScreen.kt,3fa7a673785dd7b7fc0fc1836267427aba1cec7f624da4566f15406d6bae22e8,301,none matched
+app/src/main/java/com/example/ui/screens/HomeScreen.kt,a3c98d84531530539abf3c682e97dc2c7e03321ce7cecb38a8b4d20af6403d73,105,none matched
+app/src/main/java/com/example/ui/screens/LogsScreen.kt,bb62fa2af30b90690752d4d69f1177d7d2ac7f80ac6476871d0cb9a5da15ee95,231,none matched
+app/src/main/java/com/example/ui/screens/MonitoringScreen.kt,c79b70f3f95f9c023cc3e950915c538fe7d1f44b970848d76223ffbfb9d8d78a,710,none matched
+app/src/main/java/com/example/ui/screens/SettingsScreen.kt,27f98eb03b5602d9536e724437633dad8e3c118dc7a5e0a1758b053f4f6f8f29,726,none matched
+app/src/main/java/com/example/ui/screens/StatusScreen.kt,545fb611425fea40d07fe1cd109eadc1b73aac705229a0a4335a856460652a5d,850,network_transport:311
+app/src/main/java/com/example/ui/theme/Color.kt,467f87f704335a2bce7584ff88c7f6b25df480c09e1ef4bdf8eebef36ed7ce9e,27,none matched
+app/src/main/java/com/example/ui/theme/RedesignGate.kt,143506b1263939308f6b2cd5dc2b0135f12cee8d87b83ddef800c091ce3403ed,11,none matched
+app/src/main/java/com/example/ui/theme/Theme.kt,01afb9b601d7f89811e40441a93203f96c99bc528f47a45800c09641e843840f,96,none matched
+app/src/main/java/com/example/ui/theme/Type.kt,b0497ed386eae9253c2089c0e3f32d5ce5ddde449948e89dc6a98d10f96a3ed0,54,none matched
+app/src/main/java/com/example/update/AppUpdater.kt,c924c56298a6125d54c9afc8cff465c574c5e995c3f3cc46ce1d83b58c2022ee,106,"network_transport:28,29,97; persistent_state:23,55,63,66"
+app/src/main/java/com/example/update/AutomaticUpdateNotice.kt,0f408fa500afc4e06cd7de0e484c8230db4386152a3d6826f49007797a234e4d,89,"worker_or_job:62,68; persistent_state:19,26,29,57,61"
+app/src/main/java/com/example/update/DownloadMeter.kt,b07ea4f4c727c790d415a33b4f0a6597fecc48c574053c1727620fb032757ca2,42,none matched
+app/src/main/java/com/example/update/GitHubReleasePolicy.kt,41eeadc3091b99d560187c5ca8919af318f6942e20c9583aa3eec5c23302ff0c,70,"network_transport:10,11,13,60"
+app/src/main/java/com/example/update/GitHubReleaseUpdater.kt,cb8a343298afaed3cf00d142c74515f414fa24a44b86136ffb79cbeb801e997c,2,none matched
+app/src/main/java/com/example/update/PlainFailure.kt,c972b823aa43ebe6b9612d9ef9fea0c50c16377f288c7c3b74a77c66857be312,15,none matched
+app/src/main/java/com/example/update/PreDownload.kt,5933331a6561b79dabf18d99f7e047fd57e07f86ba35798d8a872b90f4fcd14d,2,none matched
+app/src/main/java/com/example/update/UpdateCheckCard.kt,a662c76e3464040a51e92ebcbb057bd458e3f6cc6a0bc2e32d1d3ada2737990a,33,none matched
+app/src/main/java/com/example/update/UpdateCheckWorker.kt,a2985014057d172e6c44fdb70358a542eb3ffb0d9f4f2c8d987c7d5ee724f8cf,9,none matched
+app/src/main/java/com/example/update/UpdateFileCleanup.kt,451a5fc97a7cb2d0cc8353820e556bb0e4cd9b9edf1713b00643a0ae423cf375,20,none matched
+app/src/main/java/com/example/util/AudioRoutingInspector.kt,aa4a75195119379d0d0ab681115c5e6527d28bb629984194128bdfc9426991d7,218,none matched
+app/src/main/java/com/example/util/BatteryCsvExporter.kt,6b6008195ecb63627bcfcd0efe359e5a605a05bf2f588fc89accf171616923dd,135,none matched
+app/src/main/java/com/example/util/BatteryHardwareFacts.kt,172e720740f5a62b976c203cb7a9898297f1ee4395d402e2d42834456ed741ab,58,none matched
+app/src/main/java/com/example/util/BatteryPdfReportGenerator.kt,525efe9b963f4b54eeef4f15216d78d5bb29773e6f95d4cf88dc5c08899e8d54,309,none matched
+app/src/main/java/com/example/util/BluetoothHelper.kt,9c7cd6c2b9e5bdfca7cb48d509ac04aedbb4a926b2b1e8f859eecffb68179747,207,none matched
+app/src/main/java/com/example/util/BluetoothStatus.kt,c43dfc100eeeedfb9a5771ede1888d6c53ff27719eef219e8df6f37b1e68f372,18,none matched
+app/src/main/java/com/example/util/CrashAutoSender.kt,b8f88a9e52d19c0fb52c85425f7811c7c2962c27c165fde78d3555a172ff7a16,15,none matched
+app/src/main/java/com/example/util/DrainWindowAnalyzer.kt,3906b12797536a3a84f117838688a666bd9dad61df2774385395eb7e0ae87717,121,none matched
+app/src/main/java/com/example/util/FeedbackPayload.kt,6a78214dfffeef23983caff4a5ccc9ad94a876c72b968b5911f5e490f185ff6e,90,network_transport:49
+app/src/main/java/com/example/util/FeedbackSender.kt,fa7357911a695e7454f4be503a22d04b31d27e4c22baa56cd6197e16612cd033,35,"network_transport:3,8,14,22,23"
+app/src/main/java/com/example/util/ForegroundWindow.kt,c2b65e7ac081d19549549bd3ddb12389e418ce7ed9f67a11f55ab281347337a8,40,none matched
+app/src/main/java/com/example/util/HeatSuspects.kt,bf7a287a7eb26dae47334684b1b02d143c76fed00072aabf824408a9459b61b0,87,none matched
+app/src/main/java/com/example/util/MediaPlaybackController.kt,ffdaa53f0ecdaf27035817fa6511b20a179d8735b13f6ddf315ff97e79cbc6c7,118,none matched
+app/src/main/java/com/example/util/OemAutostartHelper.kt,1b31903f0d77b8df28660950d2edf717af839f32e932e964902ab869806ccc3e,60,none matched
+app/src/main/java/com/example/util/PermissionHelper.kt,181b2e7ff4b52daadf10ab1a4ce3019516d45da79e358d1f15bc840ad073d1c1,167,none matched
+app/src/main/java/com/example/util/UsageStatsHelper.kt,d48850dc9d0af806df7d75b8655183d623ee88c90d12598077bb93256837ff6e,98,none matched
+app/src/main/java/com/example/viewmodel/NetraViewModel.kt,159feb3abcd6300275f7a60628ab04e250d22ebb999292780321e7cf84894175,662,"network_transport:11,219,241,550,553,560,575,588"
+app/src/main/java/com/example/widget/NetraBatteryWidgetProvider.kt,0c4d1c5be467e4353fe5e86b73fd2397ab1243793f025d9bcd173f3e55a80210,180,none matched
+app/src/main/res/drawable/ic_launcher_background.xml,289d9950e9e7e70901b2652fc9d8bccf67201f3b5b6a9ff424ab9b43cd64471d,23,none matched
+app/src/main/res/drawable/ic_launcher_foreground.xml,f18d5237a82e46448a8ebe3f8de5ce3e55fa8b749bd03bfff2a4dc12187f13c9,58,none matched
+app/src/main/res/layout/notification_lines_compact.xml,a955fec7bf50943799040a149f4192ea2fca8c818e6b80a9b83f7a1d2e9ae33c,11,none matched
+app/src/main/res/layout/notification_lines_expanded.xml,93e2f29111c4607f85462e0b478ac74d35055f7f72745953dd52b7e64fad0417,11,none matched
+app/src/main/res/layout/widget_netra_battery.xml,4fc537e76c7653c9f90309469ce74c7424b8af8e770ccc0fa0a1d092bf9515ce,95,none matched
+app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml,6d0988175971f41bdc83eadb144af3d84c40052fa125e90edbe7d89227be4b25,6,none matched
+app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml,6d0988175971f41bdc83eadb144af3d84c40052fa125e90edbe7d89227be4b25,6,none matched
+app/src/main/res/values/colors.xml,57681038afd005dcd260eabdd6d16619709c4a3fe20324362ea00e093e85b5fd,10,none matched
+app/src/main/res/values/strings.xml,1a26c8f1c85db796b5585eac71bc00818fad8dafa920eaec40a565f5650a7c7f,13,none matched
+app/src/main/res/values/themes.xml,e8288b65767f4f28854d168c7b19c308579d3703bdf3fc26c2b266e19148f465,5,none matched
+app/src/main/res/xml/backup_rules.xml,173c90cbeb773e6a65b430581a85720dc5c7ddba17d543cfefe3d2aed9b9a7a4,13,"network_transport:3,6"
+app/src/main/res/xml/data_extraction_rules.xml,30ae995624fd57d839bf0d638900f8d2c17c703d6e7d6c8640708a8a7cac2402,19,network_transport:3
+app/src/main/res/xml/device_admin.xml,76af01703eb24a59ef16f13eef2025eb30de8cbb6db7f920920e04b6d6de84e6,6,none matched
+app/src/main/res/xml/file_paths.xml,67073b14252e13bb502eef946a6e43dec97a854c98e529c119a26ecfc3e4e2da,8,none matched
+app/src/main/res/xml/netra_battery_widget_info.xml,32bd0035a9f5f5b56d3ef89dd91240bfe022922a4e38ae70b5b91a2897cdd811,14,none matched
+app/src/main/res/xml/network_security_config.xml,accb5282b3d688edf2e8263bbd6adbe70f9f7f4d4595cf3af4ac553c62f7b71e,9,none matched

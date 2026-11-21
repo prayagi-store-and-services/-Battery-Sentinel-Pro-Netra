@@ -1,0 +1,53 @@
+tier,metric,unit,baseline,candidate,limit,method,acceptance
+Tier-0,battery_pp_24h,percentage points/24h,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-0,energy_mah,mAh/test,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-0,cpu,CPU ms/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-0,wakeups,attributable wakeups/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-0,wakelock,count and cumulative ms,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-0,network_calls,calls/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-0,network_bytes,bytes/day,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-0,database,read/write count/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-0,sensor,active ms and Hz,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-0,jobs,count and runtime ms,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-0,fgs,runtime ms,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-0,memory,PSS/RSS and allocations,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-0,recovery,attempt count and recovery cost,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,battery_pp_24h,percentage points/24h,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,energy_mah,mAh/test,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,cpu,CPU ms/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,wakeups,attributable wakeups/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,wakelock,count and cumulative ms,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,network_calls,calls/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,network_bytes,bytes/day,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,database,read/write count/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,sensor,active ms and Hz,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,jobs,count and runtime ms,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,fgs,runtime ms,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,memory,PSS/RSS and allocations,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-1,recovery,attempt count and recovery cost,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,battery_pp_24h,percentage points/24h,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,energy_mah,mAh/test,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,cpu,CPU ms/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,wakeups,attributable wakeups/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,wakelock,count and cumulative ms,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,network_calls,calls/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,network_bytes,bytes/day,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,database,read/write count/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,sensor,active ms and Hz,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,jobs,count and runtime ms,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,fgs,runtime ms,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,memory,PSS/RSS and allocations,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-2,recovery,attempt count and recovery cost,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,battery_pp_24h,percentage points/24h,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,energy_mah,mAh/test,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,cpu,CPU ms/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,wakeups,attributable wakeups/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,wakelock,count and cumulative ms,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,network_calls,calls/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,network_bytes,bytes/day,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,database,read/write count/hour,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,sensor,active ms and Hz,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,jobs,count and runtime ms,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,fgs,runtime ms,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,memory,PSS/RSS and allocations,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
+Tier-3,recovery,attempt count and recovery cost,OPEN - NOT VERIFIED,NOT RUN,OPEN - NOT VERIFIED,OPEN - match device conditions and attribution,BLOCKED until evidence and approved finite limit
