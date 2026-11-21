@@ -1,64 +1,99 @@
 name: Signed test APK (not a release)
 'on':
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      expected_head:
+        description: Exact reviewed green main SHA, no release tag is created
+        required: true
 permissions:
   contents: read
 concurrency:
   group: netra-test-apk
+  cancel-in-progress: false
 jobs:
   test-apk:
-    name: Build signed test APK from main
+    name: Build signed test APK from reviewed main
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
-    - name: Require main
-      run: test "${GITHUB_REF}" = "refs/heads/main"
-    - uses: actions/checkout@v4
-      with:
-        ref: ${{ github.sha }}
-    - uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: '17'
-    - uses: gradle/actions/setup-gradle@v4
-      with:
-        gradle-version: 9.3.1
-    - uses: android-actions/setup-android@v3
-      with:
-        packages: platform-tools
-    - name: Restore signing key
-      env:
-        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-      run: |
-        test -n "$KEYSTORE_BASE64"
-        echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/netra-release.jks"
-    - name: Build signed release APK
-      env:
-        KEYSTORE_PATH: ${{ runner.temp }}/netra-release.jks
-        STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      run: gradle --no-daemon -PnetraVersionName=1.0.0-test :app:assembleRelease
-    - name: Verify signature, certificate, package and version
-      env:
-        EXPECTED_CERT_SHA256: ${{ secrets.RELEASE_CERT_SHA256 }}
-      run: |
-        set -euo pipefail
-        test -n "$EXPECTED_CERT_SHA256"
-        APK="app/build/outputs/apk/release/app-release.apk"
-        APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)"
-        AAPT2="$(find "$ANDROID_HOME/build-tools" -name aapt2 | sort -V | tail -1)"
-        "$APKSIGNER" verify --print-certs "$APK" | tee /tmp/apksigner.txt
-        ACTUAL="$(sed -n 's/^.*[Ss]igner[^c]*certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -1 | tr -d '[:space:]')"
-        test "$ACTUAL" = "$EXPECTED_CERT_SHA256"
-        "$AAPT2" dump badging "$APK" | grep -E "^package:" | tee /tmp/badging.txt
-        cp "$APK" netra-test-${GITHUB_SHA::7}.apk
-        sha256sum netra-test-${GITHUB_SHA::7}.apk | tee netra-test-sha256.txt
-        echo "Built from commit $GITHUB_SHA" | tee -a netra-test-sha256.txt
-    - uses: actions/upload-artifact@v4
-      with:
-        name: netra-test-apk
-        path: |
-          netra-test-*.apk
-          netra-test-sha256.txt
-        retention-days: 3
-        if-no-files-found: error
+      - name: Require immutable reviewed main
+        env:
+          EXPECTED_HEAD: ${{ inputs.expected_head }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/main
+          test "$GITHUB_SHA" = "$EXPECTED_HEAD"
+          [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Record exact test identity
+        id: identity
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          VERSION_NAME="$(sed -n 's/^netraVersionName=//p' gradle.properties)"
+          VERSION_CODE="$(sed -n 's/^netraVersionCode=//p' gradle.properties)"
+          [[ "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]
+          TEST_NAME="${VERSION_NAME}-test-${GITHUB_SHA::7}"
+          echo "test_name=$TEST_NAME" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 9.3.1
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Restore existing signing key without changing secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          test -n "$KEYSTORE_BASE64"
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/netra-release.jks"
+      - name: Build test-labelled signed APK, no publication
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/netra-release.jks
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          TEST_NAME: ${{ steps.identity.outputs.test_name }}
+        run: gradle --no-daemon "-PnetraVersionName=$TEST_NAME" :app:assembleRelease
+      - name: Verify certificate continuity and exact package version
+        env:
+          EXPECTED_CERT_SHA256: ${{ secrets.RELEASE_CERT_SHA256 }}
+          TEST_NAME: ${{ steps.identity.outputs.test_name }}
+          VERSION_CODE: ${{ steps.identity.outputs.version_code }}
+        run: |
+          set -euo pipefail
+          test -n "$EXPECTED_CERT_SHA256"
+          APK="app/build/outputs/apk/release/app-release.apk"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)"
+          AAPT2="$(find "$ANDROID_HOME/build-tools" -name aapt2 | sort -V | tail -1)"
+          "$APKSIGNER" verify --print-certs "$APK" > /tmp/apksigner.txt
+          ACTUAL="$(sed -n 's/^.*[Ss]igner[^c]*certificate SHA-256 digest: //p' /tmp/apksigner.txt | head -1 | tr -d '[:space:]')"
+          test "$ACTUAL" = "$EXPECTED_CERT_SHA256"
+          "$AAPT2" dump badging "$APK" > /tmp/badging.txt
+          grep -q "^package: name='com.aistudio.batterysentinel.ntra' versionCode='$VERSION_CODE' versionName='$TEST_NAME'" /tmp/badging.txt
+          grep -q "^sdkVersion:'24'" /tmp/badging.txt
+          cp "$APK" "BSPN-${TEST_NAME}.apk"
+          sha256sum "BSPN-${TEST_NAME}.apk" > test-apk-evidence.txt
+          printf 'source_sha=%s\nversion_name=%s\nversion_code=%s\ncertificate_sha256=%s\nTEST ONLY. No release tag or publication. Device acceptance NOT RUN.\nSame package and signing identity as production; installation replaces the existing app, not a parallel install. Do not clear data or uninstall to force installation. Rollback is not guaranteed.\n' "$GITHUB_SHA" "$TEST_NAME" "$VERSION_CODE" "$ACTUAL" >> test-apk-evidence.txt
+          grep -E '^package:|^sdkVersion:|^targetSdkVersion:' /tmp/badging.txt >> test-apk-evidence.txt
+      - name: Delete temporary signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/netra-release.jks"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bspn-test-apk-${{ github.sha }}
+          path: |
+            BSPN-*-test-*.apk
+            test-apk-evidence.txt
+          retention-days: 3
+          if-no-files-found: error
