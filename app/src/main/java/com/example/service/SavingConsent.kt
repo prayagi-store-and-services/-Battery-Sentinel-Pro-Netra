@@ -60,7 +60,7 @@ object SavingSettings {
     internal fun resetIo() { io = androidIo; commitGate = { true }; editorCommit = { it.commit() }; persistenceFailed = false }
     private fun prefs(c: Context) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private fun pending(c: Context, key: String) = prefs(c).contains("before_$key")
-    private fun forget(c: Context, key: String) = prefs(c).edit().remove("before_$key").remove("applied_$key").checkedCommit()
+    private fun forget(c: Context, key: String) = prefs(c).edit().remove("before_$key").remove("applied_$key").remove("previous_applied_$key").checkedCommit()
 
     /** External edits release the changed fields and prevent that owner reapplying until it ends. */
     private fun reconcile(c: Context): Boolean {
@@ -179,10 +179,15 @@ object SavingSettings {
         if (current == value) return
         val edit = p.edit()
         if (!pending(c, key)) edit.putInt("before_$key", current)
+        // A new target may fail before Android changes anything. Keep the prior verified
+        // applied value as a rollback witness, as in Guardian's cooling controller.
+        // The original remains the original, never the last dimmed value.
+        if (pending(c, key)) edit.putInt("previous_applied_$key", current)
         check(edit.putInt("applied_$key", value).checkedCommit())
         // Persist before calling Android, including a call that writes then throws.
         check(io.write(c, key, value))
         check(io.read(c, key) == value)
+        check(p.edit().remove("previous_applied_$key").checkedCommit())
     }
 
     @Synchronized fun display(c: Context, owner: String, brightness: Int, timeoutMs: Int? = null): Boolean {
@@ -248,7 +253,7 @@ object SavingSettings {
         runCatching {
             if (pending(c, B)) {
                 val actual = io.read(c, B)
-                if (actual != p.getInt("applied_$B", -1) && actual != p.getInt("before_$B", -1)) forget(c, M)
+                if (actual != p.getInt("applied_$B", -1) && actual != p.getInt("previous_applied_$B", -1) && actual != p.getInt("before_$B", -1)) forget(c, M)
             } else if (pending(c, M) && p.contains(MODE_BRIGHTNESS_WITNESS) &&
                 io.read(c, B) != p.getInt(MODE_BRIGHTNESS_WITNESS, -1)) {
                 // Brightness may already have restored successfully in an earlier attempt.
@@ -265,7 +270,7 @@ object SavingSettings {
             val done = runCatching {
                 val actual = io.read(c, key)
                 val before = p.getInt("before_$key", actual)
-                if (actual == p.getInt("applied_$key", -1) && actual != before) {
+                if ((actual == p.getInt("applied_$key", -1) || actual == p.getInt("previous_applied_$key", -1)) && actual != before) {
                     check(io.write(c, key, before))
                     check(io.read(c, key) == before)
                 }
