@@ -1,0 +1,9 @@
+{
+  "baseline_sha": "24b1959cfd18f34bd23049e6126965959112c025",
+  "production_index_rows": 246,
+  "production_kotlin_files": 229,
+  "unit_test_files": 178,
+  "android_test_files": 2,
+  "budget_rows": 52,
+  "device_template_rows": 10
+}
